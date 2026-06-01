@@ -21,11 +21,8 @@ type LinkItem = { label: string; href: string; external?: boolean }
 
 const sectionsZh: { title: string; links: LinkItem[] }[] = [
   {
-    title: '产品',
-    links: [
-      { label: 'SO101 SERIES', href: '/product' },
-      { label: '获取报价', href: siteConfig.links.inquiry, external: true }
-    ]
+    title: '社区',
+    links: [{ label: '社区首页', href: '/community' }]
   },
   {
     title: '学习',
@@ -53,13 +50,6 @@ const sectionsZh: { title: string; links: LinkItem[] }[] = [
 ]
 
 const sectionsJa: { title: string; links: LinkItem[] }[] = [
-  {
-    title: '製品',
-    links: [
-      { label: 'SO101 SERIES', href: '/ja/product' },
-      { label: 'お見積もり', href: siteConfigJa.links.inquiry, external: true }
-    ]
-  },
   {
     title: '学習',
     links: [
@@ -107,8 +97,8 @@ export function Footer() {
   return (
     <footer className="border-t border-border/40 bg-card/30">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
-          <div>
+        <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-sm">
             <Link href={homeHref} className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-border/60">
                 <Bot className="h-4 w-4 text-primary" />
@@ -131,6 +121,7 @@ export function Footer() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-x-12 gap-y-8 sm:grid-cols-3 lg:flex lg:gap-x-16">
           {sections.map((section) => (
             <div key={section.title}>
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
@@ -163,6 +154,7 @@ export function Footer() {
               </ul>
             </div>
           ))}
+          </div>
         </div>
 
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border/40 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">

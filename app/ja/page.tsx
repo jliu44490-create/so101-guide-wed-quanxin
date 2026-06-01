@@ -19,7 +19,6 @@ import {
   AccordionItem,
   AccordionTrigger
 } from '@/components/ui/accordion'
-import Image from 'next/image'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { HeroStats } from '@/components/hero-stats'
@@ -41,10 +40,9 @@ import {
   TextReveal,
   TiltCard
 } from '@/components/effects'
-import { productSpecsJa, siteConfigJa } from '@/lib/site-config-ja'
+import { siteConfigJa } from '@/lib/site-config-ja'
 import { chaptersJa } from '@/lib/course-data-ja'
 import { cn } from '@/lib/utils'
-import { Mail } from 'lucide-react'
 
 const features = [
   {
@@ -267,106 +265,6 @@ export default function HomePageJa() {
         />
       </section>
 
-      {/* ═══════════════════════ PRODUCT SHOWCASE ═══════════════════════ */}
-      <section className="relative overflow-hidden border-b border-border/40">
-        <FloatingOrbs count={3} />
-        <div className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr]">
-            <Reveal direction="left">
-              <ConicBorder className="rounded-3xl">
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-border/40 bg-gradient-to-br from-[oklch(0.16_0.018_270)] to-[oklch(0.08_0.012_270)]">
-                  <Image
-                    src={productSpecsJa.heroImage}
-                    alt="SO101 SERIES 産業用ロボットアーム"
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 55vw"
-                    className="object-cover"
-                  />
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 -z-10"
-                    style={{
-                      background:
-                        'radial-gradient(60% 70% at 70% 50%, oklch(from var(--primary) l c h / 0.35) 0%, transparent 70%), radial-gradient(40% 50% at 30% 80%, oklch(from var(--accent) l c h / 0.25) 0%, transparent 70%)'
-                    }}
-                  />
-                  <div className="pointer-events-none absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-success)] opacity-75" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-success)]" />
-                    </span>
-                    販売中
-                  </div>
-                  <div className="pointer-events-none absolute bottom-4 right-4 z-10 rounded-md bg-black/45 px-2.5 py-1 font-mono text-[10px] text-white/70 backdrop-blur">
-                    {productSpecsJa.series}
-                  </div>
-                </div>
-              </ConicBorder>
-            </Reveal>
-
-            <Reveal direction="right">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs text-primary">
-                  <span className="font-mono uppercase tracking-[0.18em]">Hardware</span>
-                  <span className="h-3 w-px bg-primary/40" />
-                  <span>新製品</span>
-                </div>
-                <h2 className="mt-5 text-balance text-4xl font-bold sm:text-5xl">
-                  <ShimmerText>{productSpecsJa.series}</ShimmerText>
-                </h2>
-                <p className="mt-2 font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
-                  {productSpecsJa.tagline}
-                </p>
-                <p className="mt-3 text-xl font-semibold">{productSpecsJa.taglineZh}</p>
-                <p className="mt-4 max-w-xl text-muted-foreground">
-                  本学習プラットフォームの裏側には、自社開発の 6 軸産業用ロボットアームがあります。
-                  可搬質量 10 kg、リーチ 1010 mm、繰返し位置決め精度 ±0.02 mm。
-                  IP54 保護等級で任意角度の取付に対応し、配套ファームウェアは LeRobot と完全互換です。
-                </p>
-
-                <div className="mt-7 grid grid-cols-3 gap-3">
-                  {productSpecsJa.kpis.slice(0, 3).map((s) => (
-                    <SpotlightCard key={s.en} className="rounded-xl">
-                      <div className="rounded-xl border border-border/60 bg-card/60 px-3 py-3">
-                        <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {s.en}
-                        </p>
-                        <p className="mt-1 text-lg font-bold tracking-tight">
-                          {s.value}
-                          {s.unit && (
-                            <span className="ml-0.5 text-xs font-medium text-muted-foreground">
-                              {s.unit}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                    </SpotlightCard>
-                  ))}
-                </div>
-
-                <div className="mt-7 flex flex-wrap items-center gap-3">
-                  <Magnetic strength={0.4} range={130}>
-                    <Button asChild size="lg" className="h-12 glow-primary px-6">
-                      <Link href="/ja/product">
-                        製品詳細を見る
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </Magnetic>
-                  <Magnetic strength={0.4} range={130}>
-                    <Button asChild variant="outline" size="lg" className="h-12">
-                      <a href={siteConfigJa.links.inquiry}>
-                        <Mail className="mr-1.5 h-4 w-4" />
-                        お見積もり
-                      </a>
-                    </Button>
-                  </Magnetic>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
 
       {/* ═══════════════════════ FEATURES ═══════════════════════ */}
       <section className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
@@ -557,21 +455,13 @@ export default function HomePageJa() {
                     <ShimmerText>始める</ShimmerText>準備はできましたか？
                   </h2>
                   <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-                    体系化された章を順番に学ぶことも、SO101 SERIES を生産ラインや
-                    教育現場へ直接導入することも可能です。
+                    9 つのインタラクティブレッスンで SO101 模倣学習をゼロから。
+                    詰まったらコミュニティで質問 —— みんなで学ぶ方が速い。
                   </p>
                   <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                     <Magnetic strength={0.5} range={140}>
                       <Button asChild size="lg" className="h-12 glow-primary px-6">
                         <Link href="/ja/learn">今すぐ学習を始める</Link>
-                      </Button>
-                    </Magnetic>
-                    <Magnetic strength={0.5} range={140}>
-                      <Button asChild variant="outline" size="lg" className="h-12">
-                        <a href={siteConfigJa.links.inquiry}>
-                          <Mail className="mr-1.5 h-4 w-4" />
-                          購入のご相談
-                        </a>
                       </Button>
                     </Magnetic>
                     <Magnetic strength={0.5} range={140}>

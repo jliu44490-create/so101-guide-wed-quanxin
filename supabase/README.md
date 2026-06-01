@@ -20,17 +20,21 @@
 
 左侧 **Authentication → Providers**：
 
-### GitHub 登录（技术用户一键登录，推荐）
+### ⚡ 最快路径：只用邮箱登录（推荐先这样上线）
+- Authentication → Providers → **Email** → 确保开启（**新项目默认就是开的**）
+- 默认就是 magic link（无密码），**零额外配置**
+- 这一项搞定，社区就能用了。GitHub 登录可以等以后再加。
+
+### （可选）以后加 GitHub 一键登录
+邮箱登录跑通后想再加 GitHub，再做这步：
 1. 打开 GitHub → Settings → Developer settings → OAuth Apps → **New OAuth App**
 2. 填：
    - Application name: `SO101 社区`
    - Homepage URL: `https://so101-guide-web-seven.vercel.app`
    - Authorization callback URL: **从 Supabase 的 GitHub provider 页面复制那个 callback URL**（形如 `https://xxxx.supabase.co/auth/v1/callback`）
-3. 拿到 Client ID + 生成一个 Client Secret，填回 Supabase 的 GitHub provider，**保存 + 开启**
-
-### 邮箱魔法链接（没有 GitHub 的用户用）
-- Authentication → Providers → **Email** → 确保开启
-- 默认就是 magic link（无密码），不用额外配置
+3. 拿到 Client ID + 生成 Client Secret，填回 Supabase 的 GitHub provider，**保存 + 开启**
+4. **最后一步**：在 Vercel 环境变量里加 `NEXT_PUBLIC_ENABLE_GITHUB_AUTH=true` 再 Redeploy
+   —— 登录框里的「用 GitHub 登录」按钮默认隐藏，加了这个开关才出现（避免没配好就显示一个点了报错的按钮）。
 
 ## 4. 配置允许的回跳地址
 

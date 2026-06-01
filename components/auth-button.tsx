@@ -112,16 +112,24 @@ export function AuthButton() {
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          <Button onClick={signInWithGitHub} className="w-full gap-2" size="lg">
-            <Github className="h-4 w-4" />
-            用 GitHub 登录
-          </Button>
+          {/* GitHub login only appears once the project owner has configured a
+             GitHub OAuth app in Supabase AND set NEXT_PUBLIC_ENABLE_GITHUB_AUTH=true.
+             Defaults off so a fresh email-only deployment never shows a button
+             that would 500 against an unconfigured provider. */}
+          {process.env.NEXT_PUBLIC_ENABLE_GITHUB_AUTH === 'true' && (
+            <>
+              <Button onClick={signInWithGitHub} className="w-full gap-2" size="lg">
+                <Github className="h-4 w-4" />
+                用 GitHub 登录
+              </Button>
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" />
-            或用邮箱
-            <div className="h-px flex-1 bg-border" />
-          </div>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="h-px flex-1 bg-border" />
+                或用邮箱
+                <div className="h-px flex-1 bg-border" />
+              </div>
+            </>
+          )}
 
           {sent ? (
             <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 text-center text-sm">

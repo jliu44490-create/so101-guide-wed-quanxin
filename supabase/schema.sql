@@ -212,3 +212,26 @@ left join (
 order by c.created_at desc;
 
 alter view public.user_comments_with_thread set (security_invoker = true);
+
+
+-- 9. 付费权益表（一次性买断永久解锁） -----------------------------------
+-- 一行 = 一个已付费用户。webhook（用 service_role / secret key）写入，
+-- 普通用户只能读自己的那一行，无法自行插入/伪造（没有 insert 策略）。
+
+create table if not exists public.entitlements (
+  user_id           uuid primary key references public.profiles(id) on delete cascade,
+  product           text not null default 'all-access',
+  source            text,            -- 'stripe'
+  stripe_session_id text,
+  created_at        timestamptz not null default now()
+);
+
+alter table public.entitlements enable row level security;
+
+drop policy if exists "users can read own entitlement" on public.entitlements;
+create policy "users can read own entitlement"
+  on public.entitlements for select using (auth.uid() = user_id);
+
+-- 注意：故意不建 insert/update/delete 策略。
+-- 只有 service_role（webhook 服务端，绕过 RLS）能写入权益，
+-- 前端无论如何都无法自己给自己开通 —— 这是付费墙的安全根基。

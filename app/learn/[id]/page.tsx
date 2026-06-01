@@ -31,6 +31,7 @@ import { ChapterProgressActions } from '@/components/chapter-progress-actions'
 import { Prose } from '@/components/prose'
 import { Mermaid } from '@/components/mermaid'
 import { Discussion } from '@/components/discussion'
+import { ContentGate } from '@/components/content-gate'
 import {
   ExerciseList,
   PitfallList,
@@ -181,6 +182,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           </div>
         )}
 
+        <ContentGate chapterId={chapter.id} what={`第 ${chapter.id} 章`}>
         <div className="grid gap-10 lg:grid-cols-[1fr_240px]">
           <article className="min-w-0">
             <header id="overview" className="mb-8 scroll-mt-24">
@@ -634,6 +636,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
             </div>
           </aside>
         </div>
+        </ContentGate>
       </main>
 
       <Footer />

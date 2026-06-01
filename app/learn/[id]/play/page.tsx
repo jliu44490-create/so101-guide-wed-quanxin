@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ArrowRight, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LessonPlayer } from '@/components/lesson-player'
+import { ContentGate } from '@/components/content-gate'
 import { getLesson, lessons } from '@/lib/lessons'
 import { chapters } from '@/lib/course-data'
 import { siteConfig } from '@/lib/site-config'
@@ -44,7 +45,11 @@ export default async function PlayPage({ params }: PlayPageProps) {
     return <ComingSoon chapterId={chapterId} chapterTitle={chapter.title} />
   }
 
-  return <LessonPlayer lesson={lesson} />
+  return (
+    <ContentGate chapterId={chapterId} what={`第 ${chapterId} 课`}>
+      <LessonPlayer lesson={lesson} />
+    </ContentGate>
+  )
 }
 
 /**

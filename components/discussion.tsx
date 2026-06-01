@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Prose } from '@/components/prose'
 import { supabase, isSupabaseConfigured, type CommentRow } from '@/lib/supabase'
 import { useAuth } from '@/lib/use-auth'
+import { useEntitlement } from '@/lib/use-entitlement'
 import { cn } from '@/lib/utils'
 
 interface DiscussionProps {
@@ -29,6 +30,7 @@ interface UIComment extends CommentRow {
 
 export function Discussion({ threadKey, title = '讨论区', className }: DiscussionProps) {
   const { isLoggedIn, user } = useAuth()
+  const { locked: postingLocked } = useEntitlement()
   const [comments, setComments] = useState<UIComment[]>([])
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -161,7 +163,22 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
 
       {/* Composer */}
       <div className="mt-5">
-        {isLoggedIn ? (
+        {!isLoggedIn ? (
+          <div className="rounded-xl border border-border/60 bg-card/40 p-5 text-center">
+            <p className="text-sm text-muted-foreground">
+              登录后即可参与讨论 —— 点击右上角的 <strong className="text-foreground">登录</strong> 按钮
+            </p>
+          </div>
+        ) : postingLocked ? (
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 text-center">
+            <p className="text-sm">
+              发帖、提问、回答是<strong className="text-foreground">解锁后</strong>的权限
+            </p>
+            <Button asChild size="sm" className="glow-primary mt-3">
+              <Link href="/unlock">解锁全部内容</Link>
+            </Button>
+          </div>
+        ) : (
           <div className="space-y-2">
             <Textarea
               value={body}
@@ -176,12 +193,6 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
                 {posting ? '发布中' : '发布'}
               </Button>
             </div>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border/60 bg-card/40 p-5 text-center">
-            <p className="text-sm text-muted-foreground">
-              登录后即可参与讨论 —— 点击右上角的 <strong className="text-foreground">登录</strong> 按钮
-            </p>
           </div>
         )}
       </div>

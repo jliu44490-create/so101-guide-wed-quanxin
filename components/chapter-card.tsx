@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { TiltCard } from '@/components/effects/tilt-card'
 import { useProgress, applyUserProgress } from '@/lib/use-progress'
 import { hasLesson } from '@/lib/lessons'
+import { chapterRequiresAccess } from '@/lib/paywall'
+import { useEntitlement } from '@/lib/use-entitlement'
 import { CommentCountBadge } from '@/components/comment-count-badge'
 import { cn } from '@/lib/utils'
 import type { Chapter } from '@/lib/types'
@@ -71,6 +73,8 @@ export function ChapterCard({ chapter: baseChapter }: ChapterCardProps) {
   } as const
 
   const { map } = useProgress()
+  const { locked } = useEntitlement()
+  const isPremiumLocked = chapterRequiresAccess(baseChapter.id) && locked
   const chapter = applyUserProgress(baseChapter, map)
   const status = statusConfig[chapter.status]
   const StatusIcon = status.icon
@@ -102,6 +106,15 @@ export function ChapterCard({ chapter: baseChapter }: ChapterCardProps) {
               >
                 <Gamepad2 className="mr-0.5 h-2.5 w-2.5" />
                 {t.lessonBadge}
+              </Badge>
+            )}
+            {isPremiumLocked && (
+              <Badge
+                variant="outline"
+                className="border-amber-500/40 bg-amber-500/10 text-[10px] text-amber-600 dark:text-amber-400"
+              >
+                <Lock className="mr-0.5 h-2.5 w-2.5" />
+                需解锁
               </Badge>
             )}
           </div>

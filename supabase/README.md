@@ -46,9 +46,11 @@
 
 ## 5. 把密钥填进 Vercel
 
-1. Supabase 左侧 **Project Settings → API**，复制两个值：
-   - **Project URL**
-   - **anon / public** key（不是 service_role！那个是机密别外泄）
+1. 复制两个值（Supabase 新版控制台把它们分到两个页面）：
+   - **Project URL** —— 在 Settings → **Data API** 页，形如 `https://xxxx.supabase.co`
+   - **Publishable key**（`sb_publishable_...`）—— 在 Settings → **API Keys** 页
+     - ⚠️ 用 Publishable key，**不要** Secret key（`sb_secret_...`，那是后端机密，放前端等于裸奔）
+     - 旧项目若只有 Legacy 的 `anon`（`eyJ...`）key 也能用，效果一样
 2. 打开 Vercel 项目 → Settings → Environment Variables，加两条：
 
    | Name | Value |

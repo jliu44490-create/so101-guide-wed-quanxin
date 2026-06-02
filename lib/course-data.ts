@@ -1144,7 +1144,135 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         solution: '减小 batch_size 或启用梯度累积',
         command: 'python lerobot/scripts/train.py policy=act training.batch_size=8'
       }
-    ]
+    ],
+
+    introduction: `数据有了 50 条 7500 帧，终于到 AI 部分 —— 训练 ACT 模型。
+
+很多人以为 ACT 是"一个模型"，其实它是**三个组件的组合**：Transformer Encoder（看图像+状态提特征）、CVAE（处理"同一情况多种合理动作"的多模态性）、Transformer Decoder（一次输出未来 100 步动作）。第三个是关键 —— 第 1 章讲的复合误差，正是被"一次预测一段动作"压住的。
+
+这一章带你启动训练、读懂 loss 曲线、抢救 NaN、用 wandb 监控，并算清楚"50 条数据为什么够训 20 万步"。`,
+
+    whyItMatters: `训练是把数据变成能力的转化器，也是最容易"跑了一夜白跑"的环节：
+
+- 不懂健康 loss 长什么样 → 跑了 8 小时不知道是成了还是废了
+- 不会抢救 NaN → 梯度一爆全程作废，还以为要重训
+- 不会调 batch_size → 要么 OOM 要么显存浪费、收敛慢
+- 不用 wandb → 全靠刷终端，多次实验没法对比
+
+理解这一章，你的每一次训练都是"知道自己在干什么"。`,
+
+    keyTerms: ['ACT', 'CVAE', 'Action Chunking', 'CUDA / AMP', 'wandb'],
+
+    diagrams: [
+      {
+        title: 'ACT 的三段式结构',
+        source: `flowchart LR
+    Img["📷 相机帧"] --> Enc["Transformer Encoder"]
+    State["📐 关节状态"] --> Enc
+    Enc --> CVAE["CVAE (latent z)"]
+    CVAE --> Dec["Transformer Decoder"]
+    Dec --> Out["📦 未来 100 步动作"]
+    style Enc fill:#7c5cff,stroke:#7c5cff,color:#fff
+    style CVAE fill:#f59e0b,stroke:#f59e0b,color:#fff
+    style Dec fill:#22c55e,stroke:#22c55e,color:#fff
+    style Out fill:#0ea5e9,stroke:#0ea5e9,color:#fff`,
+        caption: '图像+状态 → Encoder 提特征 → CVAE 注入多模态 → Decoder 一口气出 100 步动作（Action Chunking）。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '启动训练',
+        body: `一条命令搞定（前提：第 5 章数据集已录好）。\`policy=act\` 选 ACT、\`env=so100\` 选机器人、\`dataset_repo_id\` 指向你的数据集。
+
+默认跑 20 万步，RTX 3060 上约 6-8 小时、CPU 上 1-2 天。可中途 Ctrl+C，加 \`resume=true\` 续训。`,
+        command: {
+          description: '启动 ACT 训练',
+          code: 'python lerobot/scripts/train.py \\\n  policy=act env=so100 \\\n  dataset_repo_id=your-name/so100-pick-cup'
+        },
+        expectedOutput: '[INFO] Building ACT model (params: 84.5M)...\nstep 0    loss 1.247\nstep 100  loss 0.456\nstep 500  loss 0.182\n...',
+        tip: 'checkpoint 自动保存，断了不怕，`resume=true` 接着来。'
+      },
+      {
+        title: '读懂 loss 曲线',
+        body: `健康的 loss：**前 1000 步快速下降**（模型开始学）→ 中段稳步降 → 后期变化 < 5%（收敛，可以停）。
+
+不健康信号：loss 变 NaN（梯度爆炸）、loss 反弹上升（学习率太大）、loss 卡在初始值不降（数据有问题）。`,
+        tip: '看一眼前 1000 步就能判断"学没学起来"，不用等几小时。'
+      },
+      {
+        title: '抢救 NaN loss + 调 batch_size',
+        body: `loss 变 NaN 几乎总是梯度爆炸。应急两板斧：学习率降一个量级 + 开梯度裁剪。NaN 不可逆，必须从这里重来，不会"自己恢复"。
+
+batch_size 在显存允许内越大越好（梯度估计更准、收敛快）。12 GB 显存一般能塞 32；OOM 就往下调。`,
+        command: {
+          description: 'NaN 抢救 / 调参',
+          code: 'python lerobot/scripts/train.py policy=act \\\n  training.lr=1e-5 training.grad_clip_norm=10 \\\n  training.batch_size=8'
+        },
+        warning: 'NaN 出现后，之前的进度作废（权重被污染），必须降学习率重训，不能续训。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: 'loss 跑着跑着变成 NaN。',
+        cause: '学习率过大导致梯度爆炸（也可能数据有极端值）。',
+        fix: '学习率 ÷10（如 1e-4 → 1e-5）+ 开 `grad_clip_norm`。重新开始训练，NaN 不可逆。'
+      },
+      {
+        symptom: '`CUDA out of memory`，训练起不来。',
+        cause: 'batch_size 相对显存太大。',
+        fix: '先 `training.batch_size=4`；还不行开 `grad_accumulation_steps=4`；再不行 `amp=true` 混合精度。90% 第一步解决。'
+      },
+      {
+        symptom: '「ACT 比 BC 强是因为用了 Transformer 吧？」',
+        cause: '把 backbone 当成了创新点。',
+        fix: 'Transformer 只是骨架。真正让 ACT 强的是 **Action Chunking**（一次出一段动作治复合误差）+ **CVAE**（处理多模态）。论文消融显示去掉 Chunking 性能掉 50%+。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '算一个 epoch 多少步',
+        instructions: '50 条演示、每条 ~150 帧 = 7500 样本，batch_size=8。一个 epoch（过完整份数据一遍）大约多少 step？训练 20 万步约等于多少个 epoch？',
+        hint: '一个 epoch step = 总样本 ÷ batch_size。',
+        expectedResult: '7500 ÷ 8 ≈ **938 step / epoch**；20 万步 ÷ 938 ≈ **213 个 epoch**。每个样本被模型看 213 遍 —— 这就是"50 条也够"的原因：单条被高度复用。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'ACT 由哪几部分组成？哪部分最关键？',
+        answer: 'Transformer Encoder + CVAE + Transformer Decoder。最关键是 Decoder 的 **Action Chunking**（一次预测 100 步动作，治复合误差），CVAE 次之（处理多模态）。Transformer 只是骨架。'
+      },
+      {
+        question: 'loss 变 NaN 怎么办？',
+        answer: '学习率降一个量级 + 开梯度裁剪，然后重新训练。NaN 是梯度爆炸的结果且不可逆，等不到自己恢复。'
+      },
+      {
+        question: '为什么 50 条数据够训 20 万步？',
+        answer: '因为每个样本会被反复使用。7500 样本 / batch 8 ≈ 938 步一个 epoch，20 万步 ≈ 213 个 epoch，每个样本被学 200+ 遍，对模仿学习足够。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'ACT 原论文 (Zhao et al. 2023)',
+        url: 'https://arxiv.org/abs/2304.13705',
+        note: '想理解 Action Chunking / CVAE 的数学和消融实验，读这篇。'
+      },
+      {
+        title: 'Weights & Biases (wandb)',
+        url: 'https://wandb.ai/',
+        note: '训练监控标配，加 `wandb.enable=true` 即可实时看 loss 曲线、对比实验。'
+      }
+    ],
+
+    summary: `**ACT = Transformer Encoder + CVAE + Decoder（一次出 100 步）**。让它强的是 Action Chunking + CVAE，不是 Transformer 本身。
+
+\`policy=act env=so100 dataset_repo_id=...\` 启动；健康 loss 前 1k 快降、后期收敛；NaN → 学习率÷10 + 梯度裁剪重训；OOM → 调小 batch_size；用 wandb 监控。
+
+下一章把训练好的模型部署到真实机械臂上。`
   },
   {
     id: 8,
@@ -1184,7 +1312,136 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         cause: '控制频率不稳定或模型输出噪声大',
         solution: '检查 fps 设置，考虑添加平滑滤波'
       }
-    ]
+    ],
+
+    introduction: `训练完成，硬盘上躺着一个几百 MB 的 checkpoint。现在让它**真的指挥机械臂动起来**。
+
+要有心理准备：**第一次推理成功率往往只有 10-30%**，这很正常，不是你做错了。训练 loss 低 ≠ 实测高 —— 训练数据有限、真实环境有扰动、而且第 1 章的复合误差虽被 ACT 大幅缓解但没完全消除。
+
+这一章教你加载 checkpoint 上岗、把 fps 锁稳、用 EMA 平滑治抖动，把成功率一步步调上去。`,
+
+    whyItMatters: `推理是"从能训练"到"真能用"的最后一公里，也是最考验调参直觉的地方：
+
+- 不知道首次成功率本就低 → 一看效果差就以为前面全白做，放弃
+- fps 不稳 → 抖动的头号元凶，不锁就调不动
+- 不会 EMA → 机械臂动作毛躁，看着就不靠谱
+- 不理解复合误差会重现 → 看到"前几秒顺、后面歪"不知道为什么
+
+掌握这一章，你能把一个"勉强能动"的模型调成"稳定可用"。`,
+
+    keyTerms: ['EMA 平滑', '复合误差', 'Action Chunking', 'fps'],
+
+    diagrams: [
+      {
+        title: '推理时的实时循环',
+        source: `flowchart LR
+    Cam["📷 相机 + 状态"] --> Pre["预处理/归一化"]
+    Pre --> Policy["🧠 ACT 策略"]
+    Policy --> Chunk["📦 100 步动作"]
+    Chunk --> Smooth["✨ EMA 平滑"]
+    Smooth --> Motor["🦾 Follower 执行"]
+    Motor -.->|"30 fps 回到下一帧"| Cam
+    style Policy fill:#22c55e,stroke:#22c55e,color:#fff
+    style Smooth fill:#f59e0b,stroke:#f59e0b,color:#fff`,
+        caption: '相机+状态 → 策略出 100 步 → EMA 平滑 → 电机执行 → 下一帧。EMA 是抖动的"最后一道保险"。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '加载 checkpoint 上岗',
+        body: `推理还是用 control_robot.py，但加 \`--policy-path\` 指向训练输出里的 \`checkpoints/last/pretrained_model\`。按 Enter 后 Follower 会**自己开始动**，Leader 退休（不再需要人操作）。`,
+        command: {
+          description: '运行推理',
+          code: 'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --policy-path outputs/train/act_so100/checkpoints/last/pretrained_model \\\n  --num-episodes 5'
+        },
+        expectedOutput: '[INFO] Loading policy from checkpoints/last/...\n[INFO] Robot ready. Press Enter to start inference episode 1/5.',
+        tip: '想用某个中间检查点就把 last 换成 step_50000 之类。'
+      },
+      {
+        title: '把 fps 锁死在训练时的值',
+        body: `不稳定的 fps 是抖动的系统性元凶。把推理 fps 锁成和**训练数据一致**（通常 30）——模型"感觉"到的节奏要和它学的时候一样，差太多会懵。
+
+GPU 不够强、每帧推理 > 33ms 时实际跑不到 30 fps，会丢帧依旧抖，这时要么换卡、要么训练时也用更低 fps。`,
+        command: {
+          description: '锁定推理帧率',
+          code: 'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --policy-path outputs/.../pretrained_model \\\n  --fps 30 --num-episodes 5'
+        },
+        warning: '推理 fps 和训练 fps 不一致是新手"模型在仿真好好的、实机就乱"的常见隐藏原因。'
+      },
+      {
+        title: '加 EMA 平滑治抖动',
+        body: `EMA（指数移动平均）把当前动作和上一刻动作按权重融合，抑制高频抖动，一行代码：
+
+\`smoothed = α × current + (1-α) × previous\`，α 一般取 0.3（新动作占 30%）。机械臂会明显变顺，代价是响应略慢（对多数任务可接受）。`,
+        command: {
+          description: '推理循环里的 EMA',
+          code: 'prev = None\nalpha = 0.3\nfor obs in robot_loop():\n    action = policy(obs)\n    if prev is not None:\n        action = alpha * action + (1 - alpha) * prev\n    robot.send_action(action)\n    prev = action'
+        },
+        tip: 'α 是旋钮：0.3 强平滑（推荐起点），0.1 极强（响应慢），0.5 中等。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '第一次推理成功率很低，是不是前面白做了？',
+        cause: '误以为训练 loss 低就该实测高。',
+        fix: '首次 10-30% 很正常。先锁 fps、加 EMA、必要时补数据，一步步调。sim2real gap 永远存在，调参是常态。'
+      },
+      {
+        symptom: '机械臂前几秒动作顺，越往后越歪。',
+        cause: '复合误差 —— ACT 缓解了它但没根除，段与段之间仍会累积。',
+        fix: '这是预期现象。用更稳的 fps + EMA + Temporal Ensembling 进一步压制；长任务尤其明显，必要时增加训练数据覆盖更多中后段状态。'
+      },
+      {
+        symptom: '加了 EMA 还是抖。',
+        cause: '抖动来源不止一处（fps、噪声、USB、数据）。',
+        fix: '按顺序排：① fps 锁稳（最关键）② α 调小（0.3→0.2→0.1）③ Temporal Ensembling ④ 查 USB 接线 ⑤ 补训练数据。90% 到第 3 步解决。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '理解 EMA 的 α',
+        instructions: '上一刻动作是 10，模型这一刻输出 20，α=0.3。EMA 平滑后实际发给电机的动作是多少？α 调到 0.1 又是多少？说说哪个更"跟手"。',
+        hint: 'smoothed = α×current + (1-α)×prev。',
+        expectedResult: 'α=0.3：0.3×20 + 0.7×10 = **13**。α=0.1：0.1×20 + 0.9×10 = **11**。α 越大越跟手（更接近新动作 20）、但平滑越弱；α 越小越平滑、但响应越慢。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '第一次推理成功率只有 20%，正常吗？',
+        answer: '正常。训练 loss 低不代表实测高，存在 sim2real gap + 复合误差 + 环境扰动。先锁 fps、加 EMA，再逐步调，别因为首次差就放弃。'
+      },
+      {
+        question: '为什么推理 fps 要和训练 fps 一致？',
+        answer: '模型是按训练时的时间节奏学的，推理节奏差太多会让它"感觉不对"，输出退化。一致才能复现训练时的行为。'
+      },
+      {
+        question: 'EMA 平滑的代价是什么？',
+        answer: '响应变慢 —— 因为当前动作被旧动作"拽住"。对快速任务可能影响精度，但对多数操作任务，换来的顺滑度值得。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'ACT 原论文：Temporal Ensembling 一节',
+        url: 'https://arxiv.org/abs/2304.13705',
+        note: 'EMA 之上更强的平滑方案，把多个 chunk 的预测加权平均。'
+      },
+      {
+        title: 'ALOHA 项目主页',
+        url: 'https://tonyzhaozh.github.io/aloha/',
+        note: '看 ACT 在真实双臂上推理的视频，建立"调好之后能做到什么"的预期。'
+      }
+    ],
+
+    summary: `\`--policy-path\` 加载 checkpoint 上岗。**首次成功率 10-30% 是正常的**，别灰心。
+
+抖动调优顺序：锁 \`--fps 30\`（和训练一致）→ EMA 平滑（α=0.3 一行代码）→ Temporal Ensembling → 查接线 → 补数据。复合误差会让长任务后段变歪，是预期现象。
+
+最后一章教你系统化应对一切意外。`
   },
   {
     id: 9,
@@ -1219,7 +1476,137 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
       '建立个人错误知识库',
       '理解调试的系统方法'
     ],
-    errors: []
+    errors: [],
+
+    introduction: `你一定会遇到报错 —— 所有人都会。区别只在于：有人卡半天最后放弃，有人 5 分钟定位解决。差距不在天赋，在**有没有一套系统的排错方法**。这恰恰是工程师真正值钱的能力。
+
+这一章不教某个具体报错的解法（那些在「报错诊断」库里），而是教你一套**通用 4 步法**：读最后一行 → 判断类型 → 查站内库 → Google 精确报错。90% 的问题在第 3 步就解决了。
+
+还会教你一件很多人不会的事：**怎么把问题问清楚**，让 AI 助手或社区能真正帮到你。`,
+
+    whyItMatters: `这是整个课程里"可迁移性"最强的一章 —— 学会的不只是修 LeRobot 的报错，而是修**任何**技术报错：
+
+- 会读 traceback → 不再被一长串红字吓到
+- 会判断错误类型 → 直奔正确的解决方向，不乱试
+- 会问问题 → 求助一次就能得到有效回答，而不是"帮帮我"换来"贴下完整报错"
+- 有了这套方法 → 你能独立走完前 8 章，不依赖别人手把手`,
+
+    keyTerms: ['复合误差', 'CUDA / AMP', 'LeRobot'],
+
+    diagrams: [
+      {
+        title: '排错决策树',
+        source: `flowchart TD
+    Err["💥 报错"] --> Read["1. 读最后一行"]
+    Read --> Type{"2. 判断类型"}
+    Type -->|"环境/安装"| KB["3. 查站内诊断库"]
+    Type -->|"硬件/串口"| KB
+    Type -->|"数据/文件"| KB
+    Type -->|"训练/推理"| KB
+    KB --> Found{"找到了吗"}
+    Found -->|"是"| Fix["✅ 修复"]
+    Found -->|"否"| Google["4. Google 精确报错"]
+    Google --> Fix
+    style Err fill:#dc2626,color:#fff
+    style Fix fill:#16a34a,color:#fff`,
+        caption: '通用 4 步法。每个分支对应一类典型错误，绝大多数到第 3 步（站内库）就解决。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '第 1 步：读最后一行（不是第一行）',
+        body: `Python traceback 往往有几十行。**最后一行**才是错误类型 + 直接原因的总结 —— 先看它。
+
+第二关键的是离最后一行最近的、**写着你自己代码路径**的那一行，那是你能直接改的地方。前面大段是库内部调用，初看可忽略。`,
+        tip: '别被红字长度吓到，90% 的信息量在最后一行那一句话里。'
+      },
+      {
+        title: '第 2 步：判断类型，第 3 步：查站内库',
+        body: `把错误归类：环境/安装、硬件/串口、数据/文件、训练、推理。类型决定了往哪个方向查。
+
+然后去本站「报错诊断」搜关键字 —— 已收录的十几条覆盖了 80% 的常见错（Permission denied、CUDA OOM、meta/info.json、NaN loss 等）。`,
+        tip: '搜索时用报错里的英文关键字（如 "CUDA out of memory"），比用中文描述命中率高得多。'
+      },
+      {
+        title: '完整保存错误，方便排查和求助',
+        body: `出错时先把完整输出存下来，免得滚屏看不到。\`2>&1\` 把错误流并入正常输出，\`| tee\` 同时显示在屏幕并写文件。
+
+求助别人时附上这个 error.log，比截图清楚 10 倍 —— 别人能直接复制关键字去搜。`,
+        command: {
+          description: '保存完整错误到文件',
+          code: 'python lerobot/scripts/train.py policy=act ... 2>&1 | tee error.log'
+        },
+        expectedOutput: '(输出同时显示在屏幕 + 写入 error.log)'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '看到长 traceback 就懵，从第一行开始读。',
+        cause: '不知道 traceback 的结构。',
+        fix: '先读**最后一行**（错误总结），再看离它最近的"你的代码"那一行。前面的库内部调用栈通常不用细看。'
+      },
+      {
+        symptom: '去社区/AI 助手问"我训练报错了帮帮我"，没人能答。',
+        cause: '信息量为零，别人无法复现或定位。',
+        fix: '好的提问 = 完整错误栈 + 你跑的命令 + 关键配置（info.json/yaml）+ 已经尝试过什么。信息越全，回答越准。'
+      },
+      {
+        symptom: '把报错用自己的话描述一遍发出去。',
+        cause: '复述会丢掉关键的报错关键字。',
+        fix: '直接贴**原始报错文本**（别截图、别复述），关键字一字不差才能被搜到/被识别。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '给三类报错配原因',
+        instructions: `把下面三个报错和最可能的原因连起来：\n\n报错：A) ImportError  B) CUDA out of memory  C) FileNotFoundError\n原因：① 显存不够，batch 太大  ② 路径错/数据集没录完整  ③ 缺包或环境没激活`,
+        hint: '回忆前几章每个报错出现的场景。',
+        expectedResult: 'A→③（缺包/没激活环境）、B→①（显存不够，调小 batch）、C→②（路径错或 meta 缺失）。这三类几乎覆盖你会遇到的大多数报错。'
+      },
+      {
+        title: '写一条合格的求助',
+        instructions: '假设你训练时报 NaN loss。按本章的"好提问模板"，列出你该附上哪 4 样信息。',
+        hint: '让对方不用追问就能开始帮你。',
+        expectedResult: '① 完整错误栈/loss 变 NaN 的日志片段 ② 你跑的完整命令（含超参）③ 数据集关键信息（info.json 摘要）④ 已尝试的方案及结果（如"已把 lr 从 1e-4 降到 1e-5 仍 NaN"）。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'traceback 几十行，先看哪行？',
+        answer: '最后一行 —— 它是错误类型 + 直接原因的总结。其次看离它最近的、属于你自己代码的那一行。'
+      },
+      {
+        question: '通用 4 步排错法是什么？',
+        answer: '① 读最后一行 ② 判断错误类型（环境/硬件/数据/训练/推理）③ 查站内「报错诊断」库 ④ 用引号 Google 精确报错。90% 在第 3 步解决。'
+      },
+      {
+        question: '怎么问问题才有效？',
+        answer: '附完整错误栈（贴原文不截图）+ 运行命令 + 关键配置 + 已尝试方案。信息量决定回答质量；"帮帮我"三个字得不到帮助。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: '本站 · 报错诊断库',
+        url: '/diagnose',
+        note: '十几条 LeRobot/ACT 常见报错的原因+解法+下一步，排错第 3 步的主战场。'
+      },
+      {
+        title: '本站 · AI 助手',
+        url: '/assistant',
+        note: '索引了全站章节+错误库+术语，比英文 Discord 更懂你的上下文，求助首选。'
+      }
+    ],
+
+    summary: `报错不可怕，缺的是方法。**通用 4 步法**：读最后一行 → 判断类型 → 查站内[报错诊断](/diagnose) → Google 精确报错。
+
+traceback 看最后一行；三大错误类型 ImportError / CUDA OOM / FileNotFoundError 各有套路；求助要附"错误栈+命令+配置+已尝试"，别只发截图。
+
+恭喜 —— 走到这里，你已经掌握了 SO101 模仿学习从概念到调试的完整主线。去真机上跑一遍，或来[社区](/community)和大家交流吧。`
   }
 ]
 

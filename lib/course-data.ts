@@ -276,7 +276,144 @@ SO101 上的状态是 6 维关节角度，动作是 6 维目标角度，再加�
         solution: '将用户添加到 dialout 组',
         command: 'sudo usermod -a -G dialout $USER'
       }
-    ]
+    ],
+
+    introduction: `你订的机械臂到了，拆开箱子 —— 里面是**两条**一模一样的机械臂，不是一条。
+
+一开始很多人会愣住：为什么是两条？哪条是哪条？
+
+答案是 SO101 的核心设计：**一条给你手动操作（Leader / 主臂），另一条实时复制你的动作（Follower / 从臂）**。你拿着 Leader 演示「怎么拿杯子」，电脑一边让 Follower 跟着动给你看效果，一边把 Leader 每一刻的关节角度记录下来 —— 这些记录就是第 1 章说的 (s, a) 演示数据。
+
+这一章我们把硬件彻底搞清楚：6 个关节是什么、两条臂怎么连电脑、怎么在系统里认出它们、以及第一个一定会撞上的权限报错怎么修。`,
+
+    whyItMatters: `**搞不清硬件，后面每一步都会卡。**
+
+- 不知道哪条是 Leader、哪条是 Follower → 第 4 章配置端口时一头雾水
+- 不理解"角色由接线决定" → 重启后串口顺序变了就慌
+- 不会修 \`Permission denied\` → 80% 的人第一次连机械臂就卡在这
+
+这一章是纯硬件认知，**没有机械臂也能读懂**，等硬件到手能直接上手。`,
+
+    keyTerms: ['Leader / Follower', '遥操作', 'SO101 / SO-ARM100', '校准'],
+
+    diagrams: [
+      {
+        title: 'Leader → 电脑 → Follower 的数据链路',
+        source: `flowchart LR
+    H["👋 你的手"] -->|"扳动关节"| L["🦾 Leader 主臂"]
+    L -->|"USB 读关节角"| PC["💻 电脑"]
+    PC -->|"USB 发指令"| F["🦾 Follower 从臂"]
+    PC -->|"同步录入"| D["📦 数据集 (s, a)"]
+    style L fill:#7c5cff,stroke:#7c5cff,color:#fff
+    style F fill:#0ea5e9,stroke:#0ea5e9,color:#fff
+    style PC fill:#22c55e,stroke:#22c55e,color:#fff`,
+        caption: '你扳 Leader → 电脑读它的关节角 → 同时让 Follower 复现 + 把角度写进数据集。30 fps 不停转。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '认识 6 个自由度',
+        body: `SO101 一条臂有 **6 个关节**，每个关节一个电机，可独立转动：底座旋转、肩、肘、腕部两个自由度、爪子开合。
+
+6 个自由度是工业机械臂的标配 —— 足以让末端（爪子）到达三维空间的**任意位置**（x/y/z）加**任意姿态**（俯仰/偏航/翻滚）。
+
+这也解释了为什么第 1 章说状态 s 是 6 维：一个关节贡献一维角度读数。`,
+        tip: '两条臂硬件完全相同，所以合起来的状态/动作维度是 6 + 6 = 12 维。'
+      },
+      {
+        title: '把两条臂接上电脑，认出串口',
+        body: `机械臂通过 USB 转串口连接电脑。在 Linux / macOS 上，每条臂会变成一个设备文件，名字形如 \`/dev/ttyUSB0\`。
+
+最稳的分辨方法是「拔一根看哪个消失」：先看一次列表，拔掉 Leader 的 USB，再看一次，少掉的那个就是 Leader。`,
+        command: {
+          description: '列出所有串口设备',
+          code: 'ls /dev/tty*'
+        },
+        expectedOutput: '/dev/tty   /dev/ttyS0   /dev/ttyUSB0   /dev/ttyUSB1',
+        tip: '`ttyUSB0` / `ttyUSB1` 就是你的两条机械臂；`ttyS0`、`tty` 是系统自带的，忽略。'
+      },
+      {
+        title: '理解"角色由配置决定，不是出厂决定"',
+        body: `两条臂出厂时完全一样，没有贴"我是 Leader"的标签。**哪条是 Leader、哪条是 Follower，是你在配置文件里写哪个端口对应哪个角色决定的**（第 4 章会做）。
+
+所以你只要记住：插上之后认出哪个 ttyUSB 是哪条臂，剩下的在软件里指定即可。`,
+        warning: '重启电脑或重新插拔后，ttyUSB0 / ttyUSB1 的编号可能对调 —— 这是 Linux 串口的老问题。每次开机最好用"拔一根"法快速确认一下，或用 udev 规则固定（高级话题）。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '「两条臂长得一样，我是不是买错了/多发了一条？」',
+        cause: '不知道 SO101 本来就是双臂主从设计。',
+        fix: '没买错。两条是配套协同的：Leader 给人操作，Follower 复现。这正是采集演示数据的方式。'
+      },
+      {
+        symptom: '一连机械臂就报 `Permission denied: /dev/ttyUSB0`。',
+        cause: '你的账号不在能访问串口的用户组（Ubuntu 的 dialout / Arch 的 uucp）里。',
+        fix: '`sudo usermod -a -G dialout $USER`，然后**注销重新登录**（或重启）。这是几乎人人都会撞一次的坑。'
+      },
+      {
+        symptom: '`ls /dev/tty*` 根本看不到 ttyUSB。',
+        cause: 'USB 线是充电线没有数据、或缺 CH340 串口驱动。',
+        fix: '换一条**带数据**的 USB 线；`dmesg | tail` 看插入时有没有识别信息；必要时装 CH340 驱动。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '分辨 Leader 和 Follower',
+        instructions: `两条 USB 都插上后：
+
+1. 跑 \`ls /dev/tty*\` 记下出现了哪几个 ttyUSB
+2. 拔掉其中一条（你打算当 Leader 的那条）的 USB
+3. 再跑一次 \`ls /dev/tty*\`
+
+哪个 ttyUSB 消失了，说明它是哪条臂？`,
+        hint: '消失的那个 = 你刚拔的那条。',
+        expectedResult: '消失的 ttyUSB 编号就对应你拔掉的那条臂。把它记下来 —— 第 4 章配置 yaml 时，leader_arms 的 port 就填这个。'
+      },
+      {
+        title: '算一算数据维度',
+        instructions: '两条 SO101 臂协同工作，每条 6 个关节。一帧"状态 + 动作"合起来总共多少维？',
+        hint: '(状态维度 + 动作维度)，注意只有 Leader 产生 action，Follower/状态都是 6 维。',
+        expectedResult: '常见配置下：observation.state = 6 维（Follower 当前角度），action = 6 维（目标角度），合计 **12 维**。如果两条臂都记录状态则更多 —— 看具体任务配置。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '怎么判断面前两条一模一样的臂哪条是 Leader？',
+        answer: '硬件上分辨不了 —— 它们出厂相同。靠**软件配置**：你把哪条接到哪个 USB、并在 yaml 里把那个端口写成 leader，它就是 Leader。物理上可用"拔一根看哪个 ttyUSB 消失"来认端口。'
+      },
+      {
+        question: '`Permission denied: /dev/ttyUSB0` 是硬件坏了吗？',
+        answer: '不是。是权限问题 —— 你的账号没在 dialout 组。`sudo usermod -a -G dialout $USER` 后重新登录即可，机械臂本身没问题。'
+      },
+      {
+        question: '为什么状态向量是 6 维？',
+        answer: '因为一条 SO101 臂有 6 个关节，每个关节一个角度读数，6 个关节 = 6 维。6 自由度足以让末端到达三维空间任意位置 + 任意姿态。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'SO-ARM100 硬件项目（GitHub）',
+        url: 'https://github.com/TheRobotStudio/SO-ARM100',
+        note: 'BOM、3D 打印件、装配指南。想自己拼一台或了解机械结构看这里。'
+      },
+      {
+        title: 'Linux 串口权限与 dialout 组说明',
+        url: 'https://wiki.archlinux.org/title/Working_with_the_serial_console',
+        note: '理解 ttyUSB 权限模型，遇到串口报错时有用。'
+      }
+    ],
+
+    summary: `**SO101 是两条一样的臂**：Leader 你手动操作，Follower 实时复现，电脑同步记录 Leader 的关节角作为演示数据。
+
+角色不是出厂定的，是你**接线 + 配置**决定的。机械臂在系统里是 \`/dev/ttyUSB*\` 文件；第一次连大概率撞 \`Permission denied\`，加进 dialout 组 + 重新登录即可。
+
+下一章我们装软件环境（不需要硬件），把 LeRobot 跑起来。`
   },
   {
     id: 3,
@@ -327,7 +464,148 @@ SO101 上的状态是 6 维关节角度，动作是 6 维目标角度，再加�
         solution: '确认已激活正确的 conda 环境并重新安装',
         command: 'conda activate lerobot && pip install -e .'
       }
-    ]
+    ],
+
+    introduction: `这一章**完全不需要机械臂** —— 但它劝退了大约 80% 的初学者。原因几乎都不是 LeRobot 本身难装，而是**环境没隔离干净**：有人直接拿系统 Python 一把梭 \`pip install\`，几天后系统启动器都被搞坏。
+
+我们用 **conda** 建一个完全独立的环境。它不只隔离 Python 包，还隔离 **Python 版本本身** —— 你的系统装什么版本都不管，conda 单独给 LeRobot 一个干净的 3.10。崩了？删掉环境重建，系统毫发无伤。
+
+这一章把"建环境 → 装 LeRobot → 验证 PyTorch/CUDA"一步步走通，并提前认识那个你迟早会遇到的 \`CUDA out of memory\`。`,
+
+    whyItMatters: `环境是地基，地基歪了后面全塌：
+
+- 用系统 Python 装依赖 → 迟早污染系统，难以收拾
+- 不验证 PyTorch/CUDA → 训练时才发现 GPU 没接上，白等几小时
+- 不懂 OOM 应急 → 一遇到显存报错就以为是显卡不够，其实改个参数就行
+
+把这一章走干净，后面的数据采集、训练、推理都建立在一个可复现、可删除重建的环境上。`,
+
+    keyTerms: ['LeRobot', 'CUDA / AMP', 'HuggingFace Hub'],
+
+    diagrams: [
+      {
+        title: '为什么用 conda 隔离',
+        source: `flowchart TB
+    OS["💻 操作系统"] --> Sys["🐍 系统 Python (别碰)"]
+    OS --> Conda["📦 conda 管理器"]
+    Conda --> E1["🟢 env: lerobot (Python 3.10)"]
+    Conda --> E2["🟡 env: 其他项目"]
+    style Sys fill:#7f1d1d,stroke:#7f1d1d,color:#fff
+    style E1 fill:#15803d,stroke:#15803d,color:#fff`,
+        caption: '系统 Python（红）留给操作系统。conda 给每个项目独立环境（绿），想装啥装啥，崩了删了重建。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '创建 LeRobot 专属环境',
+        body: `用 conda 建一个名为 \`lerobot\`、Python 版本锁定 3.10 的独立环境。\`-y\` 表示"别问了直接装"。
+
+如果你还没装 conda，先去装 **Miniconda**（不要 Anaconda，太重）。`,
+        command: {
+          description: '创建并准备环境',
+          code: 'conda create -n lerobot python=3.10 -y'
+        },
+        expectedOutput: '...\nPreparing transaction: done\nVerifying transaction: done\nExecuting transaction: done\n#\n# To activate this environment, use\n#     $ conda activate lerobot',
+        tip: '看到 "To activate ... conda activate lerobot" 就成功了。'
+      },
+      {
+        title: '激活环境并安装 LeRobot',
+        body: `先激活环境（命令行提示符会多出 \`(lerobot)\` 前缀），再从 GitHub 克隆并以可编辑模式安装。
+
+**每开一个新终端都要先 \`conda activate lerobot\`** —— 忘了激活是 ModuleNotFoundError 的头号原因。`,
+        command: {
+          description: '激活 + 克隆 + 安装',
+          code: 'conda activate lerobot\ngit clone https://github.com/huggingface/lerobot.git\ncd lerobot && pip install -e .'
+        },
+        expectedOutput: '(lerobot) $\n... (下载编译约 3-5 分钟) ...\nSuccessfully installed lerobot torch numpy ...',
+        warning: '提示符没有 `(lerobot)` 前缀就说明环境没激活，这时 pip 装的东西全进了错误的地方。'
+      },
+      {
+        title: '验证 PyTorch 能用 + 能否看到 GPU',
+        body: `装完不等于能用。跑一行代码同时验证两件事：PyTorch 装好了、以及 GPU 能否被检测到。
+
+输出 \`True\` = GPU 可用；输出 \`False\` = PyTorch 装对了但没找到 GPU（你没显卡，或驱动没装）。`,
+        command: {
+          description: '验证脚本',
+          code: 'python -c "import torch; print(torch.cuda.is_available())"'
+        },
+        expectedOutput: 'True',
+        tip: '输出 False 也别慌 —— 见下方"常见误区"，没 GPU 一样能学前 6 章。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '验证输出了 `False`，是不是装错了要重装？',
+        cause: '`False` 只代表"没找到可用 GPU"，不代表 PyTorch 装错。',
+        fix: '没 GPU 也能跑，LeRobot 自动 fallback 到 CPU，只是训练慢 10-30 倍。前 6 章（采集、数据、推理体验）CPU 完全够，第 7 章训练才想要 GPU。删了重装也是同样结果，别折腾。'
+      },
+      {
+        symptom: '`ModuleNotFoundError: No module named lerobot`',
+        cause: '当前终端没激活 lerobot 环境，或安装没成功。',
+        fix: '先 `conda activate lerobot` 确认提示符有 `(lerobot)`，再 `pip install -e .`。`pip list` 可检查是否装上。'
+      },
+      {
+        symptom: '直接用系统 Python `pip install` 了，现在系统有点怪。',
+        cause: '污染了系统 Python 环境。',
+        fix: '以后所有项目都用 conda/venv 隔离，永远别动系统 Python。已经污染的话，conda 新环境是干净起点，系统层面的问题按发行版文档修复。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '确认你在正确的环境里',
+        instructions: '打开一个新终端，先不要激活任何环境，直接跑 `python -c "import lerobot"`。会发生什么？然后 `conda activate lerobot` 再跑一次。对比两次结果。',
+        hint: '没激活时 import 会失败，激活后成功。',
+        expectedResult: '没激活 → `ModuleNotFoundError`（因为系统 Python 没装 lerobot）。激活后 → 无报错。这就是"每个新终端都要先 activate"的直接证据。'
+      },
+      {
+        title: '预演 OOM 应急',
+        instructions: '假设第 7 章训练时报 `CUDA out of memory`。不查文档，凭这一章的内容，你第一个该调的参数是什么？',
+        hint: '显存不够 ≈ 一次塞进 GPU 的样本太多。',
+        expectedResult: '把 `batch_size` 改小（如 `training.batch_size=4`）。还不行再开梯度累积 + 混合精度。90% 的 OOM 第一步就解决。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '为什么不直接用系统自带的 Python？',
+        answer: '系统 Python 是给操作系统自己用的，乱装包会污染它，可能搞坏系统工具。conda 建独立环境，隔离包 + Python 版本，崩了删掉重建不影响系统。'
+      },
+      {
+        question: '`torch.cuda.is_available()` 返回 False 还能继续学吗？',
+        answer: '能。LeRobot 自动用 CPU，只是慢。前 6 章不需要 GPU，第 7 章训练 ACT 才明显受益于 GPU。'
+      },
+      {
+        question: '`CUDA out of memory` 最先该试什么？',
+        answer: '调小 `batch_size`。这是 90% OOM 的根因 —— 一次计算的样本太多塞不下显存。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'Miniconda 安装文档',
+        url: 'https://docs.conda.io/en/latest/miniconda.html',
+        note: '装 conda 的官方入口，选 Miniconda 不要 Anaconda。'
+      },
+      {
+        title: 'LeRobot 官方仓库 README',
+        url: 'https://github.com/huggingface/lerobot',
+        note: '最权威的安装说明，本章和它保持一致。'
+      },
+      {
+        title: 'PyTorch Mixed Precision (AMP) 指南',
+        url: 'https://pytorch.org/docs/stable/amp.html',
+        note: '显存吃紧时的官方解法，第 7 章会用到。'
+      }
+    ],
+
+    summary: `**用 conda 建独立环境**，别碰系统 Python。\`conda create -n lerobot python=3.10\` → \`conda activate lerobot\` → 克隆 + \`pip install -e .\` → \`torch.cuda.is_available()\` 验证。
+
+记住两条铁律：每个新终端先 \`activate\`；\`CUDA out of memory\` 先调小 \`batch_size\`。
+
+下一章让电脑真正认出机械臂的两条串口，并做关键的校准。`
   },
   {
     id: 4,
@@ -368,7 +646,131 @@ SO101 上的状态是 6 维关节角度，动作是 6 维目标角度，再加�
         solution: '在 robot 配置中添加 port 字段',
         command: 'vim lerobot/configs/robot/so100.yaml'
       }
-    ]
+    ],
+
+    introduction: `两条 USB 都接上了，\`ls /dev/tty*\` 也能看到 ttyUSB0 和 ttyUSB1。但你还差两步才能开始采数据：
+
+1. **告诉 LeRobot 哪个端口是 Leader、哪个是 Follower** —— 写进配置文件
+2. **校准** —— 让电脑知道每个电机的"真零点"
+
+校准是这一章的重点，也是最容易被忽略、忽略了又必然出问题的一步。机械臂出厂时每个电机的零点都有装配公差：你说"去 30 度"，它实际可能去了 31 度或 28 度。不校准的话，Follower 跟随会偏、录的数据会失真、训练出来的模型必崩。
+
+这一步**跳不过去**，但好在脚本会一步步引导，3 分钟搞定。`,
+
+    whyItMatters: `校准是数据质量的第一道闸门：
+
+- 没校准 → Leader 读 30 度但 Follower 实际 33 度 → 你以为录的是 A 动作，存进数据集的是 B → 模型学到的是错的
+- 端口配错 → 脚本直接报 \`Missing required field(s) port\` 或连不上
+- 校准是"垃圾进垃圾出"里最前端的环节：**这里偏一点，后面训练再用力也白搭**`,
+
+    keyTerms: ['校准', 'Leader / Follower', '串口'],
+
+    diagrams: [
+      {
+        title: '校准前 vs 校准后',
+        source: `flowchart LR
+    subgraph Before ["未校准"]
+        B1["Leader 读 30度"] -.->|"偏差 3度"| B2["Follower 实际 33度"]
+    end
+    subgraph After ["校准后"]
+        A1["Leader 读 30度"] -->|"一致"| A2["Follower 实际 30度"]
+    end
+    style Before fill:#fef2f2,stroke:#dc2626
+    style After fill:#f0fdf4,stroke:#16a34a`,
+        caption: '校准让 Leader 读数与 Follower 实际姿态对齐。未校准时 1-5 度的偏差会污染整份数据集。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '认出哪个端口是哪条臂',
+        body: `最稳的土办法：\`ls /dev/tty*\` 看一次 → 拔掉 Leader 的 USB → 再看一次，少掉的那个就是 Leader。
+
+LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询问"你是几号电机"来告诉你对应关系，不用拔线。`,
+        command: {
+          description: '查看串口（拔线前后各一次对比）',
+          code: 'ls /dev/tty*'
+        },
+        expectedOutput: '第一次:  ttyUSB0  ttyUSB1\n第二次:  ttyUSB0            ← 少了 ttyUSB1，它就是刚拔的 Leader'
+      },
+      {
+        title: '把端口写进配置文件',
+        body: `知道哪个 ttyUSB 是哪个角色后，编辑 \`lerobot/configs/robot/so100.yaml\`，把端口填进 leader_arms / follower_arms。
+
+\`main\` 只是个名字，可以叫任何东西；\`port\` 填上一步认出的实际设备路径。改完保存，之后所有命令都会读这份配置。`,
+        command: {
+          description: 'so100.yaml 里的端口配置',
+          code: 'leader_arms:\n  main:\n    port: /dev/ttyUSB1\nfollower_arms:\n  main:\n    port: /dev/ttyUSB0'
+        },
+        warning: '重启后 ttyUSB 编号可能对调，届时要回来改这里 —— 这是 `Missing required field(s) port` 之外最常见的"昨天还好好的今天连不上"。'
+      },
+      {
+        title: '运行校准',
+        body: `跑校准脚本，它会一步步引导你把机械臂**手动摆到指定姿态**（如完全伸展、回零位），每摆一个按一次 Enter。整个过程 1-2 分钟，数据自动保存到 \`~/.cache/.../calibration.json\`。`,
+        command: {
+          description: '启动校准',
+          code: 'python lerobot/scripts/control_robot.py calibrate \\\n  --robot-path lerobot/configs/robot/so100.yaml'
+        },
+        expectedOutput: 'Calibrating leader_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration ... Done!',
+        warning: '手动摆姿态时**轻柔扳动**。SO101 电机不带阻尼，硬扳可能损坏齿轮。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '校准做完了，但 Follower 跟随还是偏。',
+        cause: '摆姿态时不够准 —— "完全伸展"其实只伸了 80%，导致参考点偏。',
+        fix: '重跑校准，严格按提示/图示摆到位，可拿尺子比对。校准数据会覆盖旧的，重做安全。'
+      },
+      {
+        symptom: '`Missing required field(s) port`',
+        cause: 'yaml 里没写 port，或缩进错了导致没被解析。',
+        fix: '在 leader_arms / follower_arms 下补上正确缩进的 `port:` 字段。YAML 对缩进敏感，用空格不要用 Tab。'
+      },
+      {
+        symptom: '「校准一次就一劳永逸了吧？」',
+        cause: '以为校准是终身有效的。',
+        fix: '校准数据存硬盘，关机不丢；但**换电机、拆装、运输颠簸**后零点会变，需重新校准。平时不用反复做。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '判断要不要重新校准',
+        instructions: `下面哪些情况需要重新校准？\n\nA. 关机一晚，第二天开机\nB. 机械臂从桌上摔了一下\nC. 换了一个电机\nD. 只是重新插了下 USB`,
+        hint: '校准数据存在硬盘，丢的是"物理零点"，不是文件。',
+        expectedResult: '需要重校：**B（摔了）、C（换电机）**。不需要：A（数据在硬盘，没丢）、D（插拔 USB 不影响电机零点，但可能改变 ttyUSB 编号，要去 yaml 确认端口）。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '不校准直接采数据会怎样？',
+        answer: 'Leader 的读数和 Follower 的实际姿态对不上，录进数据集的 (s, a) 是错位的。用这种数据训练，模型学到的映射本身就是歪的，再怎么训也跑不准。'
+      },
+      {
+        question: '一条臂要校准几个电机？',
+        answer: '6 个（每个关节一个）。脚本会自动逐个走完，不用手动选。两条臂就是 12 个。'
+      },
+      {
+        question: '机械臂角色（Leader/Follower）是怎么确定的？',
+        answer: '由配置文件里 leader_arms / follower_arms 各自填的 port 决定，不是硬件出厂决定。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'LeRobot 机器人控制脚本文档',
+        url: 'https://github.com/huggingface/lerobot',
+        note: 'control_robot.py 的 calibrate / teleoperate / record 子命令说明。'
+      }
+    ],
+
+    summary: `两步走：**认端口**（拔线法或 find_motors）→ 写进 so100.yaml 的 leader_arms / follower_arms；**校准**（跑 calibrate 脚本，手动摆姿态记零点）。
+
+校准对齐了 Leader 读数与 Follower 实际姿态，是数据质量的第一道闸门，硬件没变动就不用重做。
+
+下一章是最爽的部分：真的拿起机械臂演示动作，把数据录下来。`
   },
   {
     id: 5,

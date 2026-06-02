@@ -804,7 +804,145 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
       '数据文件正确生成',
       '图像帧率稳定'
     ],
-    errors: []
+    errors: [],
+
+    introduction: `准备工作都做完了，终于到最爽也最累的一步：**亲手扳动 Leader，让 Follower 跟随，电脑把整个过程录下来**。这些录像就是喂给 AI 的"演示数据"。
+
+这一章有一个反直觉但极其重要的观念：**数据质量 > 数据数量，而质量的核心是"多样性"**。新手最容易犯的错，是把同一个动作在同一个位置一丝不苟地录 50 遍 —— 结果模型只会"背"这一个场景，杯子挪 1 厘米就傻。
+
+我们会讲清楚：怎么先验证遥操作手感、怎么正式录、录多少条、以及怎么"故意制造变化"让模型真正学会泛化。`,
+
+    whyItMatters: `数据采集是整条流水线里**人力投入最大、对结果影响也最大**的一步：
+
+- 数据采得好 → 模型泛化强，环境变了也能扛
+- 数据采得"太干净太一致" → 过拟合，实测一碰扰动就崩
+- 失败演示处理不当 → 要么丢掉宝贵的"纠错信号"，要么比例过高污染目标
+
+这一步没有 GPU 也能做，是你能亲手影响最终效果的关键环节。`,
+
+    keyTerms: ['遥操作', 'Leader / Follower', '数据集', 'LeRobot Dataset'],
+
+    diagrams: [
+      {
+        title: '采集时一帧里发生了什么',
+        source: `flowchart LR
+    Hand["👋 你扳 Leader"] --> Read["读 Leader 关节角 = action a"]
+    Read --> Follow["Follower 复现"]
+    Read --> Cam["相机拍一帧 = 环境状态"]
+    Follow --> Save["写入数据集 (s, a)"]
+    Cam --> Save
+    Save -.->|"30 fps 循环"| Hand
+    style Save fill:#22c55e,stroke:#22c55e,color:#fff`,
+        caption: '每一帧：读 Leader 角度当 action、相机拍环境、Follower 复现、全部打包写盘。一秒 30 次。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '先纯遥操作，验证手感',
+        body: `别急着录。先跑 teleoperate（不存数据），确认 Leader → Follower 同步正常、延迟低。你扳 Leader，Follower 应该几乎实时跟动。
+
+试 30 秒，手感对了再 Ctrl+C 退出，进入正式录制。`,
+        command: {
+          description: '只遥操作不录',
+          code: 'python lerobot/scripts/control_robot.py teleoperate \\\n  --robot-path lerobot/configs/robot/so100.yaml'
+        },
+        expectedOutput: '[INFO] Connected to leader_arms/main\n[INFO] Connected to follower_arms/main\n[INFO] Teleoperation started. Move the leader arm.',
+        tip: '跟随有明显延迟/抖动？把机械臂直接插主板 USB（别走 hub），fps 锁 30。'
+      },
+      {
+        title: '正式录制数据集',
+        body: `切到 record 模式，加上数据集名字、要录多少条、帧率。\`--repo-id\` 是你自己起的名字（不必真的传 HuggingFace）；\`--num-episodes\` 是总条数；\`--fps 30\` 是甜点帧率。
+
+每录一条它会提示你按 Enter 开始下一条，方便你重新摆放物体。`,
+        command: {
+          description: '录 50 条演示',
+          code: 'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --repo-id your-name/so100-pick-cup \\\n  --num-episodes 50 --fps 30'
+        },
+        expectedOutput: 'Recording episode 1/50...\n[INFO] Press Enter when ready, Ctrl+C to abort.\nEpisode 1 saved (132 frames, 4.4 s)',
+        warning: '录制必须**完整跑完**才会写 meta/info.json。中途 Ctrl+C 强退会导致 meta 缺失，第 6 章/训练时报 FileNotFoundError。'
+      },
+      {
+        title: '刻意制造多样性',
+        body: `这是决定成败的一步。录 50 条时**不要每次都一样**：
+
+- 物体位置每次挪 ±3-5 cm
+- 物体朝向（杯柄朝左/右/前）都录一些
+- 起始姿态、动作快慢有变化
+- 换不同时段录（光线不同）、桌面放点干扰物
+- 偶尔的失败后重试也录进去（教模型从错误中恢复）
+
+目标：50 条里**没有任意两条完全一样**。`,
+        tip: '简单 pick-place ≈ 50 条；插 USB 这类 ≈ 100-200 条；折毛巾这类 300+ 条。但多样的 50 条 > 雷同的 200 条。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '训练后模型只会在某个固定位置工作，物体一挪就失败。',
+        cause: '采集时物体每次都放同一位置，模型过拟合到那个坐标。',
+        fix: '重采，刻意让物体位置/朝向/光线变化。泛化来自训练分布的宽度，不是重复次数。'
+      },
+      {
+        symptom: '录了 10 条就想开训，结果学不会。',
+        cause: '数据量严重不足，覆盖的状态空间太窄。',
+        fix: '简单任务起码 50 条，且要多样。10 条几乎必然过拟合。'
+      },
+      {
+        symptom: '某条演示中途失败了（杯子掉了），要不要删？',
+        cause: '以为失败数据是"脏数据"。',
+        fix: '保留并标记为失败更好 —— 它提供"这样不行"的负信号。但失败比例别超 ~30%，否则污染学习目标。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '估算样本量',
+        instructions: '你以 30 fps 录了 50 条、每条平均 5 秒的演示。总共多少帧（≈ 多少个 (s, a) 样本）？',
+        hint: 'fps × 每条秒数 × 条数。',
+        expectedResult: '30 × 5 × 50 = **7500 帧**。每帧一个 (s, a)，所以约 7500 个训练样本 —— 对 ACT 已经很充裕。'
+      },
+      {
+        title: '设计你的多样性清单',
+        instructions: '为"把杯子放到盘子里"这个任务，列出 4 个你会在 50 条演示里刻意变化的维度。',
+        hint: '想想环境里"下次可能不一样"的东西。',
+        expectedResult: '参考答案：① 杯子初始位置 ② 杯子朝向/杯柄方向 ③ 盘子位置 ④ 抓取速度。还可加：光线、桌面干扰物、机械臂起始姿态。任意合理的 4 个即可。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '为什么不能把同一个动作在同一位置录 50 遍？',
+        answer: '那会让模型过拟合到那个固定场景，只会"背"不会"举一反三"。环境稍变（物体挪动、光线变化）就崩。泛化来自训练分布的多样性。'
+      },
+      {
+        question: '录制中途 Ctrl+C 会有什么后果？',
+        answer: 'meta/info.json 不会生成（它在全部录完后才统一写）。后续加载数据集或训练会报 FileNotFoundError。要么完整录完，要么用工具基于已录 data 反向重建 meta。'
+      },
+      {
+        question: '失败的演示该怎么处理？',
+        answer: '保留 + 标记失败。它给模型"什么不该做"的负信号，比例控制在 30% 以内。完全删掉反而让模型对失败状态没有先验。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'LeRobot 数据采集教程视频',
+        url: 'https://www.youtube.com/playlist?list=PL3vV3-eqf-bp9DvB7-EkS8DGHE9pXVKlS',
+        note: 'HuggingFace 官方演示遥操作 + 录制的实拍流程。'
+      },
+      {
+        title: 'DROID 数据集',
+        url: 'https://droid-dataset.github.io/',
+        note: '看大规模、高多样性数据集长什么样，理解"多样性"在工业级是怎么做的。'
+      }
+    ],
+
+    summary: `先 \`teleoperate\` 验证手感，再 \`record\` 正式录。**质量 > 数量，质量 = 多样性**：刻意变化物体位置/朝向/光线/速度，让 50 条里没有两条相同。
+
+简单任务 ~50 条；失败演示保留并标记（<30%）；录制必须完整跑完才会写 meta。
+
+下一章打开你刚录的数据集，看看它在硬盘上长什么样。`
   },
   {
     id: 6,
@@ -846,7 +984,125 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         solution: '检查数据集目录是否完整，可能需要重新采集',
         command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so100-task/meta/'
       }
-    ]
+    ],
+
+    introduction: `你刚录了 50 条演示，它们现在在硬盘的哪里？长什么样？这一章打开来看一眼 —— 理解数据集结构能帮你在训练报错时快速定位问题。
+
+数据集藏在 \`~/.cache/huggingface/lerobot/<repo-id>/\` 下，里面是三个核心目录：**data/**（关节角度，很小）、**videos/**（相机帧，很大）、**meta/**（描述这个数据集是什么）。
+
+其中 \`meta/info.json\` 是整个数据集的"身份证"，也是初学者最常见崩溃 \`FileNotFoundError: meta/info.json\` 的主角 —— 搞懂它能省你大量时间。`,
+
+    whyItMatters: `不理解数据结构，训练报错时只能干瞪眼：
+
+- 不知道 info.json 的作用 → 遇到 FileNotFoundError 不知从何查起
+- 不知道视频占了 95% 空间 → 磁盘爆了不知道该压什么
+- 不会用 LeRobotDataset 验证 → 带着坏数据去训练，浪费几小时才发现
+
+这一章很短，但能让你在第 7 章训练出问题时，第一时间判断"是不是数据集的问题"。`,
+
+    keyTerms: ['LeRobot Dataset', 'meta', '数据集', 'HuggingFace Hub'],
+
+    diagrams: [
+      {
+        title: '数据集目录结构',
+        source: `flowchart TD
+    Root["📁 so100-pick-cup/"] --> Data["📁 data/ 关节角度"]
+    Root --> Meta["📁 meta/ 元信息"]
+    Root --> Videos["📁 videos/ 相机帧"]
+    Data --> P["📄 episode_000.parquet ..."]
+    Meta --> Info["📄 info.json / episodes.jsonl / stats.json"]
+    Videos --> M["🎥 episode_000.mp4 ..."]
+    style Data fill:#dbeafe,stroke:#3b82f6
+    style Meta fill:#fef3c7,stroke:#f59e0b
+    style Videos fill:#fce7f3,stroke:#ec4899`,
+        caption: 'data 存关节（KB 级），videos 存相机帧（MB 级，占 95%+ 空间），meta 描述数据集本身。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '看一眼目录结构',
+        body: `用 \`tree\` 浏览数据集目录，建立整体印象：parquet 在 data/chunk-000/ 下，视频按相机分文件夹放在 videos/ 下，meta/ 里几个 json 文件描述全局信息。`,
+        command: {
+          description: '查看结构',
+          code: 'tree ~/.cache/huggingface/lerobot/your-name/so100-pick-cup'
+        },
+        expectedOutput: 'so100-pick-cup/\n├── data/\n│   └── chunk-000/  episode_000.parquet ...\n├── meta/\n│   ├── info.json  episodes.jsonl  stats.json\n└── videos/\n    └── observation.images.cam_top/  episode_000.mp4 ...'
+      },
+      {
+        title: '打开 info.json —— 数据集的身份证',
+        body: `\`info.json\` 记录 episodes 总数、总帧数、fps、状态/动作维度、相机配置、schema 版本。训练时 LeRobot **第一件事就是读它**，读不到就直接崩。
+
+\`cat\` 出来对一对逻辑：total_episodes × 平均帧数 ≈ total_frames，能帮你确认数据集是不是完整。`,
+        command: {
+          description: '查看元数据',
+          code: 'cat ~/.cache/huggingface/lerobot/your-name/so100-pick-cup/meta/info.json'
+        },
+        expectedOutput: '{\n  "robot_type": "so100",\n  "total_episodes": 50,\n  "total_frames": 7423,\n  "fps": 30,\n  "features": {\n    "observation.state": {"dtype": "float32", "shape": [6]},\n    "action": {"dtype": "float32", "shape": [6]}\n  }\n}',
+        tip: 'total_episodes=50、total_frames≈7500 → 平均每条 150 帧 = 5 秒×30fps，逻辑自洽。'
+      },
+      {
+        title: '用代码验证能否加载',
+        body: `光看文件不够，用 LeRobotDataset 真的加载一次，能加载成功才说明数据集结构没问题、可以拿去训练。`,
+        command: {
+          description: '验证加载',
+          code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so100-pick-cup\'); print(len(ds))"'
+        },
+        expectedOutput: '7423   # 能打印出帧数 = 加载成功',
+        warning: '这一步报错（尤其 FileNotFoundError: meta/info.json）说明数据集不完整，别急着训练，先回去补录或重建 meta。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '训练一启动就 `FileNotFoundError: meta/info.json`。',
+        cause: '上次 record 中途被 Ctrl+C 强退 —— data/ 里有部分 parquet，但 meta/ 没生成（它在全部录完后才统一写）。',
+        fix: '要么重新完整录一遍，要么用 LeRobot 工具脚本基于 data/ 反向重建 meta。检查：`ls -la .../meta/` 看是不是空的。'
+      },
+      {
+        symptom: '硬盘很快被数据集占满。',
+        cause: '视频帧占了数据集 95%+ 的空间，关节数据反而微不足道。',
+        fix: '想省空间就降相机分辨率 / 用 H.265 编码 / 减少相机数量。删 data/ 没用 —— 它本来就小。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '算关节数据的体积',
+        instructions: 'info.json 显示 fps=30、state 和 action 都是 6 维 float32。一条 7 秒演示的纯关节数据大约多少 KB？',
+        hint: '帧数 × (6+6) × 4 字节。',
+        expectedResult: '30×7=210 帧；每帧 12 个 float32 × 4 字节 = 48 字节；210×48 ≈ **10 KB**。50 条才 ~500 KB —— 所以"占空间的是视频不是关节数据"。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'info.json 为什么这么重要？',
+        answer: '它是数据集的"身份证"：记录 episodes 数、帧数、fps、维度、相机配置。LeRobot 训练前先读它，缺失或损坏就直接报 FileNotFoundError，无法训练。'
+      },
+      {
+        question: '三个目录里哪个最占空间？',
+        answer: 'videos/（相机帧），占 95%+。data/（关节）每秒只几 KB，meta/ 几个小 json。'
+      },
+      {
+        question: '怎么确认数据集能用来训练？',
+        answer: '用 `LeRobotDataset(\'repo-id\')` 加载一次，能成功返回长度就说明结构完整。报错就先修数据集再训练。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'HuggingFace LeRobot 模型/数据集库',
+        url: 'https://huggingface.co/lerobot',
+        note: '看别人公开的数据集结构，对照理解 data/meta/videos 布局。'
+      }
+    ],
+
+    summary: `数据集在 \`~/.cache/huggingface/lerobot/<repo-id>/\`，三大目录：**data**（关节，小）、**videos**（相机，占 95% 空间）、**meta**（信息）。
+
+\`meta/info.json\` 是身份证，缺了就报 FileNotFoundError —— 多半是 record 中途强退导致。训练前用 LeRobotDataset 加载一次验证完整性。
+
+下一章进入正题：让神经网络真正开始学。`
   },
   {
     id: 7,

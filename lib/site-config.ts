@@ -38,10 +38,9 @@ export const siteConfig = {
     'LVJIN ROBOTICS',
     '绿晋科技'
   ],
-  authors: [{ name: '绿晋科技', url: 'https://github.com/AMqqqJLTA' }],
+  authors: [{ name: '绿晋科技', url: SITE_URL }],
   creator: '绿晋科技',
   links: {
-    github: 'https://github.com/AMJLTA/so101-guide-web',
     lerobot: 'https://github.com/huggingface/lerobot',
     huggingface: 'https://huggingface.co/lerobot',
     so101: 'https://github.com/TheRobotStudio/SO-ARM100',

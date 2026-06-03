@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Code2,
   Cpu,
-  Github,
   Lightbulb,
   Mail,
   Rocket,
@@ -142,18 +141,6 @@ export default function AboutPage() {
                         开始学习
                         <ChevronRight className="ml-0.5 h-4 w-4" />
                       </Link>
-                    </Button>
-                  </Magnetic>
-                  <Magnetic strength={0.4} range={140}>
-                    <Button asChild variant="outline" size="lg">
-                      <a
-                        href={siteConfig.links.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Github className="mr-1.5 h-4 w-4" />
-                        GitHub
-                      </a>
                     </Button>
                   </Magnetic>
                 </div>
@@ -326,27 +313,23 @@ export default function AboutPage() {
             <CardContent className="grid gap-6 p-8 sm:p-12 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <h2 className="text-2xl font-bold sm:text-3xl">
-                  想合作、提 issue 或贡献内容？
+                  想合作或提建议？
                 </h2>
                 <p className="mt-3 max-w-xl text-muted-foreground">
-                  本项目处于持续迭代中：硬件兼容性测试、章节扩充、英文翻译、新数据集都在路上。
-                  欢迎邮件联系或在 GitHub 提交 issue / PR。
+                  本项目持续迭代中：硬件兼容性测试、章节扩充、英文翻译、新数据集都在路上。
+                  欢迎邮件联系，或在社区里和我们交流。
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 lg:justify-end">
                 <Button asChild size="lg">
-                  <a
-                    href={siteConfig.links.github + '/issues'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="mr-1.5 h-4 w-4" />
-                    提交 Issue
+                  <a href={siteConfig.links.inquiry}>
+                    <Mail className="mr-1.5 h-4 w-4" />
+                    邮件联系
                   </a>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <Link href="/learn">
-                    开始学习
+                  <Link href="/community">
+                    逛逛社区
                     <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>

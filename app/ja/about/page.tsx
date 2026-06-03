@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Code2,
   Cpu,
-  Github,
   Lightbulb,
   Mail,
   Rocket,
@@ -143,18 +142,6 @@ export default function AboutPageJa() {
                         学習を始める
                         <ChevronRight className="ml-0.5 h-4 w-4" />
                       </Link>
-                    </Button>
-                  </Magnetic>
-                  <Magnetic strength={0.4} range={140}>
-                    <Button asChild variant="outline" size="lg">
-                      <a
-                        href={siteConfigJa.links.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Github className="mr-1.5 h-4 w-4" />
-                        GitHub
-                      </a>
                     </Button>
                   </Magnetic>
                 </div>
@@ -325,22 +312,18 @@ export default function AboutPageJa() {
             <CardContent className="grid gap-6 p-8 sm:p-12 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <h2 className="text-2xl font-bold sm:text-3xl">
-                  協業、Issue 報告、コンテンツ寄稿のご相談
+                  協業・ご提案はこちら
                 </h2>
                 <p className="mt-3 max-w-xl text-muted-foreground">
                   本プロジェクトは継続的にアップデート中です。ハードウェア互換性テスト、章の拡充、英語化、新規データセットなどに取り組んでいます。
-                  メールまたは GitHub Issue / PR からお気軽にご連絡ください。
+                  メールでお気軽にご連絡ください。
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 lg:justify-end">
                 <Button asChild size="lg">
-                  <a
-                    href={siteConfigJa.links.github + '/issues'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="mr-1.5 h-4 w-4" />
-                    Issue を作成
+                  <a href={siteConfigJa.links.inquiry}>
+                    <Mail className="mr-1.5 h-4 w-4" />
+                    メールで連絡
                   </a>
                 </Button>
                 <Button asChild size="lg" variant="outline">

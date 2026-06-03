@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   BookOpen,
   Bot,
-  Github,
   Home,
   Info,
   LayoutGrid,
@@ -152,13 +151,6 @@ export function CommandPalette() {
           >
             <Sparkles className="mr-2 h-4 w-4 text-primary" />
             <span>询问 AI 助手</span>
-          </CommandItem>
-          <CommandItem
-            value="action-github"
-            onSelect={() => go(siteConfig.links.github, true)}
-          >
-            <Github className="mr-2 h-4 w-4" />
-            <span>访问 GitHub 仓库</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

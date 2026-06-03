@@ -35,10 +35,9 @@ export const siteConfigJa = {
     'ロボット学習',
     'LVJIN ROBOTICS'
   ],
-  authors: [{ name: 'LVJIN ROBOTICS', url: 'https://github.com/AMqqqJLTA' }],
+  authors: [{ name: 'LVJIN ROBOTICS', url: siteConfig.url }],
   creator: 'LVJIN ROBOTICS',
   links: {
-    github: 'https://github.com/AMJLTA/so101-guide-web',
     lerobot: 'https://github.com/huggingface/lerobot',
     huggingface: 'https://huggingface.co/lerobot',
     so101: 'https://github.com/TheRobotStudio/SO-ARM100',

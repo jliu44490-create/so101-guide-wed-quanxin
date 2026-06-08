@@ -124,7 +124,7 @@ export const glossary: GlossaryTerm[] = [
     term: 'Hydra 配置',
     termEn: 'Hydra Config',
     definition:
-      'Facebook 推出的配置框架，LeRobot 用它管理训练参数。你可以在命令行用 policy=act env=so100 的方式覆写配置。',
+      'Facebook 推出的配置框架，LeRobot 用它管理训练参数。你可以在命令行用 --dataset.repo_id=... --policy.type=act 的方式覆写配置。',
     category: 'framework'
   }
 ]

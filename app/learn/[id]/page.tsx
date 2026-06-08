@@ -63,6 +63,13 @@ export async function generateMetadata(
       title: `${chapter.title} | ${siteConfig.shortName}`,
       description: chapter.description,
       type: 'article'
+    },
+    alternates: {
+      canonical: `/learn/${chapter.id}`,
+      languages: {
+        'zh-CN': `/learn/${chapter.id}`,
+        'ja-JP': `/ja/learn/${chapter.id}`
+      }
     }
   }
 }
@@ -70,25 +77,6 @@ export async function generateMetadata(
 export function generateStaticParams() {
   return chapters.map((chapter) => ({ id: chapter.id.toString() }))
 }
-
-const statusConfig = {
-  completed: {
-    label: '已完成',
-    icon: Trophy,
-    badge:
-      'border-[oklch(from_var(--success)_l_c_h/0.3)] bg-success/10 text-[var(--color-success)]'
-  },
-  'in-progress': {
-    label: '学习中',
-    icon: ChevronRight,
-    badge: 'border-primary/30 bg-primary/10 text-primary'
-  },
-  locked: {
-    label: '未开始',
-    icon: Clock,
-    badge: 'border-border bg-muted text-muted-foreground'
-  }
-} as const
 
 export default async function ChapterPage({ params }: ChapterPageProps) {
   const { id } = await params
@@ -101,8 +89,6 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
 
   const prevChapter = chapters.find((c) => c.id === chapterId - 1)
   const nextChapter = chapters.find((c) => c.id === chapterId + 1)
-  const status = statusConfig[chapter.status]
-  const StatusIcon = status.icon
 
   // When a chapter provides `walkthrough`, prefer it over the legacy `steps`.
   const hasWalkthrough = (chapter.walkthrough?.length ?? 0) > 0
@@ -187,10 +173,6 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           <article className="min-w-0">
             <header id="overview" className="mb-8 scroll-mt-24">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className={status.badge}>
-                  <StatusIcon className="mr-1 h-3 w-3" />
-                  {status.label}
-                </Badge>
                 <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
                   Chapter {chapter.id}
                 </Badge>

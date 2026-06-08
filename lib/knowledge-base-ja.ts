@@ -390,7 +390,7 @@ function scoreItem(item: KBItemJa, query: string, queryTokens: string[]): {
 }
 
 export interface SearchOptionsJa {
-  types?: KBItemTypeJa[]
+  types?: readonly KBItemTypeJa[]
   limit?: number
   threshold?: number
   chapterId?: number

@@ -6,7 +6,7 @@
  *   - imports from course-data-ja / glossary-ja / knowledge-base-ja
  */
 
-import { aiResponsesJa, errorDatabaseJa, chaptersJa } from './course-data-ja'
+import { errorDatabaseJa, chaptersJa } from './course-data-ja'
 import {
   knowledgeBaseJa,
   searchJa,

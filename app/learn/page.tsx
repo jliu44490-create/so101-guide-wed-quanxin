@@ -15,7 +15,14 @@ import { chapters } from '@/lib/course-data'
 export const metadata: Metadata = {
   title: '学习路径',
   description:
-    '系统的 SO101 模仿学习课程路径：从概念、硬件、环境到 ACT 训练与实机部署的 9 个章节。'
+    '系统的 SO101 模仿学习课程路径：从概念、硬件、环境到 ACT 训练与实机部署的 9 个章节。',
+  alternates: {
+    canonical: '/learn',
+    languages: {
+      'zh-CN': '/learn',
+      'ja-JP': '/ja/learn'
+    }
+  }
 }
 
 const totalMinutes = chapters.reduce((acc, c) => {

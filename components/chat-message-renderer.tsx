@@ -139,7 +139,7 @@ function renderText(text: string): React.ReactNode {
       tableRows = []
       return
     }
-    const [head, _sep, ...rest] = tableRows
+    const [head, , ...rest] = tableRows
     out.push(
       <div key={`tbl-${key}`} className="my-2 overflow-x-auto">
         <table className="w-full text-xs">

@@ -71,11 +71,11 @@ export function CodeBlock({
   const lines = code.split('\n')
 
   return (
-    <div className={cn('group relative', className)}>
+    <div className={cn('group relative min-w-0', className)}>
       {description && (
         <p className="mb-2 text-sm text-muted-foreground">{description}</p>
       )}
-      <div className="relative overflow-hidden rounded-xl border border-border/70 bg-[oklch(0.12_0.012_270)] shadow-lg shadow-black/5">
+      <div className="relative min-w-0 overflow-hidden rounded-xl border border-border/70 bg-[oklch(0.12_0.012_270)] shadow-lg shadow-black/5">
         <div className="flex items-center justify-between border-b border-white/5 bg-black/30 px-3.5 py-2">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -105,7 +105,7 @@ export function CodeBlock({
             )}
           </Button>
         </div>
-        <pre className="overflow-x-auto p-4 text-sm leading-relaxed text-white/85">
+        <pre className="max-w-full overflow-x-auto p-4 text-sm leading-relaxed text-white/85">
           <code className="font-mono">
             {lines.map((line, i) => (
               <div key={i} className="flex">

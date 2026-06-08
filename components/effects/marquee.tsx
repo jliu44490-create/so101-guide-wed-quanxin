@@ -24,13 +24,20 @@ export function Marquee({
   return (
     <div
       className={cn(
-        'relative overflow-hidden',
+        'marquee-viewport relative w-full max-w-full overflow-hidden [overflow:clip]',
         fade && '[mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]',
         className
       )}
     >
+      <div className="flex flex-wrap justify-center gap-3 px-4 sm:hidden">
+        {items.map((item, i) => (
+          <div key={i} className={cn('max-w-full min-w-0', itemClassName)}>
+            {item}
+          </div>
+        ))}
+      </div>
       <div
-        className="marquee-track gap-8"
+        className="marquee-track hidden min-w-max gap-8 will-change-transform sm:flex"
         style={
           {
             '--marquee-duration': `${duration}s`,

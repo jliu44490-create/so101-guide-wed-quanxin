@@ -15,7 +15,14 @@ import { chaptersJa } from '@/lib/course-data-ja'
 export const metadata: Metadata = {
   title: '学習パス',
   description:
-    'SO101 模倣学習の体系的なカリキュラム。概念、ハードウェア、環境構築、ACT 学習、実機デプロイまで 9 章で完結します。'
+    'SO101 模倣学習の体系的なカリキュラム。概念、ハードウェア、環境構築、ACT 学習、実機デプロイまで 9 章で完結します。',
+  alternates: {
+    canonical: '/ja/learn',
+    languages: {
+      'zh-CN': '/learn',
+      'ja-JP': '/ja/learn'
+    }
+  }
 }
 
 const totalMinutes = chaptersJa.reduce((acc, c) => {

@@ -104,10 +104,12 @@ const workflow = [
     title: 'データ収集',
     description: 'Leader / Follower 遠隔操作 → parquet + 動画 + meta',
     href: '/ja/learn/5',
-    code: `python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id you/pick_place \\
-  --num-episodes 50`
+    code: `lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \
+  --dataset.repo_id=you/pick-place \
+  --dataset.num_episodes=50 --dataset.fps=30 \
+  --display_data=true`
   },
   {
     step: '02',
@@ -115,9 +117,10 @@ const workflow = [
     title: '学習',
     description: 'ACT (CVAE + Transformer) を自前データセットでファインチューニング',
     href: '/ja/learn/7',
-    code: `python lerobot/scripts/train.py \\
-  policy=act env=so100 \\
-  dataset_repo_id=you/pick_place`
+    code: `lerobot-train \
+  --dataset.repo_id=you/pick-place \
+  --policy.type=act \
+  --output_dir=outputs/train/act_so101`
   },
   {
     step: '03',
@@ -126,9 +129,10 @@ const workflow = [
     description:
       'チェックポイントをロード → 実機制御 → fps と EMA で滑らかに調整',
     href: '/ja/learn/8',
-    code: `python lerobot/scripts/control_robot.py record \\
-  --policy-path outputs/.../last \\
-  --fps 30`
+    code: `lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --policy.path=outputs/.../last \
+  --dataset.fps=30`
   }
 ]
 
@@ -158,6 +162,7 @@ export default function HomePageJa() {
     <div className="min-h-screen bg-background">
       <Header />
 
+      <main>
       {/* ═══════════════════════ HERO ═══════════════════════ */}
       <section className="relative overflow-hidden">
         <AuroraBackground intensity="normal" withGrid={false} />
@@ -374,12 +379,12 @@ export default function HomePageJa() {
             </div>
           </Reveal>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-3">
             {workflow.map((step, i) => (
-              <Reveal key={step.step} delay={i * 120}>
-                <Link href={step.href} className="group block h-full">
-                  <ConicBorder className="h-full">
-                    <SpotlightCard className="relative h-full rounded-2xl border border-border/40 bg-card/80 backdrop-blur p-6">
+              <Reveal key={step.step} delay={i * 120} className="min-w-0">
+                <Link href={step.href} className="group block h-full min-w-0">
+                  <ConicBorder className="h-full min-w-0">
+                    <SpotlightCard className="relative h-full min-w-0 overflow-hidden rounded-2xl border border-border/40 bg-card/80 backdrop-blur p-6">
                       <div className="flex items-start justify-between gap-3">
                         <span className="font-mono text-2xl font-bold text-muted-foreground/50">
                           {step.step}
@@ -390,10 +395,10 @@ export default function HomePageJa() {
                       </div>
                       <h3 className="mt-5 text-lg font-semibold">{step.title}</h3>
                       <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
-                      <pre className="mt-5 overflow-x-auto rounded-lg border border-border/50 bg-[oklch(0.12_0.01_270)] p-3 font-mono text-[11px] leading-relaxed text-white/85">
-                        <code>{step.code}</code>
+                      <pre className="mt-5 min-w-0 max-w-full overflow-x-auto rounded-lg border border-border/50 bg-[oklch(0.12_0.01_270)] p-3 font-mono text-[11px] leading-relaxed text-white/85">
+                        <code className="block min-w-max">{step.code}</code>
                       </pre>
-                      <div className="mt-5 flex items-center gap-1.5 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="mt-5 flex min-w-0 items-center gap-1.5 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
                         章へ進む
                         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                       </div>
@@ -477,6 +482,7 @@ export default function HomePageJa() {
         </div>
       </section>
 
+      </main>
       <Footer />
     </div>
   )

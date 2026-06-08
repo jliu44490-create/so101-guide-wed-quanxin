@@ -631,8 +631,8 @@ SO101 上的状态是 6 维关节角度，动作是 6 维目标角度，再加�
       { title: '校准验证', content: '测试各关节运动范围是否正确' }
     ],
     commands: [
-      { description: '运行校准脚本', code: 'python lerobot/scripts/control_robot.py calibrate --robot-path lerobot/configs/robot/so100.yaml' },
-      { description: '查看校准结果', code: 'cat ~/.cache/huggingface/lerobot/calibration/so100.json' }
+      { description: '运行校准脚本', code: 'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower' },
+      { description: '查看校准结果', code: 'find ~/.cache/huggingface/lerobot/calibration -maxdepth 3 -type f' }
     ],
     checkpoints: [
       '端口正确识别',
@@ -643,8 +643,8 @@ SO101 上的状态是 6 维关节角度，动作是 6 维目标角度，再加�
       {
         error: 'Missing required field(s) port',
         cause: '配置文件中未指定端口',
-        solution: '在 robot 配置中添加 port 字段',
-        command: 'vim lerobot/configs/robot/so100.yaml'
+        solution: '在命令中补上 --robot.port=/dev/ttyACM0，并确认端口路径来自 ls /dev/tty* 的实际结果',
+        command: 'lerobot-calibrate --help'
       }
     ],
 
@@ -694,22 +694,22 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         expectedOutput: '第一次:  ttyUSB0  ttyUSB1\n第二次:  ttyUSB0            ← 少了 ttyUSB1，它就是刚拔的 Leader'
       },
       {
-        title: '把端口写进配置文件',
-        body: `知道哪个 ttyUSB 是哪个角色后，编辑 \`lerobot/configs/robot/so100.yaml\`，把端口填进 leader_arms / follower_arms。
+        title: '把端口写进命令参数',
+        body: `知道哪个 ttyUSB 是哪个角色后，把端口直接写进新版 LeRobot CLI 参数：Follower 用 \`--robot.port\`，Leader 用 \`--teleop.port\`。
 
-\`main\` 只是个名字，可以叫任何东西；\`port\` 填上一步认出的实际设备路径。改完保存，之后所有命令都会读这份配置。`,
+例如 Follower 是 \`/dev/ttyACM0\`、Leader 是 \`/dev/ttyACM1\`。后面校准、遥操作、录数据都沿用这两个端口。`,
         command: {
-          description: 'so100.yaml 里的端口配置',
-          code: 'leader_arms:\n  main:\n    port: /dev/ttyUSB1\nfollower_arms:\n  main:\n    port: /dev/ttyUSB0'
+          description: '新版 CLI 端口参数',
+          code: '--robot.port=/dev/ttyACM0\n--teleop.port=/dev/ttyACM1'
         },
-        warning: '重启后 ttyUSB 编号可能对调，届时要回来改这里 —— 这是 `Missing required field(s) port` 之外最常见的"昨天还好好的今天连不上"。'
+        warning: '重启后端口编号可能对调，届时先重新跑 `ls /dev/tty*`，再更新命令参数。'
       },
       {
         title: '运行校准',
         body: `跑校准脚本，它会一步步引导你把机械臂**手动摆到指定姿态**（如完全伸展、回零位），每摆一个按一次 Enter。整个过程 1-2 分钟，数据自动保存到 \`~/.cache/.../calibration.json\`。`,
         command: {
           description: '启动校准',
-          code: 'python lerobot/scripts/control_robot.py calibrate \\\n  --robot-path lerobot/configs/robot/so100.yaml'
+          code: 'lerobot-calibrate \\\n  --robot.type=so101_follower \\\n  --robot.port=/dev/ttyACM0 \\\n  --robot.id=so101_follower'
         },
         expectedOutput: 'Calibrating leader_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration ... Done!',
         warning: '手动摆姿态时**轻柔扳动**。SO101 电机不带阻尼，硬扳可能损坏齿轮。'
@@ -762,11 +762,11 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
       {
         title: 'LeRobot 机器人控制脚本文档',
         url: 'https://github.com/huggingface/lerobot',
-        note: 'control_robot.py 的 calibrate / teleoperate / record 子命令说明。'
+        note: '新版 LeRobot CLI 的 calibrate / teleoperate / record 命令说明。'
       }
     ],
 
-    summary: `两步走：**认端口**（拔线法或 find_motors）→ 写进 so100.yaml 的 leader_arms / follower_arms；**校准**（跑 calibrate 脚本，手动摆姿态记零点）。
+    summary: `两步走：**认端口**（拔线法或 find_motors）→ 写进新版 CLI 的 \`--robot.port\` / \`--teleop.port\`；**校准**（跑 lerobot-calibrate，手动摆姿态记零点）。
 
 校准对齐了 Leader 读数与 Follower 实际姿态，是数据质量的第一道闸门，硬件没变动就不用重做。
 
@@ -796,8 +796,8 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
       { title: '数据保存', content: '确认数据正确保存到指定目录' }
     ],
     commands: [
-      { description: '启动遥操作', code: 'python lerobot/scripts/control_robot.py teleoperate --robot-path lerobot/configs/robot/so100.yaml' },
-      { description: '录制数据集', code: 'python lerobot/scripts/control_robot.py record --robot-path lerobot/configs/robot/so100.yaml --repo-id your-name/so100-task --num-episodes 50' }
+      { description: '启动遥操作', code: 'lerobot-teleoperate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 --display_data=true' },
+      { description: '录制数据集', code: 'lerobot-record --robot.type=so101_follower --robot.port=/dev/ttyACM0 --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 --dataset.repo_id=your-name/so101-task --dataset.num_episodes=50 --dataset.fps=30 --display_data=true' }
     ],
     checkpoints: [
       'Leader-Follower 同步正常',
@@ -845,19 +845,19 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
 试 30 秒，手感对了再 Ctrl+C 退出，进入正式录制。`,
         command: {
           description: '只遥操作不录',
-          code: 'python lerobot/scripts/control_robot.py teleoperate \\\n  --robot-path lerobot/configs/robot/so100.yaml'
+          code: 'lerobot-teleoperate \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --display_data=true'
         },
         expectedOutput: '[INFO] Connected to leader_arms/main\n[INFO] Connected to follower_arms/main\n[INFO] Teleoperation started. Move the leader arm.',
         tip: '跟随有明显延迟/抖动？把机械臂直接插主板 USB（别走 hub），fps 锁 30。'
       },
       {
         title: '正式录制数据集',
-        body: `切到 record 模式，加上数据集名字、要录多少条、帧率。\`--repo-id\` 是你自己起的名字（不必真的传 HuggingFace）；\`--num-episodes\` 是总条数；\`--fps 30\` 是甜点帧率。
+        body: `切到 record 模式，加上数据集名字、要录多少条、帧率。\`--dataset.repo_id\` 是你自己起的名字（不必真的传 HuggingFace）；\`--dataset.num_episodes\` 是总条数；\`--dataset.fps 30\` 是甜点帧率。
 
 每录一条它会提示你按 Enter 开始下一条，方便你重新摆放物体。`,
         command: {
           description: '录 50 条演示',
-          code: 'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --repo-id your-name/so100-pick-cup \\\n  --num-episodes 50 --fps 30'
+          code: 'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --dataset.num_episodes=50 --dataset.fps=30 \\\n  --display_data=true'
         },
         expectedOutput: 'Recording episode 1/50...\n[INFO] Press Enter when ready, Ctrl+C to abort.\nEpisode 1 saved (132 frames, 4.4 s)',
         warning: '录制必须**完整跑完**才会写 meta/info.json。中途 Ctrl+C 强退会导致 meta 缺失，第 6 章/训练时报 FileNotFoundError。'
@@ -968,9 +968,9 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
       { title: '数据验证', content: '使用工具验证数据集完整性' }
     ],
     commands: [
-      { description: '查看数据集结构', code: 'tree ~/.cache/huggingface/lerobot/your-name/so100-task' },
-      { description: '查看元数据', code: 'cat ~/.cache/huggingface/lerobot/your-name/so100-task/meta/info.json' },
-      { description: '验证数据集', code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so100-task\')"' }
+      { description: '查看数据集结构', code: 'tree ~/.cache/huggingface/lerobot/your-name/so101-task' },
+      { description: '查看元数据', code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-task/meta/info.json' },
+      { description: '验证数据集', code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so101-task\')"' }
     ],
     checkpoints: [
       '理解目录结构',
@@ -982,7 +982,7 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         error: 'FileNotFoundError: meta/info.json',
         cause: '数据集元数据文件缺失',
         solution: '检查数据集目录是否完整，可能需要重新采集',
-        command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so100-task/meta/'
+        command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so101-task/meta/'
       }
     ],
 
@@ -1025,7 +1025,7 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         body: `用 \`tree\` 浏览数据集目录，建立整体印象：parquet 在 data/chunk-000/ 下，视频按相机分文件夹放在 videos/ 下，meta/ 里几个 json 文件描述全局信息。`,
         command: {
           description: '查看结构',
-          code: 'tree ~/.cache/huggingface/lerobot/your-name/so100-pick-cup'
+          code: 'tree ~/.cache/huggingface/lerobot/your-name/so101-pick-cup'
         },
         expectedOutput: 'so100-pick-cup/\n├── data/\n│   └── chunk-000/  episode_000.parquet ...\n├── meta/\n│   ├── info.json  episodes.jsonl  stats.json\n└── videos/\n    └── observation.images.cam_top/  episode_000.mp4 ...'
       },
@@ -1036,7 +1036,7 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
 \`cat\` 出来对一对逻辑：total_episodes × 平均帧数 ≈ total_frames，能帮你确认数据集是不是完整。`,
         command: {
           description: '查看元数据',
-          code: 'cat ~/.cache/huggingface/lerobot/your-name/so100-pick-cup/meta/info.json'
+          code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-pick-cup/meta/info.json'
         },
         expectedOutput: '{\n  "robot_type": "so100",\n  "total_episodes": 50,\n  "total_frames": 7423,\n  "fps": 30,\n  "features": {\n    "observation.state": {"dtype": "float32", "shape": [6]},\n    "action": {"dtype": "float32", "shape": [6]}\n  }\n}',
         tip: 'total_episodes=50、total_frames≈7500 → 平均每条 150 帧 = 5 秒×30fps，逻辑自洽。'
@@ -1046,7 +1046,7 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         body: `光看文件不够，用 LeRobotDataset 真的加载一次，能加载成功才说明数据集结构没问题、可以拿去训练。`,
         command: {
           description: '验证加载',
-          code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so100-pick-cup\'); print(len(ds))"'
+          code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so101-pick-cup\'); print(len(ds))"'
         },
         expectedOutput: '7423   # 能打印出帧数 = 加载成功',
         warning: '这一步报错（尤其 FileNotFoundError: meta/info.json）说明数据集不完整，别急着训练，先回去补录或重建 meta。'
@@ -1128,9 +1128,9 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
       { title: '模型保存', content: '保存最佳检查点用于部署' }
     ],
     commands: [
-      { description: '启动 ACT 训练', code: 'python lerobot/scripts/train.py policy=act env=so100 dataset_repo_id=your-name/so100-task' },
-      { description: '使用 wandb 监控', code: 'wandb login && python lerobot/scripts/train.py policy=act env=so100 wandb.enable=true' },
-      { description: '恢复训练', code: 'python lerobot/scripts/train.py policy=act resume=true' }
+      { description: '启动 ACT 训练', code: 'lerobot-train --dataset.repo_id=your-name/so101-task --policy.type=act --output_dir=outputs/train/act_so101' },
+      { description: '使用 wandb 监控', code: 'wandb login && lerobot-train --dataset.repo_id=your-name/so101-task --policy.type=act --wandb.enable=true --output_dir=outputs/train/act_so101' },
+      { description: '恢复训练', code: 'lerobot-train --config_path=outputs/train/act_so101/checkpoints/last/pretrained_model/train_config.json --resume=true' }
     ],
     checkpoints: [
       '训练启动无报错',
@@ -1142,7 +1142,7 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
         error: 'CUDA out of memory',
         cause: 'GPU 显存不足以运行当前 batch_size',
         solution: '减小 batch_size 或启用梯度累积',
-        command: 'python lerobot/scripts/train.py policy=act training.batch_size=8'
+        command: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --batch_size=8'
       }
     ],
 
@@ -1183,12 +1183,12 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
     walkthrough: [
       {
         title: '启动训练',
-        body: `一条命令搞定（前提：第 5 章数据集已录好）。\`policy=act\` 选 ACT、\`env=so100\` 选机器人、\`dataset_repo_id\` 指向你的数据集。
+        body: `一条命令搞定（前提：第 5 章数据集已录好）。\`--policy.type=act\` 选择 ACT，\`--dataset.repo_id=...\` 指向你的数据集。
 
 默认跑 20 万步，RTX 3060 上约 6-8 小时、CPU 上 1-2 天。可中途 Ctrl+C，加 \`resume=true\` 续训。`,
         command: {
           description: '启动 ACT 训练',
-          code: 'python lerobot/scripts/train.py \\\n  policy=act env=so100 \\\n  dataset_repo_id=your-name/so100-pick-cup'
+          code: 'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --output_dir=outputs/train/act_so101'
         },
         expectedOutput: '[INFO] Building ACT model (params: 84.5M)...\nstep 0    loss 1.247\nstep 100  loss 0.456\nstep 500  loss 0.182\n...',
         tip: 'checkpoint 自动保存，断了不怕，`resume=true` 接着来。'
@@ -1207,7 +1207,7 @@ LeRobot 也自带探测工具 \`find_motors_bus_port.py\`，会逐个端口询�
 batch_size 在显存允许内越大越好（梯度估计更准、收敛快）。12 GB 显存一般能塞 32；OOM 就往下调。`,
         command: {
           description: 'NaN 抢救 / 调参',
-          code: 'python lerobot/scripts/train.py policy=act \\\n  training.lr=1e-5 training.grad_clip_norm=10 \\\n  training.batch_size=8'
+          code: 'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --optimizer.lr=1e-5 --optimizer.grad_clip_norm=10 \\\n  --batch_size=8'
         },
         warning: 'NaN 出现后，之前的进度作废（权重被污染），必须降学习率重训，不能续训。'
       }
@@ -1270,7 +1270,7 @@ batch_size 在显存允许内越大越好（梯度估计更准、收敛快）。
 
     summary: `**ACT = Transformer Encoder + CVAE + Decoder（一次出 100 步）**。让它强的是 Action Chunking + CVAE，不是 Transformer 本身。
 
-\`policy=act env=so100 dataset_repo_id=...\` 启动；健康 loss 前 1k 快降、后期收敛；NaN → 学习率÷10 + 梯度裁剪重训；OOM → 调小 batch_size；用 wandb 监控。
+\`--dataset.repo_id=... --policy.type=act\` 启动；健康 loss 前 1k 快降、后期收敛；NaN → 学习率÷10 + 梯度裁剪重训；OOM → 调小 batch_size；用 wandb 监控。
 
 下一章把训练好的模型部署到真实机械臂上。`
   },
@@ -1298,8 +1298,13 @@ batch_size 在显存允许内越大越好（梯度估计更准、收敛快）。
       { title: '实机部署', content: '连接真实机械臂运行策略' }
     ],
     commands: [
-      { description: '运行推理', code: 'python lerobot/scripts/control_robot.py record --robot-path lerobot/configs/robot/so100.yaml --policy-path outputs/train/act_so100/checkpoints/last/pretrained_model' },
-      { description: '可视化推理', code: 'python lerobot/scripts/visualize_dataset.py --repo-id your-name/so100-task' }
+      { description: '运行推理', code: 'lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --dataset.repo_id=your-name/so101-eval \
+  --dataset.num_episodes=5 --dataset.fps=30 \
+  --policy.path=outputs/train/act_so101/checkpoints/last/pretrained_model \
+  --display_data=true' },
+      { description: '可视化数据集', code: 'lerobot-dataset-viz --repo-id your-name/so101-task' }
     ],
     checkpoints: [
       '模型加载成功',
@@ -1350,10 +1355,10 @@ batch_size 在显存允许内越大越好（梯度估计更准、收敛快）。
     walkthrough: [
       {
         title: '加载 checkpoint 上岗',
-        body: `推理还是用 control_robot.py，但加 \`--policy-path\` 指向训练输出里的 \`checkpoints/last/pretrained_model\`。按 Enter 后 Follower 会**自己开始动**，Leader 退休（不再需要人操作）。`,
+        body: `推理使用 \`lerobot-record\`，并加 \`--policy.path\` 指向训练输出里的 \`checkpoints/last/pretrained_model\`。按 Enter 后 Follower 会**自己开始动**，Leader 退休（不再需要人操作）。`,
         command: {
           description: '运行推理',
-          code: 'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --policy-path outputs/train/act_so100/checkpoints/last/pretrained_model \\\n  --num-episodes 5'
+          code: 'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/train/act_so101/checkpoints/last/pretrained_model \\\n  --display_data=true'
         },
         expectedOutput: '[INFO] Loading policy from checkpoints/last/...\n[INFO] Robot ready. Press Enter to start inference episode 1/5.',
         tip: '想用某个中间检查点就把 last 换成 step_50000 之类。'
@@ -1365,7 +1370,7 @@ batch_size 在显存允许内越大越好（梯度估计更准、收敛快）。
 GPU 不够强、每帧推理 > 33ms 时实际跑不到 30 fps，会丢帧依旧抖，这时要么换卡、要么训练时也用更低 fps。`,
         command: {
           description: '锁定推理帧率',
-          code: 'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --policy-path outputs/.../pretrained_model \\\n  --fps 30 --num-episodes 5'
+          code: 'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/.../pretrained_model \\\n  --display_data=true'
         },
         warning: '推理 fps 和训练 fps 不一致是新手"模型在仿真好好的、实机就乱"的常见隐藏原因。'
       },
@@ -1437,9 +1442,9 @@ GPU 不够强、每帧推理 > 33ms 时实际跑不到 30 fps，会丢帧依旧�
       }
     ],
 
-    summary: `\`--policy-path\` 加载 checkpoint 上岗。**首次成功率 10-30% 是正常的**，别灰心。
+    summary: `\`--policy.path\` 加载 checkpoint 上岗。**首次成功率 10-30% 是正常的**，别灰心。
 
-抖动调优顺序：锁 \`--fps 30\`（和训练一致）→ EMA 平滑（α=0.3 一行代码）→ Temporal Ensembling → 查接线 → 补数据。复合误差会让长任务后段变歪，是预期现象。
+抖动调优顺序：锁 \`--dataset.fps 30\`（和训练一致）→ EMA 平滑（α=0.3 一行代码）→ Temporal Ensembling → 查接线 → 补数据。复合误差会让长任务后段变歪，是预期现象。
 
 最后一章教你系统化应对一切意外。`
   },
@@ -1535,7 +1540,7 @@ GPU 不够强、每帧推理 > 33ms 时实际跑不到 30 fps，会丢帧依旧�
 求助别人时附上这个 error.log，比截图清楚 10 倍 —— 别人能直接复制关键字去搜。`,
         command: {
           description: '保存完整错误到文件',
-          code: 'python lerobot/scripts/train.py policy=act ... 2>&1 | tee error.log'
+          code: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act ... 2>&1 | tee error.log'
         },
         expectedOutput: '(输出同时显示在屏幕 + 写入 error.log)'
       }
@@ -1613,10 +1618,10 @@ traceback 看最后一行；三大错误类型 ImportError / CUDA OOM / FileNotF
 export const errorDatabase: Record<string, DiagnosticResult> = {
   'missing required field(s) port': {
     error: 'Missing required field(s) port',
-    cause: '机器人配置文件中未指定 port 字段，LeRobot 无法确定与机械臂通信的串口',
-    solution: '在 robot 配置文件（如 so100.yaml）中添加 port 字段，指定正确的串口路径',
-    command: 'leader_arms:\n  main:\n    port: /dev/ttyUSB0\nfollower_arms:\n  main:\n    port: /dev/ttyUSB1',
-    nextStep: '运行 ls /dev/tty* 确认串口设备存在，然后更新配置文件',
+    cause: '命令中缺少 --robot.port 或端口路径写错，LeRobot 无法确定与机械臂通信的串口',
+    solution: '先运行 ls /dev/tty* 找到实际设备，再在命令中补上 --robot.port=/dev/ttyACM0；遥操作/录制还要补上 --teleop.port=/dev/ttyACM1',
+    command: 'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower',
+    nextStep: '运行 ls /dev/tty* 确认串口设备存在，然后把真实端口写入命令参数',
     category: 'hardware',
     related: ['permission denied', 'serial port not found']
   },
@@ -1633,7 +1638,7 @@ export const errorDatabase: Record<string, DiagnosticResult> = {
     error: 'CUDA out of memory',
     cause: 'GPU 显存不足，无法分配训练所需的内存。通常是 batch_size 过大或模型太大',
     solution: '减小 batch_size，启用梯度累积，或使用混合精度训练 (amp)',
-    command: 'python lerobot/scripts/train.py policy=act training.batch_size=4 training.grad_accumulation_steps=4',
+    command: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --batch_size=4',
     nextStep: '使用 nvidia-smi 监控显存使用，逐步调整参数找到最佳配置',
     category: 'training',
     related: ['training too slow', 'nan loss']
@@ -1660,7 +1665,7 @@ export const errorDatabase: Record<string, DiagnosticResult> = {
     error: '机械臂推理时抖动',
     cause: '控制频率不稳定、网络延迟或模型输出噪声过大',
     solution: '1. 检查并固定 fps 设置\n2. 添加动作平滑滤波 (EMA)\n3. 确保 USB 连接稳定',
-    command: 'python lerobot/scripts/control_robot.py record --fps 30 --policy-path ...',
+    command: 'lerobot-record --robot.type=so101_follower --robot.port=/dev/ttyACM0 --dataset.fps=30 --policy.path=outputs/.../pretrained_model',
     nextStep: '尝试降低控制频率或添加 EMA 平滑',
     category: 'inference',
     related: ['inference latency high']
@@ -1669,7 +1674,7 @@ export const errorDatabase: Record<string, DiagnosticResult> = {
     error: 'Training loss becomes NaN',
     cause: '学习率过高、数据存在异常值或归一化出错，导致梯度爆炸',
     solution: '1. 降低学习率\n2. 启用梯度裁剪\n3. 检查数据集是否有 NaN 或极端值',
-    command: 'python lerobot/scripts/train.py policy=act training.lr=1e-5 training.grad_clip_norm=10',
+    command: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --optimizer.lr=1e-5 --optimizer.grad_clip_norm=10',
     nextStep: '使用 wandb / tensorboard 监控梯度范数，定位异常 batch',
     category: 'training',
     related: ['cuda out of memory']
@@ -1678,7 +1683,7 @@ export const errorDatabase: Record<string, DiagnosticResult> = {
     error: '训练速度过慢',
     cause: '数据加载瓶颈、batch_size 过小、未使用混合精度，或 GPU 利用率低',
     solution: '1. 增大 num_workers\n2. 启用 AMP 混合精度\n3. 适当提高 batch_size\n4. 检查 GPU 利用率',
-    command: 'python lerobot/scripts/train.py policy=act training.num_workers=8 training.amp=true',
+    command: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --num_workers=8',
     nextStep: '运行 nvidia-smi dmon 监控 GPU 利用率与功耗',
     category: 'training'
   },
@@ -1694,7 +1699,7 @@ export const errorDatabase: Record<string, DiagnosticResult> = {
     error: 'Leader 与 Follower 关节角偏差大',
     cause: '机械臂未校准或电机零点不一致',
     solution: '重新运行校准脚本，确保两条臂在相同姿态下记录零点',
-    command: 'python lerobot/scripts/control_robot.py calibrate --robot-path lerobot/configs/robot/so100.yaml',
+    command: 'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower',
     nextStep: '校准完成后再次运行遥操作，观察跟随性',
     category: 'hardware'
   },
@@ -1702,7 +1707,7 @@ export const errorDatabase: Record<string, DiagnosticResult> = {
     error: '推理 fps 不稳定 / 延迟高',
     cause: 'CPU 与 GPU 之间数据传输瓶颈，或图像编码阻塞',
     solution: '1. 降低相机分辨率\n2. 使用半精度推理\n3. 关闭无关后台进程',
-    command: 'python lerobot/scripts/control_robot.py record --fps 30 --device cuda',
+    command: 'lerobot-record --robot.type=so101_follower --robot.port=/dev/ttyACM0 --dataset.fps=30 --policy.device=cuda',
     nextStep: '使用 time.perf_counter() 在推理循环中打点，定位耗时段',
     category: 'inference'
   },
@@ -1733,8 +1738,10 @@ export const aiResponses: Record<string, string> = {
 
 2. **运行校准脚本**
 \`\`\`bash
-python lerobot/scripts/control_robot.py calibrate \\
-  --robot-path lerobot/configs/robot/so100.yaml
+lerobot-calibrate \\
+  --robot.type=so101_follower \\
+  --robot.port=/dev/ttyACM0 \\
+  --robot.id=so101_follower
 \`\`\`
 
 3. **校准过程**
@@ -1768,30 +1775,33 @@ python lerobot/scripts/control_robot.py calibrate \\
 
 \`\`\`bash
 # 基础数据采集
-python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id your-name/task-name \\
-  --num-episodes 50
+lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\
+  --dataset.repo_id=your-name/task-name \\
+  --dataset.num_episodes=50 --dataset.fps=30
 
 # 带相机的数据采集
-python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id your-name/task-name \\
-  --num-episodes 50 \\
-  --fps 30
+lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\
+  --dataset.repo_id=your-name/task-name \\
+  --dataset.num_episodes=50 --dataset.fps=30 \\
+  --display_data=true
 
 # 推送到 HuggingFace Hub
-python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id your-name/task-name \\
-  --num-episodes 50 \\
-  --push-to-hub 1
+lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\
+  --dataset.repo_id=your-name/task-name \\
+  --dataset.num_episodes=50 --dataset.fps=30 \\
+  --dataset.push_to_hub=true
 \`\`\`
 
 **参数说明：**
-- \`--num-episodes\`: 采集的轨迹数量
-- \`--fps\`: 控制和录制的帧率
-- \`--push-to-hub\`: 是否上传到 Hub`,
+- \`--dataset.num_episodes\`: 采集的轨迹数量
+- \`--dataset.fps\`: 控制和录制的帧率
+- \`--dataset.push_to_hub\`: 是否上传到 Hub`,
 
   'meta/info.json': `**关于 meta/info.json 问题：**
 
@@ -1840,9 +1850,12 @@ your-repo-id/
 
 1. **固定控制频率**
 \`\`\`bash
-python lerobot/scripts/control_robot.py record \\
-  --fps 30 \\
-  --policy-path your-checkpoint
+lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --dataset.repo_id=your-name/so101-eval \\
+  --dataset.num_episodes=5 --dataset.fps=30 \\
+  --policy.path=your-checkpoint \\
+  --display_data=true
 \`\`\`
 
 2. **添加动作平滑**

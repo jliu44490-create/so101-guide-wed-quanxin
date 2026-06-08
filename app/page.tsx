@@ -101,10 +101,12 @@ const workflow = [
     title: '采集',
     description: 'Leader/Follower 遥操作 → parquet + 视频 + meta',
     href: '/learn/5',
-    code: `python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id you/pick_place \\
-  --num-episodes 50`
+    code: `lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\
+  --dataset.repo_id=you/pick-place \\
+  --dataset.num_episodes=50 --dataset.fps=30 \\
+  --display_data=true`
   },
   {
     step: '02',
@@ -112,9 +114,9 @@ const workflow = [
     title: '训练',
     description: 'ACT (CVAE + Transformer) 在你的数据集上 fine-tune',
     href: '/learn/7',
-    code: `python lerobot/scripts/train.py \\
-  policy=act env=so100 \\
-  dataset_repo_id=you/pick_place`
+    code: `lerobot-train \\
+  --dataset.repo_id=you/pick-place \\
+  --policy.type=act`
   },
   {
     step: '03',
@@ -122,9 +124,10 @@ const workflow = [
     title: '推理',
     description: '加载 checkpoint → 实机控制 → 调 fps + EMA 平滑',
     href: '/learn/8',
-    code: `python lerobot/scripts/control_robot.py record \\
-  --policy-path outputs/.../last \\
-  --fps 30`
+    code: `lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --policy.path=outputs/.../last \\
+  --dataset.fps=30`
   }
 ]
 
@@ -155,6 +158,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-background">
       <Header />
 
+      <main>
       {/* ═══════════════════════ HERO ═══════════════════════ */}
       <section className="relative overflow-hidden">
         <AuroraBackground intensity="normal" withGrid={false} />
@@ -366,12 +370,12 @@ export default function HomePage() {
             </div>
           </Reveal>
 
-          <div className="grid gap-6 lg:grid-cols-3">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-3">
             {workflow.map((step, i) => (
-              <Reveal key={step.step} delay={i * 120}>
-                <Link href={step.href} className="group block h-full">
-                  <ConicBorder className="h-full">
-                    <SpotlightCard className="relative h-full rounded-2xl border border-border/40 bg-card/80 backdrop-blur p-6">
+              <Reveal key={step.step} delay={i * 120} className="min-w-0">
+                <Link href={step.href} className="group block h-full min-w-0">
+                  <ConicBorder className="h-full min-w-0">
+                    <SpotlightCard className="relative h-full min-w-0 overflow-hidden rounded-2xl border border-border/40 bg-card/80 backdrop-blur p-6">
                       <div className="flex items-start justify-between gap-3">
                         <span className="font-mono text-2xl font-bold text-muted-foreground/50">
                           {step.step}
@@ -382,10 +386,10 @@ export default function HomePage() {
                       </div>
                       <h3 className="mt-5 text-lg font-semibold">{step.title}</h3>
                       <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
-                      <pre className="mt-5 overflow-x-auto rounded-lg border border-border/50 bg-[oklch(0.12_0.01_270)] p-3 font-mono text-[11px] leading-relaxed text-white/85">
-                        <code>{step.code}</code>
+                      <pre className="mt-5 min-w-0 max-w-full overflow-x-auto rounded-lg border border-border/50 bg-[oklch(0.12_0.01_270)] p-3 font-mono text-[11px] leading-relaxed text-white/85">
+                        <code className="block min-w-max">{step.code}</code>
                       </pre>
-                      <div className="mt-5 flex items-center gap-1.5 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="mt-5 flex min-w-0 items-center gap-1.5 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
                         前往章节
                         <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                       </div>
@@ -474,6 +478,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      </main>
       <Footer />
     </div>
   )

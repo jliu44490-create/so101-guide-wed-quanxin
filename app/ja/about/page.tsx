@@ -35,14 +35,20 @@ import {
   Marquee,
   Reveal,
   ShimmerText,
-  SpotlightCard,
   TiltCard
 } from '@/components/effects'
 import { siteConfigJa } from '@/lib/site-config-ja'
 
 export const metadata: Metadata = {
   title: 'プロジェクトについて',
-  description: 'SO101 模倣学習ガイドの目的、技術スタック、運営チームを紹介します。'
+  description: 'SO101 模倣学習ガイドの目的、技術スタック、運営チームを紹介します。',
+  alternates: {
+    canonical: '/ja/about',
+    languages: {
+      'zh-CN': '/about',
+      'ja-JP': '/ja/about'
+    }
+  }
 }
 
 const values = [

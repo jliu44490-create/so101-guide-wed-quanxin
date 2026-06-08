@@ -20,8 +20,13 @@ export interface AuthUser {
   email?: string
 }
 
+export interface AuthSession {
+  access_token: string
+}
+
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(null)
+  const [session, setSession] = useState<AuthSession | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [ready, setReady] = useState(false)
 
@@ -47,6 +52,7 @@ export function useAuth() {
       const u = data.session?.user
       if (u) {
         setUser({ id: u.id, email: u.email ?? undefined })
+        setSession({ access_token: data.session!.access_token })
         loadProfile(u.id)
       }
       setReady(true)
@@ -56,9 +62,11 @@ export function useAuth() {
       const u = session?.user
       if (u) {
         setUser({ id: u.id, email: u.email ?? undefined })
+        setSession({ access_token: session.access_token })
         loadProfile(u.id)
       } else {
         setUser(null)
+        setSession(null)
         setProfile(null)
       }
     })
@@ -90,15 +98,19 @@ export function useAuth() {
     if (!supabase) return
     await supabase.auth.signOut()
     setUser(null)
+    setSession(null)
     setProfile(null)
   }, [])
 
   return {
     /** true once we know whether the user is logged in (or backend is absent). */
     ready,
+    /** Backwards-compatible loading alias used by entitlement/paywall flows. */
+    loading: !ready,
     /** Whether the community backend is wired up at all. */
     enabled: isSupabaseConfigured,
     user,
+    session,
     profile,
     isLoggedIn: !!user,
     signInWithGitHub,

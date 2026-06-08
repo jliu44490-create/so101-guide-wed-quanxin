@@ -35,14 +35,20 @@ import {
   Marquee,
   Reveal,
   ShimmerText,
-  SpotlightCard,
   TiltCard
 } from '@/components/effects'
 import { siteConfig } from '@/lib/site-config'
 
 export const metadata: Metadata = {
   title: '关于项目',
-  description: '了解 SO101 模仿学习指南的目标、技术栈与背后的团队。'
+  description: '了解 SO101 模仿学习指南的目标、技术栈与背后的团队。',
+  alternates: {
+    canonical: '/about',
+    languages: {
+      'zh-CN': '/about',
+      'ja-JP': '/ja/about'
+    }
+  }
 }
 
 const values = [

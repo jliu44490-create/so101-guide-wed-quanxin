@@ -33,6 +33,7 @@ export function ParticleField({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const isFine = useHasFinePointer()
   const reduceMotion = usePrefersReducedMotion()
+  const effectiveCount = isFine ? count : Math.min(count, 18)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -56,7 +57,7 @@ export function ParticleField({
     const seed = () => {
       const rect = canvas.getBoundingClientRect()
       const particles: Particle[] = []
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < effectiveCount; i++) {
         particles.push({
           x: Math.random() * rect.width,
           y: Math.random() * rect.height,
@@ -161,7 +162,7 @@ export function ParticleField({
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseout', onLeave)
     }
-  }, [count, interactive, baseHue, reduceMotion, isFine])
+  }, [effectiveCount, interactive, baseHue, reduceMotion, isFine])
 
   return (
     <canvas

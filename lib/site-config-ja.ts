@@ -5,8 +5,8 @@
  * shared components can swap to this at runtime via pathname detection.
  *
  * Brand name is intentionally kept as "LVJIN ROBOTICS" (no Japanese transliteration).
- * The `url` field intentionally depends on the CN config so both locales follow
- * the same Vercel-derived origin.
+ * The `url` field depends on the CN config so both locales share the same
+ * production origin and never inherit Vercel preview URLs.
  */
 
 import { siteConfig } from './site-config'

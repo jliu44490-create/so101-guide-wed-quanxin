@@ -41,19 +41,19 @@ export function HomeLearningPathCards() {
   const learningPath = chapters.slice(0, 6)
 
   return (
-    <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid min-w-0 gap-5 md:grid-cols-2 lg:grid-cols-3">
       {learningPath.map((chapter, index) => {
         const Icon = stepIcons[index % stepIcons.length]
         return (
-          <Reveal key={chapter.id} delay={index * 60}>
+          <Reveal key={chapter.id} delay={index * 60} className="min-w-0">
             <Link
               href={`${learnBase}/${chapter.id}`}
-              className="group relative block"
+              className="group relative block min-w-0"
             >
               <TiltCard
                 spotlight
                 maxTilt={6}
-                className="h-full overflow-hidden rounded-xl border border-border/60 bg-card/60"
+                className="h-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border/60 bg-card/60"
               >
                 <div className="p-6">
                   <div className="flex items-start gap-4">

@@ -22,6 +22,7 @@ import {
 import Link from 'next/link'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { RouteLoadingShell } from '@/components/route-loading-shell'
 import { CodeBlock } from '@/components/code-block'
 import {
   AuroraBackground,
@@ -57,7 +58,7 @@ const errorEntries: EntryWithKey[] = Object.entries(errorDatabaseJa).map(
 
 export default function DiagnosePageJa() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingShell label="診断ツールを読み込んでいます..." />}>
       <DiagnoseContent />
     </Suspense>
   )
@@ -202,8 +203,8 @@ function DiagnoseContent() {
             </CardContent>
           </Card>
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <div className="space-y-3">
+          <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+            <div className="min-w-0 space-y-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 該当するエラー ({filtered.length})
               </p>
@@ -231,7 +232,7 @@ function DiagnoseContent() {
                         type="button"
                         onClick={() => setActiveKey(key)}
                         className={cn(
-                          'group flex items-start gap-3 rounded-xl border bg-card/60 p-3.5 text-left transition-all',
+                          'group flex w-full min-w-0 items-start gap-3 rounded-xl border bg-card/60 p-3.5 text-left transition-all',
                           isActive
                             ? 'border-primary/40 bg-primary/5 shadow-md shadow-primary/5'
                             : 'border-border/60 hover:border-primary/30 hover:bg-card'
@@ -261,7 +262,7 @@ function DiagnoseContent() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="min-w-0 space-y-4">
               {active ? (
                 <ErrorDetail entry={active} onSelect={(k) => setActiveKey(k)} />
               ) : (
@@ -279,15 +280,15 @@ function DiagnoseContent() {
               )}
 
               <Card className="border-border/60 bg-card/30">
-                <CardContent className="flex items-start gap-3 p-5">
+                <CardContent className="flex flex-col items-start gap-3 p-5 sm:flex-row">
                   <Bot className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <div className="flex-1 text-sm">
+                  <div className="min-w-0 flex-1 text-sm">
                     <p className="font-medium">該当が無い場合は AI に相談</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       完整なエラースタックや実行コマンドを添えて AI アシスタントに送ると精度が上がります。
                     </p>
                   </div>
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                     <Link href={query ? `/ja/assistant?q=${encodeURIComponent(query)}` : '/ja/assistant'}>
                       質問する
                       <ArrowRight className="ml-1 h-3.5 w-3.5" />
@@ -315,14 +316,14 @@ function ErrorDetail({
   const cfg = categoryConfig[entry.result.category ?? 'misc']
   const { result } = entry
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <Card className="border-destructive/30">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="border-border/60">
                   <cfg.icon className={cn('mr-1 h-3 w-3', cfg.color)} />
@@ -330,7 +331,7 @@ function ErrorDetail({
                 </Badge>
               </div>
               <CardTitle className="mt-1 text-base">エラーメッセージ</CardTitle>
-              <CardDescription className="mt-1 font-mono text-sm text-destructive">
+              <CardDescription className="mt-1 break-words font-mono text-sm text-destructive">
                 {result.error}
               </CardDescription>
             </div>
@@ -370,7 +371,7 @@ function ErrorDetail({
       <Card className="border-primary/30 bg-primary/5">
         <CardContent className="flex items-start gap-3 p-5">
           <ArrowRight className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-          <div>
+          <div className="min-w-0">
             <p className="font-medium">次の一手</p>
             <p className="mt-1 text-sm text-muted-foreground">{result.nextStep}</p>
           </div>

@@ -510,7 +510,7 @@ export const lessons: Record<number, Lesson> = {
         ],
         correctOptionId: 'smaller-batch',
         explanation:
-          '## OOM ≈ batch 太大\n\n90% 的 CUDA OOM 是 batch_size 过大。你的 GPU 显存不够装那么多样本同时计算。\n\n**应急三步：**\n1. `--training.batch_size=4`（默认通常是 32 或 64，改成 4）\n2. 还不行？开梯度累积 `--training.grad_accumulation_steps=4`\n3. 还不行？用混合精度 `--training.amp=true`\n\n90% 情况下第 1 步就够。第 7 章再细讲。'
+          '## OOM ≈ batch 太大\n\n90% 的 CUDA OOM 是 batch_size 过大。你的 GPU 显存不够装那么多样本同时计算。\n\n**应急三步：**\n1. `--batch_size=4`（先把 batch 调小，减半甚至降到 2）\n2. 还不行？关掉多余摄像头、调低输入图像分辨率，让每个样本更小\n3. 还不行？换更小的 policy，或租一张显存更大的 GPU\n\n90% 情况下第 1 步就够。第 7 章再细讲。'
       },
       {
         id: 'c3-10-recap',
@@ -574,18 +574,18 @@ export const lessons: Record<number, Lesson> = {
         ],
         correctOptionId: 'find-motors',
         explanation:
-          '## LeRobot 自带探测工具\n\n命令是 `python lerobot/scripts/find_motors_bus_port.py`。它会**逐个端口**询问机械臂「你是几号电机？」然后告诉你哪个端口对应哪条臂。\n\n手动拔线 ✅ 简单但要动手  \nfind_motors ✅ 自动但记不住命令'
+          '## LeRobot 自带探测工具\n\n命令是 `lerobot-find-port`。它会**逐个端口**询问机械臂「你是几号电机？」然后告诉你哪个端口对应哪条臂。\n\n手动拔线 ✅ 简单但要动手  \nfind_motors ✅ 自动但记不住命令'
       },
       {
         id: 'c4-04-config',
         type: 'command',
-        title: '把结果写进配置文件',
-        intro: '知道哪个 ttyUSB 是哪个角色后，把它写进配置 yaml：',
-        description: '编辑 `lerobot/configs/robot/so100.yaml`，加这几行：',
+        title: '把结果写进命令参数',
+        intro: '知道哪个 ttyUSB 是哪个角色后，把它写进新版 LeRobot CLI 参数：',
+        description: '后续命令里带上这两个端口：',
         code:
-          'leader_arms:\n  main:\n    port: /dev/ttyUSB1\nfollower_arms:\n  main:\n    port: /dev/ttyUSB0',
-        tip: '`main` 是个名字，可以叫任何东西。port 是从上一步认出来的实际端口。**改完保存，以后所有命令自动用这个配置。**',
-        warning: '如果你重启电脑后再插，ttyUSB0 / ttyUSB1 的顺序可能颠倒！这是 Linux 串口的老问题。最稳的办法是用 udev 规则绑定，但那是高级话题。你现在每次开机看一眼就够了。'
+          '--robot.port=/dev/ttyACM0\n--teleop.port=/dev/ttyACM1',
+        tip: '`--robot.port` 是 Follower 端口，`--teleop.port` 是 Leader 端口。后面的校准、遥操作、录制都沿用这个对应关系。',
+        warning: '如果你重启电脑后再插，ttyACM0 / ttyACM1 的顺序可能颠倒。最稳的是先跑 `ls /dev/tty*` 再复制真实端口。'
       },
       {
         id: 'c4-05-calibrate-why',
@@ -618,7 +618,7 @@ export const lessons: Record<number, Lesson> = {
         title: '跑校准',
         description: '一条命令开始校准过程：',
         code:
-          'python lerobot/scripts/control_robot.py calibrate \\\n  --robot-path lerobot/configs/robot/so100.yaml',
+          'lerobot-calibrate \\\n  --robot.type=so101_follower \\\n  --robot.port=/dev/ttyACM0 \\\n  --robot.id=so101_follower',
         expectedOutput:
           'Calibrating leader_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration to ~/.cache/.../calibration.json\nDone!',
         tip: '它会一步步引导你：让你把臂**手动摆到指定姿态**（如完全伸展、回零位），每摆一个姿态按一次 Enter。整个过程 1-2 分钟。',
@@ -681,7 +681,7 @@ export const lessons: Record<number, Lesson> = {
         bullets: [
           '🔍 学会了 **ls /dev/tty\\*** 看串口',
           '⚙️ 知道了 LeRobot 自带 **find_motors** 工具',
-          '📝 会在 yaml 里写 **leader_arms / follower_arms 端口**',
+          '📝 会用 **--robot.port / --teleop.port** 写清两条臂端口',
           '🎯 理解了 **校准** = 让电脑知道每个电机的真零点',
           '🔁 知道校准 **只在硬件变动时**才需要重做'
         ]
@@ -720,7 +720,7 @@ export const lessons: Record<number, Lesson> = {
         intro: '不录数据，先验证 Leader → Follower 同步工作正常。',
         description: '跑这条命令：',
         code:
-          'python lerobot/scripts/control_robot.py teleoperate \\\n  --robot-path lerobot/configs/robot/so100.yaml',
+          'lerobot-teleoperate \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --display_data=true',
         expectedOutput: '[INFO] Connected to leader_arms/main\n[INFO] Connected to follower_arms/main\n[INFO] Teleoperation started. Move the leader arm.',
         tip: '现在你拿手扳 Leader 关节 → Follower 应该**同步动**。延迟 < 50ms 才算正常。\n\n试个 30 秒，确认手感对了再 Ctrl+C 退出。'
       },
@@ -757,10 +757,10 @@ export const lessons: Record<number, Lesson> = {
         intro: 'Teleop 手感对了，切换到 record 模式。这次会把数据保存下来。',
         description: '完整命令：',
         code:
-          'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --repo-id your-name/so100-pick-cup \\\n  --num-episodes 50 \\\n  --fps 30',
+          'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --dataset.num_episodes=50 --dataset.fps=30 \\\n  --display_data=true',
         expectedOutput:
           'Recording episode 1/50...\n[INFO] Press Enter when ready, Ctrl+C to abort.\nEpisode 1 saved (132 frames, 4.4 s)',
-        tip: '`--repo-id` 是你自己起的数据集名字（任意，不用真的传到 HuggingFace）。\n`--num-episodes` 总共要录多少条。\n`--fps` 控制频率，30 推荐。'
+        tip: '`--dataset.repo_id` 是你自己起的数据集名字（任意，不用真的传到 HuggingFace）。\n`--dataset.num_episodes` 总共要录多少条。\n`--dataset.fps` 控制频率，30 推荐。'
       },
       {
         id: 'c5-05-how-many',
@@ -835,10 +835,10 @@ export const lessons: Record<number, Lesson> = {
         id: 'c5-10-push-hub',
         type: 'command',
         title: '（可选）把数据集传到 HuggingFace Hub',
-        intro: '想分享给别人，或者备份到云？加一个 `--push-to-hub 1` 标志：',
+        intro: '想分享给别人，或者备份到云？加一个 `--dataset.push_to_hub=true` 标志：',
         description: '在 record 命令里加一行：',
         code:
-          'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --repo-id your-name/so100-pick-cup \\\n  --num-episodes 50 \\\n  --push-to-hub 1',
+          'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --dataset.num_episodes=50 --dataset.fps=30 \\\n  --dataset.push_to_hub=true \\\n  --display_data=true',
         tip: '需要先 `huggingface-cli login` 登录。**完全可以不传**，本地训练用本地数据集就行。'
       },
       {
@@ -886,7 +886,7 @@ export const lessons: Record<number, Lesson> = {
         prompt: '你的演示数据被保存在 ——',
         revealCta: '看路径',
         reveal:
-          '## 路径\n\n```\n~/.cache/huggingface/lerobot/<repo-id>/\n```\n\n比如你 `--repo-id` 写的是 `your-name/so100-pick-cup`，路径就是：\n\n```\n~/.cache/huggingface/lerobot/your-name/so100-pick-cup/\n```\n\n打开这个文件夹 —— 你会看到下面这样的结构 ↓',
+          '## 路径\n\n```\n~/.cache/huggingface/lerobot/<repo-id>/\n```\n\n比如你 `--dataset.repo_id` 写的是 `your-name/so101-pick-cup`，路径就是：\n\n```\n~/.cache/huggingface/lerobot/your-name/so101-pick-cup/\n```\n\n打开这个文件夹 —— 你会看到下面这样的结构 ↓',
         followCta: '看目录树 →'
       },
       {
@@ -933,7 +933,7 @@ export const lessons: Record<number, Lesson> = {
         type: 'command',
         title: '打开 info.json 看一眼',
         description: '直接 cat 出来：',
-        code: 'cat ~/.cache/huggingface/lerobot/your-name/so100-pick-cup/meta/info.json',
+        code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-pick-cup/meta/info.json',
         expectedOutput:
           '{\n  "codebase_version": "v2.0",\n  "robot_type": "so100",\n  "total_episodes": 50,\n  "total_frames": 7423,\n  "fps": 30,\n  "features": {\n    "observation.state": {"dtype": "float32", "shape": [6]},\n    "action": {"dtype": "float32", "shape": [6]},\n    ...\n  }\n}',
         tip: '看 `total_episodes` 是 50 + `total_frames` 是 ~7500 = 平均每条 150 帧 = 5 秒 30fps。**逻辑闭环**。'
@@ -1061,7 +1061,7 @@ export const lessons: Record<number, Lesson> = {
         title: '启动训练',
         description: '一条命令搞定（前提：第 5 课的数据集已录好）：',
         code:
-          'python lerobot/scripts/train.py \\\n  policy=act \\\n  env=so100 \\\n  dataset_repo_id=your-name/so100-pick-cup',
+          'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --output_dir=outputs/train/act_so101',
         expectedOutput:
           '[INFO] Loading dataset...\n[INFO] Building ACT model (params: 84.5M)...\n[INFO] Starting training...\nstep 0    loss 1.247    lr 1e-4\nstep 100  loss 0.456    lr 1e-4\nstep 500  loss 0.182    lr 1e-4\n...',
         tip: '默认会跑 200,000 步。在 RTX 3060 上大约 6-8 小时，CPU 上 1-2 天。\n\n**可以中途 Ctrl+C** —— checkpoint 会自动保存，下次加 `resume=true` 接着训练。'
@@ -1109,7 +1109,7 @@ export const lessons: Record<number, Lesson> = {
             id: 'lower-lr-clip',
             label: 'C. 学习率降一个量级 + 启用梯度裁剪',
             feedback:
-              '✨ **正确**。\n\nNaN 几乎总是「梯度爆炸」的结果 —— 学习率太大让权重一步跳到天上，下次计算就溢出。\n\n应急两板斧：\n```\n--training.lr=1e-5  (从 1e-4 降到 1e-5)\n--training.grad_clip_norm=10  (梯度裁剪)\n```\n\n90% 情况下这两个一起够了。',
+              '✨ **正确**。\n\nNaN 几乎总是「梯度爆炸」的结果 —— 学习率太大让权重一步跳到天上，下次计算就溢出。\n\n应急两板斧：\n```\n--optimizer.lr=1e-5  (从 1e-4 降到 1e-5)\n--optimizer.grad_clip_norm=10  (梯度裁剪)\n```\n\n90% 情况下这两个一起够了。',
             correct: true
           }
         ]
@@ -1121,7 +1121,7 @@ export const lessons: Record<number, Lesson> = {
         intro: '看 loss 不能光看终端。**wandb** 是机器学习的标配监控面板，会画 loss 曲线、记录超参、对比多次实验。',
         description: '装好后只要加两个参数：',
         code:
-          'wandb login   # 第一次要登一下\n\npython lerobot/scripts/train.py \\\n  policy=act env=so100 \\\n  dataset_repo_id=your-name/so100-pick-cup \\\n  wandb.enable=true \\\n  wandb.project=so100-experiments',
+          'wandb login   # 第一次要登一下\n\nlerobot-train \\\n  --dataset.repo_id=... --policy.type=act \\\n  dataset.repo_id=your-name/so101-pick-cup \\\n  wandb.enable=true \\\n  wandb.project=so101-experiments',
         tip: '训练开始后 wandb 会打印一个 URL，浏览器打开能实时看 loss 曲线。\n\n免费版功能完全够个人用。'
       },
       {
@@ -1143,7 +1143,7 @@ export const lessons: Record<number, Lesson> = {
         bullets: [
           '🧠 **ACT** = Transformer Encoder + CVAE + Decoder（输出 100 步）',
           '🎯 让 ACT 强的核心：**Action Chunking** + **CVAE**',
-          '🚀 `policy=act env=so100 dataset_repo_id=...` 启动训练',
+          '🚀 `--dataset.repo_id=... --policy.type=act` 启动训练',
           '📉 loss 健康 = 前 1k 快速降 → 后期 < 5% 变化收敛',
           '⚠️ **NaN loss** ➜ 学习率 ÷ 10 + 梯度裁剪',
           '📊 用 **wandb** 监控，比看终端高效得多'
@@ -1181,12 +1181,12 @@ export const lessons: Record<number, Lesson> = {
         type: 'command',
         title: '让训练好的模型上岗',
         intro: '推理命令长这样：',
-        description: '同样是 control_robot.py，但这次加 `--policy-path`：',
+        description: '同样用 `lerobot-record`，但这次加 `--policy.path`：',
         code:
-          'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --policy-path outputs/train/act_so100/checkpoints/last/pretrained_model \\\n  --num-episodes 5',
+          'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/train/act_so101/checkpoints/last/pretrained_model \\\n  --display_data=true',
         expectedOutput:
           '[INFO] Loading policy from checkpoints/last/...\n[INFO] Robot ready. Press Enter to start inference episode 1/5.',
-        tip: '注意 `--policy-path` 指向**训练输出目录里的 last/pretrained_model**。`last` 是最近的检查点。想用某个具体步数的 checkpoint 就改成 `step_50000/` 之类。\n\n按 Enter 后 Follower 臂会**自己开始动**。Leader 不动了 —— 它已经退休。'
+        tip: '注意 `--policy.path` 指向**训练输出目录里的 last/pretrained_model**。`last` 是最近的检查点。想用某个具体步数的 checkpoint 就改成 `step_50000/` 之类。\n\n按 Enter 后 Follower 臂会**自己开始动**。Leader 不动了 —— 它已经退休。'
       },
       {
         id: 'c8-03-first-run',
@@ -1231,9 +1231,9 @@ export const lessons: Record<number, Lesson> = {
         type: 'command',
         title: '把推理 fps 锁死',
         intro: 'LeRobot 默认会尽全力跑，但**不稳定的 fps 是抖动的元凶**。把它锁在 30：',
-        description: '加 `--fps 30`：',
+        description: '加 `--dataset.fps 30`：',
         code:
-          'python lerobot/scripts/control_robot.py record \\\n  --robot-path lerobot/configs/robot/so100.yaml \\\n  --policy-path outputs/.../pretrained_model \\\n  --fps 30 \\\n  --num-episodes 5',
+          'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/.../pretrained_model \\\n  --display_data=true',
         tip: '为啥锁 30？因为**训练数据就是 30 fps 录的**。推理时 fps 跟训练 fps 一致才能让模型「感觉」一致。差太多 → 模型懵。',
         warning: '如果你 GPU 不够强，**实际跑不到 30 fps**（每帧推理 > 33ms），LeRobot 会丢帧，依然不稳。这时候要么换更快的 GPU，要么训练时也用更低的 fps。'
       },
@@ -1276,10 +1276,10 @@ export const lessons: Record<number, Lesson> = {
         type: 'recap',
         title: '🧠 这一关你已经掌握:',
         bullets: [
-          '🦾 用 `--policy-path` 加载 checkpoint 上岗',
+          '🦾 用 `--policy.path` 加载 checkpoint 上岗',
           '⚠️ **第一次成功率 10-30% 是正常的**，别灰心',
           '🌨️ **复合误差**仍在，但比 BC 好太多',
-          '🔒 `--fps 30` 锁死帧率 = 抖动调优第一步',
+          '🔒 `--dataset.fps 30` 锁死帧率 = 抖动调优第一步',
           '✨ **EMA 平滑**：α=0.3，一行代码搞定大半抖动',
           '🎯 还抖 ➜ Temporal Ensembling / 更多数据'
         ]
@@ -1384,7 +1384,7 @@ export const lessons: Record<number, Lesson> = {
         title: '把错误完整保存',
         intro: '出错时先**完整保存输出**，免得后面看不到。这条命令把所有输出（包括错误）都存到 `error.log`：',
         description: '在你的训练/推理命令后面加：',
-        code: 'python lerobot/scripts/train.py policy=act ... 2>&1 | tee error.log',
+        code: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act ... 2>&1 | tee error.log',
         expectedOutput: '(同时显示在屏幕上 + 写入 error.log)',
         tip: '`2>&1` 把错误流也合到正常输出。\n`| tee` 同时显示在屏幕**和**写文件。\n\n以后求助别人时，附上 error.log 比截图清楚 10 倍。'
       },

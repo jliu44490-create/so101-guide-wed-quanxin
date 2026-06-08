@@ -26,6 +26,9 @@ export async function generateMetadata(
       title: `${chapter.title} 互动课 | ${siteConfig.shortName}`,
       description: chapter.description,
       type: 'article'
+    },
+    alternates: {
+      canonical: `/learn/${chapter.id}/play`
     }
   }
 }

@@ -128,7 +128,7 @@ export const glossaryJa: GlossaryTerm[] = [
     term: 'Hydra 設定',
     termEn: 'Hydra Config',
     definition:
-      'Facebook が公開した設定管理フレームワーク。LeRobot は Hydra を用いて学習パラメータを管理しており、`policy=act env=so100` のようにコマンドラインから設定を上書きできます。',
+      'Facebook が公開した設定管理フレームワーク。LeRobot は Hydra を用いて学習パラメータを管理しており、`--dataset.repo_id=... --policy.type=act` のようにコマンドラインから設定を上書きできます。',
     category: 'framework'
   }
 ]

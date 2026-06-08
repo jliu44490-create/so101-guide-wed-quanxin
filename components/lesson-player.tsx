@@ -49,21 +49,38 @@ import type {
   VizCard
 } from '@/lib/lesson-types'
 
+function seededRandom(seed: number) {
+  let value = seed + 0x6d2b79f5
+  value = Math.imul(value ^ (value >>> 15), value | 1)
+  value ^= value + Math.imul(value ^ (value >>> 7), value | 61)
+  return ((value ^ (value >>> 14)) >>> 0) / 4294967296
+}
+
+function hashText(value: string) {
+  let hash = 2166136261
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+const CONFETTI_SYMBOLS = ['🎉', '✨', '🎊', '⭐', '💫', '🌟', '🎈']
+
 /* ────────────────────────────────────────────────────────────────────── */
 /* Confetti — pure CSS particles, no library                              */
 /* ────────────────────────────────────────────────────────────────────── */
 
 function Confetti() {
-  const symbols = ['🎉', '✨', '🎊', '⭐', '💫', '🌟', '🎈']
   const items = useMemo(
     () =>
       Array.from({ length: 28 }, (_, i) => ({
-        s: symbols[i % symbols.length],
-        dx: (Math.random() - 0.5) * 800,
-        dy: -200 - Math.random() * 400,
-        rot: (Math.random() - 0.5) * 720,
+        s: CONFETTI_SYMBOLS[i % CONFETTI_SYMBOLS.length],
+        dx: (seededRandom(i + 11) - 0.5) * 800,
+        dy: -200 - seededRandom(i + 29) * 400,
+        rot: (seededRandom(i + 47) - 0.5) * 720,
         delay: i * 18,
-        dur: 1200 + Math.random() * 600
+        dur: 1200 + seededRandom(i + 71) * 600
       })),
     []
   )
@@ -582,8 +599,9 @@ function MatchCardView({
   // Shuffled right column. Generate once.
   const shuffledRights = useMemo(() => {
     const arr = card.pairs.map((p, i) => ({ value: p.right, originalIdx: i }))
+    const seedBase = hashText(card.pairs.map((p) => `${p.left}:${p.right}`).join('|'))
     for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
+      const j = Math.floor(seededRandom(seedBase + i) * (i + 1))
       ;[arr[i], arr[j]] = [arr[j], arr[i]]
     }
     return arr
@@ -722,7 +740,14 @@ function VizCardView({
       )}
       {card.imageSrc && (
         <figure className="overflow-hidden rounded-xl border border-border/60 bg-card/40">
-          <img src={card.imageSrc} alt={card.imageAlt ?? ''} className="w-full" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={card.imageSrc}
+            alt={card.imageAlt ?? ''}
+            className="w-full"
+            loading="lazy"
+            decoding="async"
+          />
           {card.caption && (
             <figcaption className="border-t border-border/40 bg-background/40 px-4 py-2 text-xs text-muted-foreground sm:px-6 sm:py-3 sm:text-sm">
               {card.caption}

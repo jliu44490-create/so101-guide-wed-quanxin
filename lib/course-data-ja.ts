@@ -155,8 +155,8 @@ export const chaptersJa: Chapter[] = [
       { title: 'キャリブレーション検証', content: '各関節の可動範囲が正しいかテストします。' }
     ],
     commands: [
-      { description: 'キャリブレーションスクリプトを実行', code: 'python lerobot/scripts/control_robot.py calibrate --robot-path lerobot/configs/robot/so100.yaml' },
-      { description: 'キャリブレーション結果を確認', code: 'cat ~/.cache/huggingface/lerobot/calibration/so100.json' }
+      { description: 'キャリブレーションスクリプトを実行', code: 'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower' },
+      { description: 'キャリブレーション結果を確認', code: 'find ~/.cache/huggingface/lerobot/calibration -maxdepth 3 -type f' }
     ],
     checkpoints: [
       'ポートを正しく識別できている',
@@ -166,9 +166,9 @@ export const chaptersJa: Chapter[] = [
     errors: [
       {
         error: 'Missing required field(s) port',
-        cause: '設定ファイルでポートが指定されていません。',
-        solution: 'robot 設定に port フィールドを追加します。',
-        command: 'vim lerobot/configs/robot/so100.yaml'
+        cause: 'コマンド内でポートが指定されていません。',
+        solution: '--robot.port=/dev/ttyACM0 を追加し、実際のポートは ls /dev/tty* で確認します。',
+        command: 'lerobot-calibrate --help'
       }
     ]
   },
@@ -196,8 +196,8 @@ export const chaptersJa: Chapter[] = [
       { title: 'データの保存', content: '指定ディレクトリに正しく保存されたか確認します。' }
     ],
     commands: [
-      { description: '遠隔操作を起動', code: 'python lerobot/scripts/control_robot.py teleoperate --robot-path lerobot/configs/robot/so100.yaml' },
-      { description: 'データセットを録画', code: 'python lerobot/scripts/control_robot.py record --robot-path lerobot/configs/robot/so100.yaml --repo-id your-name/so100-task --num-episodes 50' }
+      { description: '遠隔操作を起動', code: 'lerobot-teleoperate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 --display_data=true' },
+      { description: 'データセットを録画', code: 'lerobot-record --robot.type=so101_follower --robot.port=/dev/ttyACM0 --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 --dataset.repo_id=your-name/so101-task --dataset.num_episodes=50 --dataset.fps=30 --display_data=true' }
     ],
     checkpoints: [
       'Leader-Follower の同期が正常',
@@ -230,9 +230,9 @@ export const chaptersJa: Chapter[] = [
       { title: 'データ検証', content: 'ツールを使ってデータセットの完整性を検証します。' }
     ],
     commands: [
-      { description: 'データセット構造を確認', code: 'tree ~/.cache/huggingface/lerobot/your-name/so100-task' },
-      { description: 'メタデータを表示', code: 'cat ~/.cache/huggingface/lerobot/your-name/so100-task/meta/info.json' },
-      { description: 'データセットを検証', code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so100-task\')"' }
+      { description: 'データセット構造を確認', code: 'tree ~/.cache/huggingface/lerobot/your-name/so101-task' },
+      { description: 'メタデータを表示', code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-task/meta/info.json' },
+      { description: 'データセットを検証', code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so101-task\')"' }
     ],
     checkpoints: [
       'ディレクトリ構造を理解している',
@@ -244,7 +244,7 @@ export const chaptersJa: Chapter[] = [
         error: 'FileNotFoundError: meta/info.json',
         cause: 'データセットのメタデータファイルが存在しません。',
         solution: 'データセットディレクトリの完整性を確認します。欠損している場合は再収集が必要です。',
-        command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so100-task/meta/'
+        command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so101-task/meta/'
       }
     ]
   },
@@ -272,9 +272,9 @@ export const chaptersJa: Chapter[] = [
       { title: 'モデルの保存', content: 'デプロイに向けてベストなチェックポイントを保存します。' }
     ],
     commands: [
-      { description: 'ACT 学習を起動', code: 'python lerobot/scripts/train.py policy=act env=so100 dataset_repo_id=your-name/so100-task' },
-      { description: 'wandb で監視', code: 'wandb login && python lerobot/scripts/train.py policy=act env=so100 wandb.enable=true' },
-      { description: '学習を再開', code: 'python lerobot/scripts/train.py policy=act resume=true' }
+      { description: 'ACT 学習を起動', code: 'lerobot-train --dataset.repo_id=your-name/so101-task --policy.type=act --output_dir=outputs/train/act_so101' },
+      { description: 'wandb で監視', code: 'wandb login && lerobot-train --dataset.repo_id=your-name/so101-task --policy.type=act --wandb.enable=true --output_dir=outputs/train/act_so101' },
+      { description: '学習を再開', code: 'lerobot-train --config_path=outputs/train/act_so101/checkpoints/last/pretrained_model/train_config.json --resume=true' }
     ],
     checkpoints: [
       '学習を起動してもエラーが出ない',
@@ -286,7 +286,7 @@ export const chaptersJa: Chapter[] = [
         error: 'CUDA out of memory',
         cause: '現在の batch_size に対し GPU VRAM が不足しています。',
         solution: 'batch_size を縮小するか勾配累積を有効にします。',
-        command: 'python lerobot/scripts/train.py policy=act training.batch_size=8'
+        command: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --batch_size=8'
       }
     ]
   },
@@ -314,8 +314,13 @@ export const chaptersJa: Chapter[] = [
       { title: '実機デプロイ', content: '実機と接続し、ポリシーを稼働させます。' }
     ],
     commands: [
-      { description: '推論を実行', code: 'python lerobot/scripts/control_robot.py record --robot-path lerobot/configs/robot/so100.yaml --policy-path outputs/train/act_so100/checkpoints/last/pretrained_model' },
-      { description: '推論を可視化', code: 'python lerobot/scripts/visualize_dataset.py --repo-id your-name/so100-task' }
+      { description: '推論を実行', code: 'lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --dataset.repo_id=your-name/so101-eval \
+  --dataset.num_episodes=5 --dataset.fps=30 \
+  --policy.path=outputs/train/act_so101/checkpoints/last/pretrained_model \
+  --display_data=true' },
+      { description: 'データセットを可視化', code: 'lerobot-dataset-viz --repo-id your-name/so101-task' }
     ],
     checkpoints: [
       'モデルが正常にロードされる',
@@ -371,11 +376,11 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
   'missing required field(s) port': {
     error: 'Missing required field(s) port',
     cause:
-      'ロボット設定ファイルで port フィールドが指定されておらず、LeRobot が通信先のシリアルポートを判定できません。',
-    solution: 'robot 設定ファイル (例: so100.yaml) に port フィールドを追加し、正しいシリアルパスを指定します。',
+      'コマンドに --robot.port が無いか、指定したシリアルポートが実機と一致していません。',
+    solution: 'ls /dev/tty* で実際のポートを確認し、--robot.port=/dev/ttyACM0 を追加します。遠隔操作や録画では --teleop.port=/dev/ttyACM1 も指定します。',
     command:
-      'leader_arms:\n  main:\n    port: /dev/ttyUSB0\nfollower_arms:\n  main:\n    port: /dev/ttyUSB1',
-    nextStep: '`ls /dev/tty*` でシリアル機器を確認したうえで設定ファイルを更新してください。',
+      'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower',
+    nextStep: '`ls /dev/tty*` でシリアル機器を確認し、実際のポートをコマンド引数に入れてください。',
     category: 'hardware',
     related: ['permission denied', 'serial port not found']
   },
@@ -396,7 +401,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
       'GPU の VRAM が不足し、学習に必要なメモリを確保できません。多くは batch_size が大きすぎる、もしくはモデル自体が大きい場合です。',
     solution: 'batch_size を縮小する、勾配累積を有効にする、混合精度 (AMP) を活用します。',
     command:
-      'python lerobot/scripts/train.py policy=act training.batch_size=4 training.grad_accumulation_steps=4',
+      'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --batch_size=4',
     nextStep: '`nvidia-smi` で VRAM 使用量を観測しつつ、段階的にパラメータを調整します。',
     category: 'training',
     related: ['training too slow', 'nan loss']
@@ -423,7 +428,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
     error: 'ロボットアームが推論時に振動する',
     cause: '制御周波数の不安定、ネットワーク遅延、モデル出力のノイズが原因と考えられます。',
     solution: '1. fps を固定する  \n2. EMA フィルタで動作を平滑化する  \n3. USB 接続の安定性を確保する',
-    command: 'python lerobot/scripts/control_robot.py record --fps 30 --policy-path ...',
+    command: 'lerobot-record --robot.type=so101_follower --robot.port=/dev/ttyACM0 --dataset.fps=30 --policy.path=outputs/.../pretrained_model',
     nextStep: '制御周波数を下げるか、EMA 平滑化を導入して挙動を確認してください。',
     category: 'inference',
     related: ['inference latency high']
@@ -434,7 +439,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
       '学習率が過大、データに外れ値や正規化の不備があり、勾配が爆発している可能性があります。',
     solution: '1. 学習率を下げる  \n2. 勾配クリッピングを有効化する  \n3. データセットに NaN や極端値がないか確認する',
     command:
-      'python lerobot/scripts/train.py policy=act training.lr=1e-5 training.grad_clip_norm=10',
+      'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --optimizer.lr=1e-5 --optimizer.grad_clip_norm=10',
     nextStep: 'wandb / tensorboard で勾配ノルムを監視し、異常 batch を特定します。',
     category: 'training',
     related: ['cuda out of memory']
@@ -446,7 +451,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
     solution:
       '1. num_workers を増やす  \n2. AMP 混合精度を有効化する  \n3. batch_size を適切に引き上げる  \n4. GPU 利用率を確認する',
     command:
-      'python lerobot/scripts/train.py policy=act training.num_workers=8 training.amp=true',
+      'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --num_workers=8',
     nextStep: '`nvidia-smi dmon` で GPU 利用率と消費電力を監視します。',
     category: 'training'
   },
@@ -463,7 +468,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
     cause: 'キャリブレーション未実施、もしくはモータ零点が一致していません。',
     solution: 'キャリブレーションスクリプトを再実行し、両アームを同一姿勢で零点記録します。',
     command:
-      'python lerobot/scripts/control_robot.py calibrate --robot-path lerobot/configs/robot/so100.yaml',
+      'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower',
     nextStep: 'キャリブレーション後に遠隔操作を再実行し、追従性を観察してください。',
     category: 'hardware'
   },
@@ -471,7 +476,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
     error: '推論 fps が不安定 / 遅延が大きい',
     cause: 'CPU と GPU の間のデータ転送、もしくは画像エンコードがボトルネックです。',
     solution: '1. カメラ解像度を下げる  \n2. 半精度推論を使う  \n3. 不要なバックグラウンドプロセスを停止する',
-    command: 'python lerobot/scripts/control_robot.py record --fps 30 --device cuda',
+    command: 'lerobot-record --robot.type=so101_follower --robot.port=/dev/ttyACM0 --dataset.fps=30 --policy.device=cuda',
     nextStep: '推論ループに `time.perf_counter()` を入れて時間のかかる区間を特定してください。',
     category: 'inference'
   },
@@ -503,8 +508,10 @@ export const aiResponsesJa: Record<string, string> = {
 
 2. **キャリブレーションスクリプトの実行**
 \`\`\`bash
-python lerobot/scripts/control_robot.py calibrate \\
-  --robot-path lerobot/configs/robot/so100.yaml
+lerobot-calibrate \
+  --robot.type=so101_follower \
+  --robot.port=/dev/ttyACM0 \
+  --robot.id=so101_follower
 \`\`\`
 
 3. **キャリブレーションの流れ**
@@ -538,30 +545,35 @@ python lerobot/scripts/control_robot.py calibrate \\
 
 \`\`\`bash
 # 基本のデータ収集
-python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id your-name/task-name \\
-  --num-episodes 50
+lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \
+  --dataset.repo_id=your-name/task-name \
+  --dataset.num_episodes=50 --dataset.fps=30 \
+  --display_data=true
 
 # カメラ付きのデータ収集
-python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id your-name/task-name \\
-  --num-episodes 50 \\
-  --fps 30
+lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \
+  --dataset.repo_id=your-name/task-name \
+  --dataset.num_episodes=50 --dataset.fps=30 \
+  --display_data=true
 
 # HuggingFace Hub にプッシュ
-python lerobot/scripts/control_robot.py record \\
-  --robot-path lerobot/configs/robot/so100.yaml \\
-  --repo-id your-name/task-name \\
-  --num-episodes 50 \\
-  --push-to-hub 1
+lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \
+  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \
+  --dataset.repo_id=your-name/task-name \
+  --dataset.num_episodes=50 --dataset.fps=30 \
+  --dataset.push_to_hub=true \
+  --display_data=true
 \`\`\`
 
 **パラメータの説明：**
-- \`--num-episodes\`: 収集するエピソード数
-- \`--fps\`: 制御・録画のフレームレート
-- \`--push-to-hub\`: Hub にアップロードするかどうか`,
+- \`--dataset.num_episodes\`: 収集するエピソード数
+- \`--dataset.fps\`: 制御・録画のフレームレート
+- \`--dataset.push_to_hub\`: Hub にアップロードするかどうか`,
 
   'meta/info.json': `**meta/info.json 関連のエラーについて：**
 
@@ -610,9 +622,12 @@ your-repo-id/
 
 1. **制御周波数を固定する**
 \`\`\`bash
-python lerobot/scripts/control_robot.py record \\
-  --fps 30 \\
-  --policy-path your-checkpoint
+lerobot-record \\
+  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\
+  --dataset.repo_id=your-name/so101-eval \\
+  --dataset.num_episodes=5 --dataset.fps=30 \\
+  --policy.path=your-checkpoint \\
+  --display_data=true
 \`\`\`
 
 2. **動作の平滑化を導入する**

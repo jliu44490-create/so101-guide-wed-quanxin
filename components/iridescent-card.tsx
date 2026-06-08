@@ -157,7 +157,6 @@ export function IridescentCard({
   const currentRef = useRef({ x: 0.5, y: 0.5, active: 0 })
   const hoverRef = useRef(false)
   const touchRef = useRef(false)
-  const rangeRef = useRef({ width: 0, height: 0 })
 
   // 注入到 DOM 的核心循环
   useEffect(() => {
@@ -171,7 +170,6 @@ export function IridescentCard({
     if (!wrap || !rainbow || !spot || !sheen) return
 
     const idleStart = performance.now()
-    const surf = SURFACES[surface]
 
     const loop = (now: number) => {
       const cur = currentRef.current
@@ -253,7 +251,6 @@ export function IridescentCard({
     sheenIntensity,
     haloIntensity,
     idleDrift,
-    surface,
     disableTiltOnTouch
   ])
 

@@ -160,7 +160,7 @@ export function Footer() {
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border/40 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <p>{copyright}</p>
           <div className="flex items-center gap-4">
-            <span className="font-mono uppercase tracking-[0.12em] text-muted-foreground/70">
+            <span className="font-mono uppercase tracking-[0.12em] text-muted-foreground">
               {builtWithLabel}
             </span>
             <Link

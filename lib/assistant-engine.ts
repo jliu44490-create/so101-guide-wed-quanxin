@@ -7,8 +7,7 @@
  *   3. 按意图组合回复（拼合 top-N 命中、添加引用链接）
  */
 
-import { aiResponses, errorDatabase, chapters } from './course-data'
-import { glossary } from './glossary'
+import { errorDatabase, chapters } from './course-data'
 import {
   knowledgeBase,
   search,
@@ -374,7 +373,6 @@ function composeTroubleshoot(
       lines.push(top.snippet)
     }
   } else {
-    const top = results[0].item
     lines.push(`没有直接匹配到错误，但下面这条内容看起来相关：`)
     lines.push('')
     lines.push(formatItemAsBullet(results[0]))

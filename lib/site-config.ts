@@ -2,16 +2,15 @@
  * Site origin used for canonical URLs, sitemap, robots, OG metadata.
  *
  * Resolution order (first non-empty wins):
- *   1. NEXT_PUBLIC_SITE_URL          — explicit override (set this in Vercel for prod custom domain)
- *   2. https://${VERCEL_URL}         — auto-injected by Vercel on every deploy / preview
- *   3. https://lvjin.vercel.app      — fallback for local dev or build without env vars
+ *   1. NEXT_PUBLIC_SITE_URL          — explicit public origin override
+ *   2. https://lvjin.vercel.app      — production fallback
  *
  * Never trailing-slash. Sitemap/robots build URLs by appending `/path`.
+ * VERCEL_URL is intentionally ignored: preview deployments are often private
+ * or protected, and must not become canonical URLs.
  */
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-  'https://lvjin.vercel.app'
+const DEFAULT_SITE_URL = 'https://lvjin.vercel.app'
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, '')
 
 export const siteConfig = {
   name: 'SO101 Imitation Learning Guide',

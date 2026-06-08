@@ -21,13 +21,34 @@ import { chapters } from '@/lib/course-data'
 
 export const metadata: Metadata = {
   title: '社区',
-  description: 'SO101 模仿学习的中文社区 — 最新讨论、活跃贡献者、答疑现场。'
+  description: 'SO101 模仿学习的中文社区 — 最新讨论、活跃贡献者、答疑现场。',
+  alternates: {
+    canonical: '/community'
+  }
 }
 
 // Pre-build a chapter-id → title lookup that can be passed to describeThread
 const chapterTitleByIdEntries = chapters.map((c) => [c.id, c.title] as const)
 const chapterTitleById = new Map<number, string>(chapterTitleByIdEntries)
 const titleLookup = (id: number) => chapterTitleById.get(id)
+
+const starterTopics = [
+  {
+    title: '我该怎么确认 Leader / Follower 端口？',
+    body: '适合贴出 `ls /dev/tty*` 的结果和你的接线方式，让别人帮你快速判断端口。',
+    href: '/learn/4'
+  },
+  {
+    title: '数据采集 50 条够不够？',
+    body: '适合讨论任务难度、物体摆放变化、失败样本是否保留这些采集策略。',
+    href: '/learn/5'
+  },
+  {
+    title: '训练 loss 变 NaN 或 OOM',
+    body: '适合贴出 GPU、batch_size、命令和前几百步 loss，方便定位训练配置。',
+    href: '/diagnose?q=CUDA%20out%20of%20memory'
+  }
+]
 
 export const revalidate = 60 // ISR — refresh community page every minute
 
@@ -127,6 +148,8 @@ function ComingSoon() {
           </div>
         ))}
       </div>
+
+      <StarterTopics />
     </section>
   )
 }
@@ -150,7 +173,37 @@ function SeedState() {
           </Button>
         </CardContent>
       </Card>
+
+      <StarterTopics />
     </section>
+  )
+}
+
+function StarterTopics() {
+  return (
+    <div className="mt-10">
+      <p className="text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+        可以先从这些话题开始
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {starterTopics.map((topic) => (
+          <Link
+            key={topic.title}
+            href={topic.href}
+            className="group rounded-xl border border-border/60 bg-card/40 p-4 text-left transition-colors hover:border-primary/30 hover:bg-card/70"
+          >
+            <p className="text-sm font-semibold">{topic.title}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              {topic.body}
+            </p>
+            <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
+              去相关章节
+              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
 

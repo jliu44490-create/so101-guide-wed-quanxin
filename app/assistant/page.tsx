@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -20,6 +20,7 @@ import {
 import { toast } from 'sonner'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
+import { RouteLoadingShell } from '@/components/route-loading-shell'
 import { ChatMessageRenderer } from '@/components/chat-message-renderer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -89,7 +90,7 @@ const typeLabel: Record<string, string> = {
 
 export default function AssistantPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RouteLoadingShell label="正在加载 AI 助手..." />}>
       <AssistantContent />
     </Suspense>
   )
@@ -105,6 +106,7 @@ function AssistantContent() {
   const contextRef = useRef<ConversationContext>({})
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const initialQuerySentRef = useRef(false)
 
   useEffect(() => {
     try {
@@ -135,23 +137,7 @@ function AssistantContent() {
     }
   }, [messages, loaded])
 
-  useEffect(() => {
-    if (initialQuery) {
-      setTimeout(() => handleSend(initialQuery), 200)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery])
-
-  useEffect(() => {
-    const scroll = scrollAreaRef.current?.querySelector(
-      '[data-radix-scroll-area-viewport]'
-    )
-    if (scroll) {
-      scroll.scrollTop = scroll.scrollHeight
-    }
-  }, [messages, isTyping])
-
-  const handleSend = async (override?: string) => {
+  const handleSend = useCallback(async (override?: string) => {
     const text = (override ?? input).trim()
     if (!text || isTyping) return
 
@@ -183,7 +169,25 @@ function AssistantContent() {
       }
     ])
     setIsTyping(false)
-  }
+  }, [input, isTyping])
+
+  useEffect(() => {
+    if (!initialQuery || initialQuerySentRef.current) return
+    initialQuerySentRef.current = true
+    const timer = window.setTimeout(() => {
+      void handleSend(initialQuery)
+    }, 200)
+    return () => window.clearTimeout(timer)
+  }, [handleSend, initialQuery])
+
+  useEffect(() => {
+    const scroll = scrollAreaRef.current?.querySelector(
+      '[data-radix-scroll-area-viewport]'
+    )
+    if (scroll) {
+      scroll.scrollTop = scroll.scrollHeight
+    }
+  }, [messages, isTyping])
 
   const handleNewChat = () => {
     setMessages([welcomeMessage])

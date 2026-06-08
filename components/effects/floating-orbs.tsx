@@ -9,15 +9,19 @@ interface FloatingOrbsProps {
 /** 漂浮的发光球，纯 CSS 实现，超轻量 */
 export function FloatingOrbs({ className, count = 5 }: FloatingOrbsProps) {
   const orbs = Array.from({ length: count }, (_, i) => i)
+  const stableRandom = (seed: number) => {
+    const x = Math.sin(seed * 997.3) * 10000
+    return x - Math.floor(x)
+  }
 
   return (
-    <div className={cn('pointer-events-none absolute inset-0 overflow-hidden', className)} aria-hidden>
+    <div className={cn('pointer-events-none absolute inset-0 overflow-hidden [overflow:clip]', className)} aria-hidden>
       {orbs.map((i) => {
-        const size = 80 + Math.random() * 160
-        const left = Math.random() * 100
-        const top = Math.random() * 100
-        const delay = -Math.random() * 8
-        const duration = 8 + Math.random() * 8
+        const size = 70 + stableRandom(i + 1) * 120
+        const left = stableRandom(i + 11) * 100
+        const top = stableRandom(i + 21) * 100
+        const delay = -stableRandom(i + 31) * 8
+        const duration = 9 + stableRandom(i + 41) * 7
         const isAccent = i % 2 === 0
         return (
           <div

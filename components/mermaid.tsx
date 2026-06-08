@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 
@@ -28,7 +28,8 @@ interface MermaidProps {
  */
 export function Mermaid({ source, caption, className }: MermaidProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const idRef = useRef(`mmd-${Math.random().toString(36).slice(2, 10)}`)
+  const reactId = useId()
+  const idRef = useRef(`mmd-${reactId.replace(/:/g, '')}`)
   const { resolvedTheme } = useTheme()
   const [error, setError] = useState<string | null>(null)
   const [rendered, setRendered] = useState(false)

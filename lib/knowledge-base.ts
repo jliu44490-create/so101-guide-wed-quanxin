@@ -432,7 +432,7 @@ function scoreItem(item: KBItem, query: string, queryTokens: string[]): {
 
 export interface SearchOptions {
   /** 限制 type */
-  types?: KBItemType[]
+  types?: readonly KBItemType[]
   /** 最多返回多少条 */
   limit?: number
   /** 最低分数阈值 */

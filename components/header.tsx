@@ -162,7 +162,7 @@ export function Header() {
             </Link>
           </Button>
           <ThemeToggle />
-          <AuthButton />
+          <AuthButton locale={isJa ? 'ja' : 'zh'} />
           <Button asChild size="sm" className="glow-primary hidden lg:inline-flex">
             <Link href={learnHref}>
               {labels.ctaStart}

@@ -21,6 +21,13 @@ import { useEffect, useRef, useState } from 'react'
 import { useHasFinePointer, usePrefersReducedMotion } from '@/lib/hooks'
 import { cn } from '@/lib/utils'
 
+const ARM_IMAGES = [
+  '/lvjin-so101-view-front.jpeg',
+  '/lvjin-so101-view-rear.jpeg',
+  '/lvjin-so101-view-side.jpeg',
+  '/lvjin-so101-view-top.jpeg'
+]
+
 interface BrandCardProps {
   className?: string
   /** 容器宽 */
@@ -47,7 +54,6 @@ export function BrandCard({
   className,
   width = 380,
   height = 480,
-  logoSrc = '/lvjin-logo.png',
   statusLabel = 'LIVE',
   productCode = 'LVJIN/SO-101',
   title = '绿晋科技',
@@ -55,26 +61,25 @@ export function BrandCard({
   tags = ['Hardware', 'Software', 'Education'],
   maxTilt = 6
 }: BrandCardProps) {
-  const armImages = [
-    '/lvjin-so101-view-front.jpeg',
-    '/lvjin-so101-view-rear.jpeg',
-    '/lvjin-so101-view-side.jpeg',
-    '/lvjin-so101-view-top.jpeg'
-  ]
-
-  const [activeImage, setActiveImage] = useState(0)
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveImage((prev) => (prev + 1) % armImages.length)
-    }, 2500)
-
-    return () => clearInterval(timer)
-  }, [])
-
   const wrapRef = useRef<HTMLDivElement>(null)
   const isFine = useHasFinePointer()
   const reduce = usePrefersReducedMotion()
+  const shouldCycleImages = isFine && !reduce
+  const [activeImage, setActiveImage] = useState(0)
+  const activeImageSrc = ARM_IMAGES[shouldCycleImages ? activeImage : 0]
+
+  useEffect(() => {
+    if (!shouldCycleImages) {
+      setActiveImage(0)
+      return
+    }
+
+    const timer = setInterval(() => {
+      setActiveImage((prev) => (prev + 1) % ARM_IMAGES.length)
+    }, 2800)
+
+    return () => clearInterval(timer)
+  }, [shouldCycleImages])
 
   useEffect(() => {
     if (!isFine || reduce) return
@@ -132,8 +137,9 @@ export function BrandCard({
         ref={wrapRef}
         className="group relative will-change-transform"
         style={{
-          width,
-          height,
+          width: `min(${width}px, calc(100vw - 2rem))`,
+          height: `min(${height}px, 70vh)`,
+          maxWidth: '100%',
           transformStyle: 'preserve-3d',
           transition: 'transform 400ms cubic-bezier(.22,1,.36,1)',
           ['--mx' as string]: '50%',
@@ -143,7 +149,7 @@ export function BrandCard({
         {/* 外圈柔光（远） */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -inset-6 rounded-[2.5rem] opacity-60 blur-3xl"
+          className="pointer-events-none absolute -inset-4 rounded-[2.5rem] opacity-60 blur-3xl sm:-inset-6"
           style={{
             background:
               'radial-gradient(45% 45% at 50% 30%, oklch(from var(--primary) l c h / 0.5) 0%, transparent 70%), radial-gradient(45% 45% at 50% 80%, oklch(from var(--accent) l c h / 0.4) 0%, transparent 70%)'
@@ -231,7 +237,7 @@ export function BrandCard({
             style={{ transform: 'translateZ(40px)' }}
           >
             <div
-              className="relative mx-auto h-[500px] w-full max-w-[500px] overflow-hidden rounded-2xl"
+              className="relative mx-auto h-[min(500px,60vh)] w-full max-w-[500px] overflow-hidden rounded-2xl"
               style={{
                 maskImage:
                   'radial-gradient(ellipse 70% 70% at 50% 50%, black 40%, transparent 100%)',
@@ -248,20 +254,15 @@ export function BrandCard({
                 }}
               />
 
-              {armImages.map((src, index) => (
-                <Image
-                  key={src}
-                  src={src}
-                  alt={`${title} robotic arm ${index + 1}`}
-                  fill
-                  priority={index === 0}
-                  className={cn(
-                    'object-contain object-top transition-opacity duration-700',
-                    index === activeImage ? 'opacity-95' : 'opacity-0'
-                  )}
-                  sizes="270px"
-                />
-              ))}
+              <Image
+                key={activeImageSrc}
+                src={activeImageSrc}
+                alt={`${title} robotic arm view`}
+                fill
+                priority
+                className="object-contain object-top opacity-95 transition-opacity duration-700"
+                sizes="(max-width: 640px) 70vw, 270px"
+              />
             </div>
           </div>
 
@@ -298,9 +299,9 @@ export function BrandCard({
             <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-white/45">
               LVJIN ROBOTICS
             </p>
-            <h3 className="mt-1.5 text-xl font-semibold tracking-tight text-white">
+            <p className="mt-1.5 text-xl font-semibold tracking-tight text-white">
               {title}
-            </h3>
+            </p>
             <p className="mt-1 text-[12px] text-white/55">{subtitle}</p>
 
             {/* 标签 */}

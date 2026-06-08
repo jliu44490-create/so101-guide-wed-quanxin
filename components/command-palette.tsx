@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   AlertTriangle,
   BookOpen,
@@ -24,11 +24,43 @@ import {
   CommandSeparator
 } from '@/components/ui/command'
 import { chapters } from '@/lib/course-data'
+import { chaptersJa } from '@/lib/course-data-ja'
 import { siteConfig } from '@/lib/site-config'
+import { siteConfigJa } from '@/lib/site-config-ja'
+
+const commandLabels = {
+  zh: {
+    title: '命令面板',
+    description: '搜索章节、错误和站内页面。',
+    placeholder: '搜索章节、错误、页面…',
+    empty: '没有找到匹配项 · 试试别的关键词',
+    nav: '导航',
+    chapters: '章节',
+    errors: '常见错误',
+    actions: '操作',
+    askAssistant: '询问 AI 助手'
+  },
+  ja: {
+    title: 'コマンドパレット',
+    description: '章、エラー、サイト内ページを検索します。',
+    placeholder: '章、エラー、ページを検索…',
+    empty: '一致する項目がありません · 別のキーワードを試してください',
+    nav: 'ナビゲーション',
+    chapters: '章',
+    errors: 'よくあるエラー',
+    actions: '操作',
+    askAssistant: 'AI アシスタントに質問'
+  }
+} as const
 
 export function CommandPalette() {
   const router = useRouter()
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const isJa = pathname?.startsWith('/ja') ?? false
+  const config = isJa ? siteConfigJa : siteConfig
+  const chapterList = isJa ? chaptersJa : chapters
+  const t = isJa ? commandLabels.ja : commandLabels.zh
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -73,18 +105,24 @@ export function CommandPalette() {
   }
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="搜索章节、错误、页面…" />
+    <CommandDialog
+      open={open}
+      onOpenChange={setOpen}
+      title={t.title}
+      description={t.description}
+    >
+      <CommandInput placeholder={t.placeholder} />
       <CommandList className="max-h-[420px]">
         <CommandEmpty>
           <div className="py-6 text-center text-sm text-muted-foreground">
-            没有找到匹配项 · 试试别的关键词
+            {t.empty}
           </div>
         </CommandEmpty>
 
-        <CommandGroup heading="导航">
-          {[...siteConfig.nav, ...siteConfig.navExtra].map((item) => {
-            const Icon = navIcons[item.href] ?? BookOpen
+        <CommandGroup heading={t.nav}>
+          {[...config.nav, ...config.navExtra].map((item) => {
+            const normalizedHref = item.href === '/ja' ? '/' : item.href.replace(/^\/ja/, '')
+            const Icon = navIcons[normalizedHref] ?? BookOpen
             return (
               <CommandItem
                 key={item.href}
@@ -103,12 +141,12 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        <CommandGroup heading="章节">
-          {chapters.map((chapter) => (
+        <CommandGroup heading={t.chapters}>
+          {chapterList.map((chapter) => (
             <CommandItem
               key={chapter.id}
               value={`chapter-${chapter.title}-${chapter.titleEn}`}
-              onSelect={() => go(`/learn/${chapter.id}`)}
+              onSelect={() => go(isJa ? `/ja/learn/${chapter.id}` : `/learn/${chapter.id}`)}
             >
               <BookOpen className="mr-2 h-4 w-4 text-muted-foreground" />
               <div className="flex flex-col">
@@ -126,15 +164,17 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        <CommandGroup heading="常见错误">
-          {chapters
+        <CommandGroup heading={t.errors}>
+          {chapterList
             .flatMap((c) => c.errors.map((e) => ({ chapter: c, error: e })))
             .slice(0, 6)
             .map(({ chapter, error }, i) => (
               <CommandItem
                 key={`${chapter.id}-${i}`}
                 value={`error-${error.error}`}
-                onSelect={() => go(`/diagnose?q=${encodeURIComponent(error.error)}`)}
+                onSelect={() =>
+                  go(`${isJa ? '/ja' : ''}/diagnose?q=${encodeURIComponent(error.error)}`)
+                }
               >
                 <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
                 <span className="font-mono text-sm">{error.error}</span>
@@ -144,13 +184,13 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        <CommandGroup heading="操作">
+        <CommandGroup heading={t.actions}>
           <CommandItem
             value="action-ai-assistant"
-            onSelect={() => go('/assistant')}
+            onSelect={() => go(isJa ? '/ja/assistant' : '/assistant')}
           >
             <Sparkles className="mr-2 h-4 w-4 text-primary" />
-            <span>询问 AI 助手</span>
+            <span>{t.askAssistant}</span>
           </CommandItem>
         </CommandGroup>
       </CommandList>

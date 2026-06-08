@@ -8,7 +8,7 @@ interface ProseProps {
   content: string
   className?: string
   /** When true, applies a slightly larger base size suited for chapter body copy. */
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'inherit'
 }
 
 /**
@@ -24,7 +24,11 @@ export function Prose({ content, className, size = 'md' }: ProseProps) {
     <div
       className={cn(
         'prose-chapter',
-        size === 'md' ? 'text-[15px] leading-7' : 'text-sm leading-relaxed',
+        size === 'inherit'
+          ? ''
+          : size === 'md'
+            ? 'text-[15px] leading-7'
+            : 'text-sm leading-relaxed',
         className
       )}
     >

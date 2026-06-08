@@ -51,13 +51,20 @@ function writeStorage(map: ProgressMap) {
 /**
  * 把 base chapter 数据和用户进度合并，得到"有效"状态
  */
+/** Status is always derived from progress so the badge and the bar can never disagree. */
+export function deriveStatus(progress: number): ChapterStatus {
+  if (progress >= 100) return 'completed'
+  if (progress > 0) return 'in-progress'
+  return 'locked'
+}
+
 export function applyUserProgress(chapter: Chapter, map: ProgressMap): Chapter {
   const entry = map[chapter.id]
-  if (!entry) return chapter
+  const progress = entry?.progress ?? chapter.progress
   return {
     ...chapter,
-    status: entry.status,
-    progress: entry.progress
+    status: deriveStatus(progress),
+    progress
   }
 }
 

@@ -366,7 +366,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           {isUser ? (
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</p>
           ) : (
-            <ChatMessageRenderer content={message.content} />
+            <ChatMessageRenderer content={message.content} className="text-sm" />
           )}
         </div>
 

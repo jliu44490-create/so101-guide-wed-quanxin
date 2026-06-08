@@ -369,7 +369,7 @@ function IntroCardView({
         </h1>
       )}
       <div className="mx-auto max-w-2xl text-center text-lg leading-relaxed text-muted-foreground sm:text-2xl lg:text-3xl lg:leading-snug">
-        <Prose content={card.body} size="md" />
+        <Prose content={card.body} size="inherit" />
       </div>
       <div className="flex justify-center pt-2 sm:pt-4">
         <NextButton onClick={onNext} label={card.cta ?? '继续'} />
@@ -390,7 +390,7 @@ function RevealCardView({
   return (
     <CardShell>
       <div className="mx-auto max-w-2xl text-center text-xl leading-relaxed sm:text-2xl lg:text-3xl lg:leading-snug">
-        <Prose content={card.prompt} size="md" />
+        <Prose content={card.prompt} size="inherit" />
       </div>
 
       {!revealed ? (
@@ -401,7 +401,7 @@ function RevealCardView({
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-6 sm:space-y-8">
           <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-accent/10 p-6 sm:p-10 lg:p-12">
             <div className="text-base leading-relaxed sm:text-lg lg:text-xl">
-              <Prose content={card.reveal} />
+              <Prose content={card.reveal} size="inherit" />
             </div>
           </div>
           <div className="flex justify-center">
@@ -438,7 +438,7 @@ function ChoiceCardView({
   return (
     <CardShell>
       <div className="text-center text-xl font-semibold leading-snug sm:text-3xl lg:text-4xl lg:leading-snug">
-        <Prose content={card.question} />
+        <Prose content={card.question} size="inherit" />
       </div>
 
       <div className="space-y-3 sm:space-y-4">
@@ -487,7 +487,7 @@ function ChoiceCardView({
             )}
           >
             <div className="text-base leading-relaxed sm:text-lg">
-              <Prose content={picked.feedback} />
+              <Prose content={picked.feedback} size="inherit" />
             </div>
           </div>
           <div className="flex justify-center">
@@ -522,7 +522,7 @@ function MCQCardView({
   return (
     <CardShell>
       <div className="text-center text-xl font-semibold leading-snug sm:text-3xl lg:text-4xl lg:leading-snug">
-        <Prose content={card.question} />
+        <Prose content={card.question} size="inherit" />
       </div>
 
       <div className="space-y-3 sm:space-y-4">
@@ -575,7 +575,7 @@ function MCQCardView({
               {correct ? '✅ 答对了' : '🤔 别灰心 — 真正的答案是：'}
             </p>
             <div className="text-base leading-relaxed sm:text-lg">
-              <Prose content={card.explanation} />
+              <Prose content={card.explanation} size="inherit" />
             </div>
           </div>
           <div className="flex justify-center">
@@ -642,7 +642,7 @@ function MatchCardView({
   return (
     <CardShell>
       <div className="text-center text-xl font-semibold leading-snug sm:text-3xl lg:text-4xl">
-        <Prose content={card.prompt} />
+        <Prose content={card.prompt} size="inherit" />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5">
@@ -730,7 +730,7 @@ function VizCardView({
       )}
       {card.body && (
         <div className="mx-auto max-w-2xl text-center text-base text-muted-foreground sm:text-lg lg:text-xl">
-          <Prose content={card.body} />
+          <Prose content={card.body} size="inherit" />
         </div>
       )}
       {card.mermaid && (
@@ -800,7 +800,7 @@ function NumericCardView({
   return (
     <CardShell>
       <div className="text-center text-xl font-semibold leading-snug sm:text-3xl lg:text-4xl lg:leading-snug">
-        <Prose content={card.question} />
+        <Prose content={card.question} size="inherit" />
       </div>
 
       <div className="mx-auto flex max-w-md items-center gap-3">
@@ -863,7 +863,7 @@ function NumericCardView({
                 : `❌ 你写了 ${value}，正确答案是 ${card.answer}${card.unit ?? ''}`}
             </p>
             <div className="text-base leading-relaxed sm:text-lg">
-              <Prose content={card.explanation} />
+              <Prose content={card.explanation} size="inherit" />
             </div>
           </div>
           <div className="flex justify-center">
@@ -890,7 +890,7 @@ function CommandCardView({
       </h2>
       {card.intro && (
         <div className="mx-auto max-w-2xl text-center text-base text-muted-foreground sm:text-lg lg:text-xl">
-          <Prose content={card.intro} />
+          <Prose content={card.intro} size="inherit" />
         </div>
       )}
       <div className="space-y-4">
@@ -957,7 +957,7 @@ function RecapCardView({
             className="animate-in fade-in slide-in-from-left-2 fill-mode-both rounded-lg border border-border/60 bg-card/40 p-4 text-base leading-relaxed sm:p-6 sm:text-lg lg:text-xl"
             style={{ animationDelay: `${i * 100}ms`, animationDuration: '400ms' }}
           >
-            <Prose content={b} size="md" />
+            <Prose content={b} size="inherit" />
           </li>
         ))}
       </ul>
@@ -995,7 +995,7 @@ function CompletionCardView({
         {card.title}
       </h1>
       <div className="mx-auto max-w-2xl text-center text-base text-muted-foreground sm:text-xl lg:text-2xl lg:leading-snug">
-        <Prose content={card.body} />
+        <Prose content={card.body} size="inherit" />
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {card.nextChapterId && (

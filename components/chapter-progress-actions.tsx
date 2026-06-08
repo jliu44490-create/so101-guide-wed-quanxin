@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { useProgress } from '@/lib/use-progress'
+import { deriveStatus, useProgress } from '@/lib/use-progress'
 import { cn } from '@/lib/utils'
 
 interface ChapterProgressActionsProps {
@@ -54,8 +54,8 @@ export function ChapterProgressActions({
   const t = isJa ? i18n.ja : i18n.zh
   const { map, markVisited, markCompleted, resetChapter, hydrated } = useProgress()
   const entry = map[chapterId]
-  const status = entry?.status ?? baseStatus
   const progress = entry?.progress ?? baseProgress
+  const status = deriveStatus(progress)
 
   // 首次访问自动标 in-progress（base 已经完成的不动）
   useEffect(() => {

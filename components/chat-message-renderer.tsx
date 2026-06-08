@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 
 interface ChatMessageRendererProps {
   content: string
+  /** Extra classes for the root. Callers set font-size here; omitted = inherit from parent. */
+  className?: string
 }
 
 interface Block {
@@ -266,10 +268,10 @@ function CodeBubble({ code, language }: { code: string; language?: string }) {
   )
 }
 
-export function ChatMessageRenderer({ content }: ChatMessageRendererProps) {
+export function ChatMessageRenderer({ content, className }: ChatMessageRendererProps) {
   const blocks = parseBlocks(content)
   return (
-    <div className={cn('chat-prose text-sm')}>
+    <div className={cn('chat-prose', className)}>
       {blocks.map((block, i) =>
         block.type === 'code' ? (
           <CodeBubble key={i} code={block.content} language={block.language} />

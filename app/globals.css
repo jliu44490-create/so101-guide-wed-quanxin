@@ -626,6 +626,22 @@
   100% { transform: translate(var(--tx, 100px), -100vh); opacity: 0 }
 }
 
+/* ============== Robot-arm blueprint trajectory ============== */
+@keyframes arm-trace {
+  to { stroke-dashoffset: -240 }
+}
+
+.arm-trace {
+  stroke-dasharray: 5 7;
+  animation: arm-trace 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arm-trace {
+    animation: none;
+  }
+}
+
 /* ============== Disco / breathing gradient on backgrounds ============== */
 @keyframes hue-rotate {
   to { filter: hue-rotate(360deg) }

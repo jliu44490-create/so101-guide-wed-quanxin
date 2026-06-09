@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Activity, Cpu, Sparkles, Terminal } from 'lucide-react'
+import { RobotArmBlueprint } from '@/components/robot-arm-blueprint'
 import { cn } from '@/lib/utils'
 
 interface SpecItem {
@@ -87,27 +88,31 @@ export function AuthShell({
             </div>
           </header>
 
-          {/* Middle: hero copy */}
-          <div className="relative space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary backdrop-blur-sm">
-              <Cpu className="size-3" />
-              {eyebrow}
+          {/* Middle: hero copy + robotic-arm blueprint */}
+          <div className="relative space-y-8">
+            <div className="space-y-5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary backdrop-blur-sm">
+                <Cpu className="size-3" />
+                {eyebrow}
+              </div>
+              <h1 className="text-balance text-3xl font-bold leading-[1.15] tracking-tight xl:text-4xl">
+                {brandTitle.split('LVJIN').map((part, i, arr) =>
+                  i < arr.length - 1 ? (
+                    <span key={i}>
+                      {part}
+                      <span className="shimmer-text font-extrabold">LVJIN</span>
+                    </span>
+                  ) : (
+                    <span key={i}>{part}</span>
+                  )
+                )}
+              </h1>
+              <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+                {brandSubtitle}
+              </p>
             </div>
-            <h1 className="text-balance text-3xl font-bold leading-[1.15] tracking-tight xl:text-4xl">
-              {brandTitle.split('LVJIN').map((part, i, arr) =>
-                i < arr.length - 1 ? (
-                  <span key={i}>
-                    {part}
-                    <span className="shimmer-text font-extrabold">LVJIN</span>
-                  </span>
-                ) : (
-                  <span key={i}>{part}</span>
-                )
-              )}
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              {brandSubtitle}
-            </p>
+
+            <RobotArmBlueprint className="animate-float max-w-xl" />
           </div>
 
           {/* Bottom: spec grid + terminal */}

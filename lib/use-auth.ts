@@ -10,9 +10,13 @@ import { supabase, isSupabaseConfigured, type Profile } from './supabase'
  * `user` stays null, so consumers render their logged-out / placeholder state
  * without hanging.
  *
- * v1 auth methods (both passwordless):
- *   - GitHub OAuth   → one click for the technical audience
- *   - Email magic link → fallback for users without GitHub
+ * v2 auth methods:
+ *   - GitHub OAuth     → one click for the technical audience
+ *   - Google OAuth     → broadest reach
+ *   - Email + password → traditional sign-up / sign-in
+ *
+ * Note: the implicit flow (see lib/supabase.ts) handles the OAuth round-trip
+ * entirely client-side; no /auth/callback route is required.
  */
 
 export interface AuthUser {
@@ -77,11 +81,19 @@ export function useAuth() {
     }
   }, [])
 
-  const signInWithGitHub = useCallback(async () => {
+  const signInWithGitHub = useCallback(async (redirectTo?: string) => {
     if (!supabase) return
     await supabase.auth.signInWithOAuth({
       provider: 'github',
-      options: { redirectTo: window.location.href }
+      options: { redirectTo: redirectTo ?? window.location.origin }
+    })
+  }, [])
+
+  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
+    if (!supabase) return
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: redirectTo ?? window.location.origin }
     })
   }, [])
 
@@ -91,6 +103,38 @@ export function useAuth() {
       email,
       options: { emailRedirectTo: window.location.href }
     })
+    return { error: error?.message ?? null }
+  }, [])
+
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    if (!supabase) return { error: 'not_configured' as const }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error: error?.message ?? null }
+  }, [])
+
+  const signUp = useCallback(async (email: string, password: string) => {
+    if (!supabase) return { error: 'not_configured' as const, needsConfirmation: false }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/login` }
+    })
+    // When email confirmation is required, Supabase returns a user but no session.
+    const needsConfirmation = !!data?.user && !data.session
+    return { error: error?.message ?? null, needsConfirmation }
+  }, [])
+
+  const resetPasswordForEmail = useCallback(async (email: string) => {
+    if (!supabase) return { error: 'not_configured' as const }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+    return { error: error?.message ?? null }
+  }, [])
+
+  const updatePassword = useCallback(async (password: string) => {
+    if (!supabase) return { error: 'not_configured' as const }
+    const { error } = await supabase.auth.updateUser({ password })
     return { error: error?.message ?? null }
   }, [])
 
@@ -114,7 +158,12 @@ export function useAuth() {
     profile,
     isLoggedIn: !!user,
     signInWithGitHub,
+    signInWithGoogle,
     signInWithEmail,
+    signInWithPassword,
+    signUp,
+    resetPasswordForEmail,
+    updatePassword,
     signOut
   }
 }

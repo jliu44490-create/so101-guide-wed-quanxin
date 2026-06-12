@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/use-auth'
+import { oauthProviders as regionProviders, type OAuthProvider } from '@/lib/region'
 
 function GitHubMark({ className }: { className?: string }) {
   return (
@@ -36,12 +37,23 @@ function GoogleMark({ className }: { className?: string }) {
 }
 
 /**
- * GitHub + Google sign-in buttons, shared by /login and /signup.
+ * Social sign-in buttons, shared by /login and /signup.
  * `next` is the relative path to return to after the OAuth round-trip.
+ * `providers` defaults to the region's set (empty in CN → renders nothing).
  */
-export function OAuthButtons({ next = '/', disabled }: { next?: string; disabled?: boolean }) {
+export function OAuthButtons({
+  next = '/',
+  disabled,
+  providers = regionProviders
+}: {
+  next?: string
+  disabled?: boolean
+  providers?: OAuthProvider[]
+}) {
   const { signInWithGitHub, signInWithGoogle } = useAuth()
   const [busy, setBusy] = useState<'github' | 'google' | null>(null)
+
+  if (providers.length === 0) return null
 
   const go = async (provider: 'github' | 'google') => {
     setBusy(provider)
@@ -57,35 +69,39 @@ export function OAuthButtons({ next = '/', disabled }: { next?: string; disabled
 
   return (
     <div className="space-y-2.5">
-      <button
-        type="button"
-        onClick={() => go('github')}
-        disabled={disabled || busy !== null}
-        className="group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border/70 bg-card/60 px-4 text-sm font-medium transition-all hover:border-border hover:bg-card disabled:opacity-60"
-      >
-        {busy === 'github' ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <GitHubMark className="size-4" />
-        )}
-        <span>使用 GitHub 继续</span>
-        <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
-      </button>
+      {providers.includes('github') && (
+        <button
+          type="button"
+          onClick={() => go('github')}
+          disabled={disabled || busy !== null}
+          className="group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border/70 bg-card/60 px-4 text-sm font-medium transition-all hover:border-border hover:bg-card disabled:opacity-60"
+        >
+          {busy === 'github' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <GitHubMark className="size-4" />
+          )}
+          <span>使用 GitHub 继续</span>
+          <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+        </button>
+      )}
 
-      <button
-        type="button"
-        onClick={() => go('google')}
-        disabled={disabled || busy !== null}
-        className="group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border/70 bg-card/60 px-4 text-sm font-medium transition-all hover:border-border hover:bg-card disabled:opacity-60"
-      >
-        {busy === 'google' ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <GoogleMark className="size-4" />
-        )}
-        <span>使用 Google 继续</span>
-        <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
-      </button>
+      {providers.includes('google') && (
+        <button
+          type="button"
+          onClick={() => go('google')}
+          disabled={disabled || busy !== null}
+          className="group relative flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-border/70 bg-card/60 px-4 text-sm font-medium transition-all hover:border-border hover:bg-card disabled:opacity-60"
+        >
+          {busy === 'google' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <GoogleMark className="size-4" />
+          )}
+          <span>使用 Google 继续</span>
+          <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+        </button>
+      )}
     </div>
   )
 }

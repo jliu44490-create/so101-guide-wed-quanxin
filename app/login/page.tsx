@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/use-auth'
 import { isValidEmail } from '@/lib/email-utils'
+import { oauthProviders } from '@/lib/region'
 
 function LoginContent() {
   const router = useRouter()
@@ -94,16 +95,20 @@ function LoginContent() {
           </p>
         </div>
 
-        <OAuthButtons next={next} disabled={submitting} />
+        {oauthProviders.length > 0 && (
+          <>
+            <OAuthButtons next={next} disabled={submitting} />
 
-        {/* Divider */}
-        <div className="relative flex items-center gap-3">
-          <div className="h-px flex-1 bg-border/60" />
-          <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-            或使用邮箱
-          </span>
-          <div className="h-px flex-1 bg-border/60" />
-        </div>
+            {/* Divider */}
+            <div className="relative flex items-center gap-3">
+              <div className="h-px flex-1 bg-border/60" />
+              <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                或使用邮箱
+              </span>
+              <div className="h-px flex-1 bg-border/60" />
+            </div>
+          </>
+        )}
 
         {/* Email + password form */}
         <form

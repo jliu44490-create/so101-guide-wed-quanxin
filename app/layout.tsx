@@ -6,6 +6,7 @@ import { ScrollToTop } from '@/components/scroll-to-top'
 import { CommandPalette } from '@/components/command-palette'
 import { HtmlLangSync } from '@/components/html-lang-sync'
 import { siteConfig } from '@/lib/site-config'
+import { analyticsEnabled } from '@/lib/region'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -90,7 +91,7 @@ export default function RootLayout({
           <CommandPalette />
           <ScrollToTop />
           <Toaster position="bottom-right" richColors closeButton />
-          {process.env.NODE_ENV === 'production' && <Analytics />}
+          {process.env.NODE_ENV === 'production' && analyticsEnabled && <Analytics />}
         </ThemeProvider>
       </body>
     </html>

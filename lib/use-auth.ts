@@ -1,22 +1,20 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { supabase, isSupabaseConfigured, type Profile } from './supabase'
+import { authBackend } from './backend'
+import type { Profile } from './supabase'
 
 /**
  * Auth state + actions for the community layer.
  *
- * SSR-safe: when Supabase isn't configured, `ready` flips true immediately and
- * `user` stays null, so consumers render their logged-out / placeholder state
- * without hanging.
+ * Backend-agnostic: all calls go through `authBackend` (Supabase for `global`,
+ * CloudBase for `cn` — see lib/backend). SSR-safe: when the backend isn't
+ * configured, `ready` flips true immediately and `user` stays null, so consumers
+ * render their logged-out / placeholder state without hanging.
  *
  * v2 auth methods:
- *   - GitHub OAuth     → one click for the technical audience
- *   - Google OAuth     → broadest reach
- *   - Email + password → traditional sign-up / sign-in
- *
- * Note: the implicit flow (see lib/supabase.ts) handles the OAuth round-trip
- * entirely client-side; no /auth/callback route is required.
+ *   - GitHub / Google OAuth  → global region only (hidden in CN)
+ *   - Email + password       → traditional sign-up / sign-in
  */
 
 export interface AuthUser {
@@ -35,7 +33,7 @@ export function useAuth() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!supabase) {
+    if (!authBackend.isConfigured) {
       setReady(true)
       return
     }
@@ -43,30 +41,24 @@ export function useAuth() {
     let active = true
 
     const loadProfile = async (userId: string) => {
-      const { data } = await supabase!
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-      if (active) setProfile((data as Profile) ?? null)
+      const p = await authBackend.loadProfile(userId)
+      if (active) setProfile(p)
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    authBackend.getSession().then((res) => {
       if (!active) return
-      const u = data.session?.user
-      if (u) {
-        setUser({ id: u.id, email: u.email ?? undefined })
-        setSession({ access_token: data.session!.access_token })
-        loadProfile(u.id)
+      if (res) {
+        setUser(res.user)
+        setSession(res.session)
+        loadProfile(res.user.id)
       }
       setReady(true)
     })
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user
+    const sub = authBackend.onAuthStateChange((u, s) => {
       if (u) {
-        setUser({ id: u.id, email: u.email ?? undefined })
-        setSession({ access_token: session.access_token })
+        setUser(u)
+        setSession(s)
         loadProfile(u.id)
       } else {
         setUser(null)
@@ -77,70 +69,47 @@ export function useAuth() {
 
     return () => {
       active = false
-      sub.subscription.unsubscribe()
+      sub.unsubscribe()
     }
   }, [])
 
-  const signInWithGitHub = useCallback(async (redirectTo?: string) => {
-    if (!supabase) return
-    await supabase.auth.signInWithOAuth({
-      provider: 'github',
-      options: { redirectTo: redirectTo ?? window.location.origin }
-    })
-  }, [])
+  const signInWithGitHub = useCallback(
+    (redirectTo?: string) => authBackend.signInWithOAuth('github', redirectTo),
+    []
+  )
 
-  const signInWithGoogle = useCallback(async (redirectTo?: string) => {
-    if (!supabase) return
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: redirectTo ?? window.location.origin }
-    })
-  }, [])
+  const signInWithGoogle = useCallback(
+    (redirectTo?: string) => authBackend.signInWithOAuth('google', redirectTo),
+    []
+  )
 
-  const signInWithEmail = useCallback(async (email: string) => {
-    if (!supabase) return { error: 'not_configured' as const }
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.href }
-    })
-    return { error: error?.message ?? null }
-  }, [])
+  const signInWithEmail = useCallback(
+    (email: string) => authBackend.signInWithEmailLink(email),
+    []
+  )
 
-  const signInWithPassword = useCallback(async (email: string, password: string) => {
-    if (!supabase) return { error: 'not_configured' as const }
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
-  }, [])
+  const signInWithPassword = useCallback(
+    (email: string, password: string) => authBackend.signInWithPassword(email, password),
+    []
+  )
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    if (!supabase) return { error: 'not_configured' as const, needsConfirmation: false }
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: `${window.location.origin}/login` }
-    })
-    // When email confirmation is required, Supabase returns a user but no session.
-    const needsConfirmation = !!data?.user && !data.session
-    return { error: error?.message ?? null, needsConfirmation }
-  }, [])
+  const signUp = useCallback(
+    (email: string, password: string) => authBackend.signUp(email, password),
+    []
+  )
 
-  const resetPasswordForEmail = useCallback(async (email: string) => {
-    if (!supabase) return { error: 'not_configured' as const }
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
-    })
-    return { error: error?.message ?? null }
-  }, [])
+  const resetPasswordForEmail = useCallback(
+    (email: string) => authBackend.resetPasswordForEmail(email),
+    []
+  )
 
-  const updatePassword = useCallback(async (password: string) => {
-    if (!supabase) return { error: 'not_configured' as const }
-    const { error } = await supabase.auth.updateUser({ password })
-    return { error: error?.message ?? null }
-  }, [])
+  const updatePassword = useCallback(
+    (password: string) => authBackend.updatePassword(password),
+    []
+  )
 
   const signOut = useCallback(async () => {
-    if (!supabase) return
-    await supabase.auth.signOut()
+    await authBackend.signOut()
     setUser(null)
     setSession(null)
     setProfile(null)
@@ -152,7 +121,7 @@ export function useAuth() {
     /** Backwards-compatible loading alias used by entitlement/paywall flows. */
     loading: !ready,
     /** Whether the community backend is wired up at all. */
-    enabled: isSupabaseConfigured,
+    enabled: authBackend.isConfigured,
     user,
     session,
     profile,

@@ -14,5 +14,10 @@ node_modules
 .next/
 .DS_Store
 
+# Local package-manager registry override (e.g. China mirror) — keep local, don't commit
+.npmrc
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Claude Code local config
 .claude/

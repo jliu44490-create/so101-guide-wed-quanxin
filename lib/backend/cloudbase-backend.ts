@@ -1,26 +1,18 @@
 /**
  * Tencent CloudBase implementation of AuthBackend (powers the `cn` region).
  *
- * ─── STATUS: scaffold ───────────────────────────────────────────────────────
- * Not wired yet. The CN deployment needs a CloudBase environment provisioned
- * first (env id + region), after which this adapter gets fleshed out against
- * `@cloudbase/js-sdk`:
+ * CloudBase's web v3 auth API (@cloudbase/js-sdk ≥ 3.4) is deliberately
+ * Supabase-shaped — `signInWithPassword({ email, password })`, `getSession()`,
+ * `onAuthStateChange((event, session) => …)`, `{ data, error }` returns — so this
+ * maps almost 1:1 onto our AuthBackend contract.
  *
- *   import cloudbase from '@cloudbase/js-sdk'
- *   const app = cloudbase.init({ env: process.env.NEXT_PUBLIC_CLOUDBASE_ENV! })
- *   const auth = app.auth()
- *   // signIn:  auth.signIn({ username/email, password })
- *   // signUp:  auth.signUp(...) or the email-verification flow
- *   // session: auth.getLoginState() / auth.onLoginStateChanged(...)
- *   // profile: app.database().collection('profiles').doc(uid).get()
+ * The SDK is pulled in via a lazy dynamic import so it only ships in the CN
+ * bundle: in the global build `backendKind === 'supabase'`, these methods are
+ * never called and the import chunk is never loaded.
  *
- * Until `NEXT_PUBLIC_CLOUDBASE_ENV` is set, `isConfigured` is false and every
- * consumer degrades to the same "community not configured" placeholder used
- * when Supabase is absent — so a half-set-up CN build never crashes.
- *
- * Phase 1 surfaces email/password only (see lib/region.ts → oauthProviders is
- * empty for CN). WeChat QR sign-in is a later addition once a 微信开放平台
- * 网站应用 is registered.
+ * Phase 1 surfaces email/password only. Two things are intentionally deferred:
+ *   - loadProfile → null (the community/profiles data layer is a later slice)
+ *   - updatePassword (the recovery-session flow lands with /reset-password)
  */
 
 import type { Profile } from '@/lib/supabase'
@@ -32,59 +24,131 @@ import type {
   SignUpResult
 } from './types'
 
-const CLOUDBASE_ENV = process.env.NEXT_PUBLIC_CLOUDBASE_ENV
-const configured = Boolean(CLOUDBASE_ENV)
+// This adapter bridges to the dynamically-imported, loosely-typed CloudBase SDK
+// and implements interface methods whose params aren't all used yet (CN phase 1).
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
+const ENV = process.env.NEXT_PUBLIC_CLOUDBASE_ENV
+const REGION = process.env.NEXT_PUBLIC_CLOUDBASE_REGION
+const ACCESS_KEY = process.env.NEXT_PUBLIC_CLOUDBASE_ACCESS_KEY
+const configured = Boolean(ENV && ACCESS_KEY)
 
 const notReady: ActionResult = { error: 'not_configured' }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// Minimal shapes we rely on from the SDK (kept local to avoid coupling to the
+// SDK's large type surface; the instances themselves stay loosely typed).
+interface CBUser {
+  id: string
+  email?: string | null
+}
+interface CBSession {
+  access_token?: string
+  user: CBUser
+}
+
+/** Lazy singleton auth instance — loaded in the browser on first use only. */
+let authPromise: Promise<any> | null = null
+async function getAuth(): Promise<any> {
+  if (!authPromise) {
+    authPromise = import('@cloudbase/js-sdk').then((mod) => {
+      const cloudbase = (mod as any).default ?? mod
+      const app = cloudbase.init({ env: ENV, region: REGION, accessKey: ACCESS_KEY })
+      return app.auth({ persistence: 'local' })
+    })
+  }
+  return authPromise
+}
+
+const errMsg = (error: any): string | null =>
+  error ? (error.message ?? String(error)) : null
+
+const mapUser = (u: CBUser) => ({ id: u.id, email: u.email ?? undefined })
+
 export const cloudbaseAuthBackend: AuthBackend = {
   isConfigured: configured,
 
   async getSession() {
-    // TODO(cn): return app.auth().getLoginState() mapped to BackendUser/Session.
-    return null
+    if (!configured) return null
+    const auth = await getAuth()
+    const { data } = await auth.getSession()
+    const session: CBSession | undefined = data?.session
+    if (!session?.user) return null
+    return {
+      user: mapUser(session.user),
+      session: { access_token: session.access_token ?? '' }
+    }
   },
 
-  onAuthStateChange(_cb): AuthSubscription {
-    // TODO(cn): wire app.auth().onLoginStateChanged → cb; return its disposer.
-    return { unsubscribe() {} }
+  onAuthStateChange(cb): AuthSubscription {
+    if (!configured) return { unsubscribe() {} }
+    let subscription: { unsubscribe?: () => void } | undefined
+    // getAuth resolves asynchronously; attach the listener once it's ready.
+    getAuth().then((auth) => {
+      const res = auth.onAuthStateChange((_event: string, session: CBSession | null) => {
+        if (session?.user) {
+          cb(mapUser(session.user), { access_token: session.access_token ?? '' })
+        } else {
+          cb(null, null)
+        }
+      })
+      subscription = res?.data?.subscription
+    })
+    return { unsubscribe: () => subscription?.unsubscribe?.() }
   },
 
   async loadProfile(_userId: string): Promise<Profile | null> {
-    // TODO(cn): read from the `profiles` collection in CloudBase database.
+    // Profiles live in the CloudBase database; wired with the community slice.
     return null
   },
 
   async signInWithOAuth(_provider: OAuthProvider, _redirectTo?: string) {
-    // No social OAuth in CN phase 1. WeChat QR sign-in lands here later.
+    // No social login in the CN region (phase 1). WeChat QR sign-in lands later.
   },
 
-  async signInWithEmailLink(_email: string): Promise<ActionResult> {
-    return notReady
+  async signInWithEmailLink(email: string): Promise<ActionResult> {
+    if (!configured) return notReady
+    const auth = await getAuth()
+    const { error } = await auth.signInWithOtp({ email, options: { shouldCreateUser: true } })
+    return { error: errMsg(error) }
   },
 
-  async signInWithPassword(_email: string, _password: string): Promise<ActionResult> {
-    // TODO(cn): app.auth().signIn({ username: email, password }).
-    return notReady
+  async signInWithPassword(email: string, password: string): Promise<ActionResult> {
+    if (!configured) return notReady
+    const auth = await getAuth()
+    const { error } = await auth.signInWithPassword({ email, password })
+    return { error: errMsg(error) }
   },
 
-  async signUp(_email: string, _password: string): Promise<SignUpResult> {
-    // TODO(cn): CloudBase email sign-up + verification flow.
-    return { error: 'not_configured', needsConfirmation: false }
+  async signUp(email: string, password: string): Promise<SignUpResult> {
+    if (!configured) return { error: 'not_configured', needsConfirmation: false }
+    const auth = await getAuth()
+    const { data, error } = await auth.signUp({ email, password })
+    if (error) return { error: errMsg(error), needsConfirmation: false }
+    // CloudBase returns a `verifyOtp` callback (and no session) when the email
+    // still needs to be confirmed with a one-time code.
+    const needsConfirmation = !!data?.verifyOtp || !data?.session
+    return { error: null, needsConfirmation }
   },
 
-  async resetPasswordForEmail(_email: string): Promise<ActionResult> {
-    // TODO(cn): app.auth().sendPasswordResetEmail(...) equivalent.
-    return notReady
+  async resetPasswordForEmail(email: string): Promise<ActionResult> {
+    if (!configured) return notReady
+    const auth = await getAuth()
+    const { error } = await auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    })
+    return { error: errMsg(error) }
   },
 
   async updatePassword(_password: string): Promise<ActionResult> {
-    return notReady
+    // CloudBase updates the password through the callback returned by
+    // resetPasswordForEmail()/verifyOtp(), which needs the recovery session.
+    // Wired with the /reset-password slice.
+    return { error: 'not_configured' }
   },
 
   async signOut() {
-    // TODO(cn): app.auth().signOut().
+    if (!configured) return
+    const auth = await getAuth()
+    await auth.signOut()
   }
 }
-/* eslint-enable @typescript-eslint/no-unused-vars */

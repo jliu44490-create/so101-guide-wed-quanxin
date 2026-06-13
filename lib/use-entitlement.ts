@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { supabase, isSupabaseConfigured } from './supabase'
+import { communityBackend } from './backend'
 import { useAuth } from './use-auth'
 import { PAYWALL_ENABLED } from './paywall'
 
@@ -34,7 +34,7 @@ export function useEntitlement(): UseEntitlementResult {
 
   useEffect(() => {
     // When paywall is off, or backend missing, there's nothing to check.
-    if (!PAYWALL_ENABLED || !isSupabaseConfigured || !supabase) {
+    if (!PAYWALL_ENABLED || !communityBackend.isConfigured) {
       setChecking(false)
       return
     }
@@ -47,23 +47,18 @@ export function useEntitlement(): UseEntitlementResult {
 
     let alive = true
     setChecking(true)
-    supabase
-      .from('entitlements')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!alive) return
-        setHasEntitlement(!!data)
-        setChecking(false)
-      })
+    communityBackend.hasEntitlement(user.id).then((has) => {
+      if (!alive) return
+      setHasEntitlement(has)
+      setChecking(false)
+    })
     return () => {
       alive = false
     }
   }, [user, authLoading])
 
   // Paywall off (or backend missing) → everyone has access.
-  if (!PAYWALL_ENABLED || !isSupabaseConfigured) {
+  if (!PAYWALL_ENABLED || !communityBackend.isConfigured) {
     return { hasAccess: true, loading: false, locked: false }
   }
 

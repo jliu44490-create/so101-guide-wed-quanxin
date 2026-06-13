@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Prose } from '@/components/prose'
-import { supabase, isSupabaseConfigured, type CommentRow } from '@/lib/supabase'
+import { communityBackend, type UIComment } from '@/lib/backend'
 import { useAuth } from '@/lib/use-auth'
 import { useEntitlement } from '@/lib/use-entitlement'
 import { cn } from '@/lib/utils'
@@ -23,11 +23,6 @@ interface DiscussionProps {
   className?: string
 }
 
-interface UIComment extends CommentRow {
-  author_username?: string
-  author_avatar_url?: string | null
-}
-
 export function Discussion({ threadKey, title = '讨论区', className }: DiscussionProps) {
   const { isLoggedIn, user } = useAuth()
   const { locked: postingLocked } = useEntitlement()
@@ -38,36 +33,17 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
   const [posting, setPosting] = useState(false)
 
   const load = useCallback(async () => {
-    if (!supabase) {
+    if (!communityBackend.isConfigured) {
       setLoading(false)
       return
     }
     setLoading(true)
-    const { data, error } = await supabase
-      .from('comments_with_meta')
-      .select('*')
-      .eq('thread_key', threadKey)
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      setLoading(false)
-      return
-    }
-    const rows = (data as UIComment[]) ?? []
+    const { comments: rows, likedIds: liked } = await communityBackend.listThread(
+      threadKey,
+      user?.id
+    )
     setComments(rows)
-
-    // Which of these did the current user like?
-    if (user && rows.length > 0) {
-      const ids = rows.map((r) => r.id)
-      const { data: votes } = await supabase
-        .from('comment_votes')
-        .select('comment_id')
-        .eq('user_id', user.id)
-        .in('comment_id', ids)
-      setLikedIds(new Set((votes ?? []).map((v: { comment_id: string }) => v.comment_id)))
-    } else {
-      setLikedIds(new Set())
-    }
+    setLikedIds(new Set(liked))
     setLoading(false)
   }, [threadKey, user])
 
@@ -77,11 +53,9 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
 
   const post = async () => {
     const text = body.trim()
-    if (!text || !supabase || !user) return
+    if (!text || !user) return
     setPosting(true)
-    const { error } = await supabase
-      .from('comments')
-      .insert({ thread_key: threadKey, author_id: user.id, body: text })
+    const { error } = await communityBackend.postComment(threadKey, user.id, text)
     setPosting(false)
     if (error) {
       toast.error('发送失败，请重试')
@@ -93,7 +67,7 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
   }
 
   const toggleLike = async (c: UIComment) => {
-    if (!supabase || !user) {
+    if (!user) {
       toast.error('登录后才能点赞')
       return
     }
@@ -110,17 +84,13 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
         x.id === c.id ? { ...x, like_count: (x.like_count ?? 0) + (liked ? -1 : 1) } : x
       )
     )
-    if (liked) {
-      await supabase.from('comment_votes').delete().eq('comment_id', c.id).eq('user_id', user.id)
-    } else {
-      await supabase.from('comment_votes').insert({ comment_id: c.id, user_id: user.id })
-    }
+    await communityBackend.setLike(c.id, user.id, !liked)
   }
 
   const remove = async (c: UIComment) => {
-    if (!supabase || !user) return
+    if (!user) return
     if (!confirm('确定删除这条评论？')) return
-    const { error } = await supabase.from('comments').delete().eq('id', c.id)
+    const { error } = await communityBackend.deleteComment(c.id)
     if (error) {
       toast.error('删除失败')
       return
@@ -132,7 +102,7 @@ export function Discussion({ threadKey, title = '讨论区', className }: Discus
   const count = comments.length
 
   // ── Backend not configured → friendly placeholder ──────────────────────
-  if (!isSupabaseConfigured) {
+  if (!communityBackend.isConfigured) {
     return (
       <section className={cn('mt-12 border-t border-border/40 pt-8', className)}>
         <h2 className="flex items-center gap-2 text-xl font-bold">

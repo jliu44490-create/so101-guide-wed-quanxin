@@ -38,6 +38,14 @@ export interface AuthBackend {
   /** Whether this backend has the env/config it needs to operate. */
   readonly isConfigured: boolean
 
+  /**
+   * How a freshly-signed-up email gets confirmed:
+   *  - 'link' → the backend emails a clickable confirmation link (Supabase).
+   *  - 'otp'  → the backend emails a one-time code to enter (CloudBase).
+   * The signup UI branches on this.
+   */
+  readonly confirmationMethod: 'link' | 'otp'
+
   /** Current session, or null if signed out. */
   getSession(): Promise<{ user: BackendUser; session: BackendSession } | null>
 
@@ -57,6 +65,12 @@ export interface AuthBackend {
 
   signInWithPassword(email: string, password: string): Promise<ActionResult>
   signUp(email: string, password: string): Promise<SignUpResult>
+
+  /** Confirm a signup with the one-time code emailed to the user (OTP backends). */
+  verifyOtp(email: string, token: string): Promise<ActionResult>
+  /** Resend the signup one-time code (OTP backends). */
+  resendOtp(email: string): Promise<ActionResult>
+
   resetPasswordForEmail(email: string): Promise<ActionResult>
   updatePassword(password: string): Promise<ActionResult>
   signOut(): Promise<void>

@@ -18,6 +18,7 @@ const notConfigured: ActionResult = { error: 'not_configured' }
 
 export const supabaseAuthBackend: AuthBackend = {
   isConfigured: isSupabaseConfigured,
+  confirmationMethod: 'link',
 
   async getSession() {
     if (!supabase) return null
@@ -82,6 +83,15 @@ export const supabaseAuthBackend: AuthBackend = {
     // When email confirmation is required, Supabase returns a user but no session.
     const needsConfirmation = !!data?.user && !data.session
     return { error: error?.message ?? null, needsConfirmation }
+  },
+
+  // Supabase confirms signups with an email link, so OTP entry is never shown.
+  async verifyOtp(): Promise<ActionResult> {
+    return { error: 'not_supported' }
+  },
+
+  async resendOtp(): Promise<ActionResult> {
+    return { error: 'not_supported' }
   },
 
   async resetPasswordForEmail(email: string): Promise<ActionResult> {

@@ -8,6 +8,7 @@ import {
   Check,
   Eye,
   EyeOff,
+  KeyRound,
   Loader2,
   Lock,
   Mail,
@@ -19,6 +20,7 @@ import { AuthShell } from '@/components/auth-shell'
 import { OAuthButtons } from '@/components/oauth-buttons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/use-auth'
 import { isValidEmail, scorePassword, suggestEmailFix } from '@/lib/email-utils'
@@ -28,7 +30,8 @@ import { cn } from '@/lib/utils'
 function SignupContent() {
   const router = useRouter()
   const search = useSearchParams()
-  const { enabled, ready, isLoggedIn, signUp } = useAuth()
+  const { enabled, ready, isLoggedIn, confirmationMethod, signUp, verifyOtp, resendOtp } =
+    useAuth()
 
   const next = search.get('next') ?? '/'
 
@@ -40,10 +43,20 @@ function SignupContent() {
   const [touched, setTouched] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
+  // OTP confirmation (CloudBase / CN region).
+  const [otpCode, setOtpCode] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [resendIn, setResendIn] = useState(0)
 
   useEffect(() => {
     if (ready && isLoggedIn) router.replace(next)
   }, [ready, isLoggedIn, next, router])
+
+  useEffect(() => {
+    if (resendIn <= 0) return
+    const id = window.setTimeout(() => setResendIn((n) => n - 1), 1000)
+    return () => window.clearTimeout(id)
+  }, [resendIn])
 
   const trimmed = email.trim()
   const validEmail = isValidEmail(trimmed)
@@ -78,10 +91,46 @@ function SignupContent() {
     }
     if (needsConfirmation) {
       setSentTo(trimmed)
+      if (confirmationMethod === 'otp') setResendIn(45)
     } else {
       toast.success('注册成功')
       router.replace(next)
     }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!sentTo || otpCode.length < 6) {
+      toast.error('请输入完整的 6 位验证码')
+      return
+    }
+    setVerifying(true)
+    const { error } = await verifyOtp(sentTo, otpCode)
+    setVerifying(false)
+    if (error) {
+      toast.error(error === 'not_supported' ? '当前后端不支持验证码' : '验证码不正确或已过期')
+      return
+    }
+    toast.success('注册成功')
+    router.replace(next)
+  }
+
+  const handleResendOtp = async () => {
+    if (!sentTo || resendIn > 0) return
+    const { error } = await resendOtp(sentTo)
+    if (error) {
+      toast.error(error)
+      return
+    }
+    toast.success('验证码已重新发送')
+    setResendIn(45)
+  }
+
+  const backToForm = () => {
+    setSentTo(null)
+    setOtpCode('')
+    setPassword('')
+    setConfirm('')
+    setResendIn(0)
   }
 
   const loginHref = `/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`
@@ -107,8 +156,85 @@ function SignupContent() {
     )
   }
 
-  // Post-signup: email confirmation required.
+  // Post-signup: confirmation required.
   if (sentTo) {
+    // CloudBase (CN) confirms with a one-time code.
+    if (confirmationMethod === 'otp') {
+      return (
+        <AuthShell eyebrow="CREATE ACCOUNT" brandTitle="创建你的 LVJIN 账号">
+          <div className="space-y-6">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 ring-1 ring-primary/30">
+              <KeyRound className="size-7 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold tracking-tight">输入验证码</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                我们向 <strong className="break-all text-foreground">{sentTo}</strong> 发送了一封
+                6 位验证码邮件,输入它即可完成注册。
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                value={otpCode}
+                onChange={setOtpCode}
+                onComplete={handleVerifyOtp}
+                autoFocus
+              >
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} className="size-11 text-base" />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <Button
+              onClick={handleVerifyOtp}
+              disabled={verifying || otpCode.length < 6}
+              className="glow-primary-hover h-11 w-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/25 disabled:opacity-60"
+            >
+              {verifying ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  验证中…
+                </>
+              ) : (
+                <>
+                  验证并登录
+                  <ArrowRight className="size-4" />
+                </>
+              )}
+            </Button>
+
+            <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-4 py-3 text-xs">
+              <span className="text-muted-foreground">
+                {resendIn > 0 ? `${resendIn} 秒后可重发` : '没收到?检查垃圾邮件或重新发送'}
+              </span>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendIn > 0}
+                className="shrink-0 font-medium text-foreground underline underline-offset-4 hover:text-primary disabled:opacity-50 disabled:no-underline"
+              >
+                重新发送
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={backToForm}
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              ← 换个邮箱重试
+            </button>
+          </div>
+        </AuthShell>
+      )
+    }
+
+    // Supabase (global) confirms with a clickable email link.
     return (
       <AuthShell eyebrow="CREATE ACCOUNT" brandTitle="创建你的 LVJIN 账号">
         <div className="space-y-6">
@@ -126,11 +252,7 @@ function SignupContent() {
             没收到?检查垃圾邮件文件夹,或{' '}
             <button
               type="button"
-              onClick={() => {
-                setSentTo(null)
-                setPassword('')
-                setConfirm('')
-              }}
+              onClick={backToForm}
               className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
             >
               换个邮箱重试

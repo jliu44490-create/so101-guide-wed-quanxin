@@ -98,6 +98,13 @@ export function useAuth() {
     []
   )
 
+  const verifyOtp = useCallback(
+    (email: string, token: string) => authBackend.verifyOtp(email, token),
+    []
+  )
+
+  const resendOtp = useCallback((email: string) => authBackend.resendOtp(email), [])
+
   const resetPasswordForEmail = useCallback(
     (email: string) => authBackend.resetPasswordForEmail(email),
     []
@@ -122,6 +129,8 @@ export function useAuth() {
     loading: !ready,
     /** Whether the community backend is wired up at all. */
     enabled: authBackend.isConfigured,
+    /** 'link' (Supabase) or 'otp' (CloudBase) — how signup confirmation works. */
+    confirmationMethod: authBackend.confirmationMethod,
     user,
     session,
     profile,
@@ -131,6 +140,8 @@ export function useAuth() {
     signInWithEmail,
     signInWithPassword,
     signUp,
+    verifyOtp,
+    resendOtp,
     resetPasswordForEmail,
     updatePassword,
     signOut

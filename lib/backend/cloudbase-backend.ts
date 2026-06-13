@@ -46,6 +46,11 @@ interface CBSession {
   user: CBUser
 }
 
+// CloudBase's signUp() returns a `verifyOtp` callback that closes over the
+// pending verification context (message id etc.). We stash it so the separate
+// "enter code" step can complete the confirmation.
+let pendingVerifyOtp: ((p: { token: string }) => Promise<any>) | null = null
+
 /** Lazy singleton auth instance — loaded in the browser on first use only. */
 let authPromise: Promise<any> | null = null
 async function getAuth(): Promise<any> {
@@ -66,6 +71,7 @@ const mapUser = (u: CBUser) => ({ id: u.id, email: u.email ?? undefined })
 
 export const cloudbaseAuthBackend: AuthBackend = {
   isConfigured: configured,
+  confirmationMethod: 'otp',
 
   async getSession() {
     if (!configured) return null
@@ -126,8 +132,29 @@ export const cloudbaseAuthBackend: AuthBackend = {
     if (error) return { error: errMsg(error), needsConfirmation: false }
     // CloudBase returns a `verifyOtp` callback (and no session) when the email
     // still needs to be confirmed with a one-time code.
+    pendingVerifyOtp = typeof data?.verifyOtp === 'function' ? data.verifyOtp : null
     const needsConfirmation = !!data?.verifyOtp || !data?.session
     return { error: null, needsConfirmation }
+  },
+
+  async verifyOtp(email: string, token: string): Promise<ActionResult> {
+    if (!configured) return notReady
+    const auth = await getAuth()
+    // Prefer the callback captured at signUp time (carries the message id);
+    // fall back to the stateless top-level verify keyed by email.
+    const res = pendingVerifyOtp
+      ? await pendingVerifyOtp({ token })
+      : await auth.verifyOtp({ email, token, type: 'signup' })
+    const error = errMsg(res?.error)
+    if (!error) pendingVerifyOtp = null
+    return { error }
+  },
+
+  async resendOtp(email: string): Promise<ActionResult> {
+    if (!configured) return notReady
+    const auth = await getAuth()
+    const { error } = await auth.resend({ email, type: 'signup' })
+    return { error: errMsg(error) }
   },
 
   async resetPasswordForEmail(email: string): Promise<ActionResult> {

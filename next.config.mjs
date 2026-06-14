@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Self-contained build output for container deploys (the CN / Hong Kong node).
-  // Vercel ignores this and uses its own pipeline, so the global deploy is
-  // unaffected.
-  output: 'standalone',
+  // Standalone output ONLY for the CN container build (the Dockerfile sets
+  // NEXT_PUBLIC_REGION=cn before building). The global Vercel build keeps its
+  // default output untouched, so pushing this is a no-op for lvjin.online.
+  output: process.env.NEXT_PUBLIC_REGION === 'cn' ? 'standalone' : undefined,
   images: {
     formats: ['image/avif', 'image/webp'],
   },

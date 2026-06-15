@@ -92,7 +92,7 @@ export default async function CommunityPage() {
               <Reveal delay={300}>
                 <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-yellow-500/40 bg-yellow-500/10 px-4 py-1.5 text-xs text-yellow-700 dark:text-yellow-300">
                   <Sparkles className="h-3 w-3" />
-                  社区后端配置中，即将开放
+                  社区互动即将开放
                 </div>
               </Reveal>
             )}
@@ -123,12 +123,9 @@ function ComingSoon() {
           <p className="text-2xl">💬</p>
           <h2 className="text-xl font-semibold">即将开放</h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            社区功能（登录、评论、点赞）的代码已经在仓库里。<br />
-            管理员只需要配置 Supabase 后端，就能立刻激活。
+            评论、点赞等社区互动正在搭建中，很快和你见面。<br />
+            可以先从下面的热门话题，去对应章节看看。
           </p>
-          <div className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
-            配置指南: <code className="rounded bg-secondary px-1.5 py-0.5">supabase/README.md</code>
-          </div>
         </CardContent>
       </Card>
 

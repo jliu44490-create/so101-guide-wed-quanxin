@@ -18,6 +18,8 @@ node_modules
 .npmrc
 # TypeScript incremental build cache
 *.tsbuildinfo
+# Packaged cloud function (build artifact for console upload)
+cloudbase/functions/*.zip
 
 # Claude Code local config
 .claude/

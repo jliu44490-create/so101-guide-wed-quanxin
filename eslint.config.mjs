@@ -15,6 +15,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // CloudBase cloud functions are standalone CommonJS, deployed separately —
+    // not part of the Next.js app's lint scope.
+    "cloudbase/functions/**",
   ]),
 ]);
 

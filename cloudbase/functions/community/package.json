@@ -1,0 +1,10 @@
+{
+  "name": "community",
+  "version": "1.0.0",
+  "description": "SO101 CN community data function (comments / votes / profiles / entitlement)",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.10.0",
+    "pg": "^8.13.0"
+  }
+}

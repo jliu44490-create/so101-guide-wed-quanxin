@@ -23,15 +23,13 @@ import type {
   AuthSubscription,
   SignUpResult
 } from './types'
+import { getCloudbaseApp, cloudbaseConfigured } from './cloudbase-app'
 
 // This adapter bridges to the dynamically-imported, loosely-typed CloudBase SDK
 // and implements interface methods whose params aren't all used yet (CN phase 1).
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 
-const ENV = process.env.NEXT_PUBLIC_CLOUDBASE_ENV
-const REGION = process.env.NEXT_PUBLIC_CLOUDBASE_REGION
-const ACCESS_KEY = process.env.NEXT_PUBLIC_CLOUDBASE_ACCESS_KEY
-const configured = Boolean(ENV && ACCESS_KEY)
+const configured = cloudbaseConfigured
 
 const notReady: ActionResult = { error: 'not_configured' }
 
@@ -51,17 +49,10 @@ interface CBSession {
 // "enter code" step can complete the confirmation.
 let pendingVerifyOtp: ((p: { token: string }) => Promise<any>) | null = null
 
-/** Lazy singleton auth instance — loaded in the browser on first use only. */
-let authPromise: Promise<any> | null = null
+/** The shared CloudBase auth instance (see cloudbase-app). */
 async function getAuth(): Promise<any> {
-  if (!authPromise) {
-    authPromise = import('@cloudbase/js-sdk').then((mod) => {
-      const cloudbase = (mod as any).default ?? mod
-      const app = cloudbase.init({ env: ENV, region: REGION, accessKey: ACCESS_KEY })
-      return app.auth({ persistence: 'local' })
-    })
-  }
-  return authPromise
+  const app = await getCloudbaseApp()
+  return app.auth({ persistence: 'local' })
 }
 
 const errMsg = (error: any): string | null =>

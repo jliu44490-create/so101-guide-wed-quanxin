@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Activity, Cpu, Sparkles, Terminal } from 'lucide-react'
-import { RobotArmBlueprint } from '@/components/robot-arm-blueprint'
+import { Cpu, Sparkles } from 'lucide-react'
+import { BinaryField } from '@/components/binary-field'
 import { cn } from '@/lib/utils'
 
 interface SpecItem {
@@ -11,7 +11,7 @@ interface SpecItem {
 }
 
 interface AuthShellProps {
-  /** Form panel content (the right side on desktop). */
+  /** Form panel content (the glass card). */
   children: React.ReactNode
   /** Small uppercase label above the brand title, e.g. "AUTHENTICATION". */
   eyebrow?: string
@@ -19,7 +19,7 @@ interface AuthShellProps {
   brandTitle?: string
   /** One-line subtitle under the brand title. */
   brandSubtitle?: string
-  /** Tech-spec rows shown at the bottom of the brand panel. */
+  /** Tech-spec rows shown under the brand copy. */
   specs?: SpecItem[]
   className?: string
 }
@@ -34,9 +34,10 @@ const defaultSpecs: SpecItem[] = [
 /**
  * Shared shell for the auth pages (/login, /signup, /forgot-password, etc.).
  *
- * Industrial / tech-dark vibe: grid backdrop + aurora glow on the brand side,
- * minimal mono-tone form panel on the right. Forces dark mode regardless of
- * the site's current theme so the auth flow has a consistent identity.
+ * One immersive scene: a full-bleed binary sea (see BinaryField) covers the whole
+ * screen, with the brand copy and a translucent glass login card floating on top
+ * of it — no split panels, no hard divider. Soft scrims + drop shadows keep the
+ * copy and form readable. Forces dark mode for a consistent auth identity.
  */
 export function AuthShell({
   children,
@@ -47,163 +48,120 @@ export function AuthShell({
   className
 }: AuthShellProps) {
   return (
-    <div className={cn('dark min-h-screen bg-background text-foreground', className)}>
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_1fr]">
-        {/* ============== Brand side ============== */}
-        <aside className="relative isolate hidden flex-col justify-between overflow-hidden border-r border-border/40 bg-background p-10 lg:flex">
-          {/* Grid + aurora backdrop */}
-          <div
-            aria-hidden
-            className="grid-pattern pointer-events-none absolute inset-0 opacity-[0.35]"
-          />
-          <div
-            aria-hidden
-            className="aurora pointer-events-none absolute inset-0 opacity-60"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background/90"
-          />
+    <div
+      className={cn(
+        'dark relative isolate min-h-screen overflow-hidden bg-[oklch(0.1_0.016_265)] text-foreground',
+        className
+      )}
+    >
+      {/* Full-bleed binary sea */}
+      <BinaryField className="absolute inset-0 z-0" />
 
-          {/* Top: logo + status pill */}
-          <header className="relative flex items-center justify-between">
-            <Link href="/" className="group flex items-center gap-2.5">
-              <div className="relative flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25 ring-1 ring-white/20 ring-inset transition-transform group-hover:scale-105">
-                <Sparkles className="size-4 text-white drop-shadow-sm" />
-              </div>
-              <div className="leading-tight">
-                <div className="text-sm font-semibold tracking-tight">LVJIN</div>
-                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Imitation Learning
-                </div>
-              </div>
-            </Link>
+      {/* Readability scrims — soft, no hard edges: gentle top/bottom darkening and
+          a focus dim under the brand copy on the left. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-[oklch(0.1_0.016_265)]/75 via-transparent to-[oklch(0.1_0.016_265)]/85"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-10 [background:radial-gradient(42%_38%_at_36%_53%,oklch(0.08_0.016_265/0.9),oklch(0.08_0.016_265/0.45)_52%,transparent_80%)]"
+      />
 
-            <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground backdrop-blur-sm">
-              <span className="relative flex size-1.5">
-                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative size-1.5 rounded-full bg-emerald-400" />
-              </span>
-              Online
+      {/* Content */}
+      <div className="relative z-20 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 sm:px-10">
+        {/* Header */}
+        <header className="flex items-center justify-between py-6">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <div className="relative flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25 ring-1 ring-white/20 ring-inset transition-transform group-hover:scale-105">
+              <Sparkles className="size-4 text-white drop-shadow-sm" />
             </div>
-          </header>
-
-          {/* Middle: hero copy + robotic-arm blueprint */}
-          <div className="relative space-y-8">
-            <div className="space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary backdrop-blur-sm">
-                <Cpu className="size-3" />
-                {eyebrow}
+            <div className="leading-tight">
+              <div className="text-sm font-semibold tracking-tight">LVJIN</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Imitation Learning
               </div>
-              <h1 className="text-balance text-3xl font-bold leading-[1.15] tracking-tight xl:text-4xl">
-                {brandTitle.split('LVJIN').map((part, i, arr) =>
-                  i < arr.length - 1 ? (
-                    <span key={i}>
-                      {part}
-                      <span className="shimmer-text font-extrabold">LVJIN</span>
-                    </span>
-                  ) : (
-                    <span key={i}>{part}</span>
-                  )
-                )}
-              </h1>
-              <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                {brandSubtitle}
-              </p>
             </div>
+          </Link>
 
-            <RobotArmBlueprint className="animate-float max-w-xl" />
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground backdrop-blur-md">
+            <span className="relative flex size-1.5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative size-1.5 rounded-full bg-emerald-400" />
+            </span>
+            Online
+          </div>
+        </header>
+
+        {/* Main: brand copy + glass login card, both floating on the sea */}
+        <main className="flex flex-1 flex-col items-center justify-center gap-10 py-8 lg:flex-row lg:justify-between lg:gap-16">
+          {/* Brand copy */}
+          <div className="w-full max-w-lg space-y-6 text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary backdrop-blur-md">
+              <Cpu className="size-3" />
+              {eyebrow}
+            </div>
+            <h1 className="text-balance text-3xl font-bold leading-[1.15] tracking-tight drop-shadow-[0_2px_16px_oklch(0.08_0.02_265/0.9)] xl:text-4xl">
+              {brandTitle.split('LVJIN').map((part, i, arr) =>
+                i < arr.length - 1 ? (
+                  <span key={i}>
+                    {part}
+                    <span className="shimmer-text font-extrabold">LVJIN</span>
+                  </span>
+                ) : (
+                  <span key={i}>{part}</span>
+                )
+              )}
+            </h1>
+            <p className="mx-auto max-w-md text-sm leading-relaxed text-foreground/85 drop-shadow-[0_1px_12px_oklch(0.06_0.02_265/1)] lg:mx-0">
+              {brandSubtitle}
+            </p>
+
+            <div className="space-y-4 pt-2">
+              <div className="glow-beam" />
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+                {specs.map((spec) => (
+                  <div key={spec.label} className="min-w-0 space-y-1">
+                    <dt className="text-[10px] font-medium uppercase tracking-[0.16em] text-foreground/60 drop-shadow-[0_1px_8px_oklch(0.06_0.02_265/0.95)]">
+                      {spec.label}
+                    </dt>
+                    <dd className="truncate font-mono text-sm font-semibold tracking-tight drop-shadow-[0_1px_10px_oklch(0.06_0.02_265/1)]">
+                      {spec.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
 
-          {/* Bottom: spec grid + terminal */}
-          <div className="relative space-y-5">
-            <div className="glow-beam" />
-
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-              {specs.map((spec) => (
-                <div key={spec.label} className="min-w-0 space-y-1">
-                  <dt className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                    {spec.label}
-                  </dt>
-                  <dd className="truncate font-mono text-sm font-semibold tracking-tight">
-                    {spec.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="terminal mt-2 text-xs">
-              <div className="terminal-header">
-                <div className="terminal-dot bg-rose-400/80" />
-                <div className="terminal-dot bg-amber-400/80" />
-                <div className="terminal-dot bg-emerald-400/80" />
-                <span className="ml-2 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                  <Terminal className="size-3" />
-                  lvjin@so101 ~ %
-                </span>
-              </div>
-              <div className="space-y-1 px-4 py-3 font-mono leading-relaxed">
-                <div className="text-muted-foreground">
-                  <span className="text-emerald-400">$</span> lerobot-record \
-                </div>
-                <div className="pl-4 text-muted-foreground">
-                  <span className="text-primary">--repo_id</span>=you/so101_pickup \
-                </div>
-                <div className="pl-4 text-muted-foreground">
-                  <span className="text-primary">--num_episodes</span>=50
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Activity className="size-3 text-emerald-400" />
-                  <span className="text-emerald-400">●</span> recording episode 12 / 50
-                </div>
-              </div>
+          {/* Glass login card */}
+          <div className="w-full max-w-md">
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[oklch(0.13_0.02_265/0.55)] p-6 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:p-8">
+              {/* top hairline accent */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent"
+              />
+              {children}
             </div>
           </div>
-        </aside>
-
-        {/* ============== Form side ============== */}
-        <main className="relative flex flex-col bg-background">
-          {/* Subtle grid on mobile/right side */}
-          <div
-            aria-hidden
-            className="grid-pattern pointer-events-none absolute inset-0 opacity-[0.18] lg:hidden"
-          />
-
-          {/* Mobile-only top bar with logo */}
-          <header className="relative flex items-center justify-between border-b border-border/40 px-6 py-4 lg:hidden">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-md bg-gradient-to-br from-primary to-accent">
-                <Sparkles className="size-3.5 text-white" />
-              </div>
-              <span className="text-sm font-semibold tracking-tight">LVJIN</span>
-            </Link>
-            <Link
-              href="/"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              返回首页
-            </Link>
-          </header>
-
-          <div className="relative flex flex-1 items-center justify-center px-6 py-10 sm:px-10 lg:py-16">
-            <div className="w-full max-w-md">{children}</div>
-          </div>
-
-          <footer className="relative flex flex-wrap items-center justify-between gap-3 border-t border-border/40 px-6 py-4 text-[11px] text-muted-foreground sm:px-10">
-            <span>© {new Date().getFullYear()} LVJIN · lvjin.online</span>
-            <div className="flex items-center gap-4">
-              <Link href="/" className="transition-colors hover:text-foreground">
-                首页
-              </Link>
-              <Link href="/learn" className="transition-colors hover:text-foreground">
-                教程
-              </Link>
-              <a href="#" className="transition-colors hover:text-foreground">
-                隐私
-              </a>
-            </div>
-          </footer>
         </main>
+
+        {/* Footer */}
+        <footer className="flex flex-wrap items-center justify-between gap-3 py-5 text-[11px] text-muted-foreground">
+          <span>© {new Date().getFullYear()} LVJIN · lvjin.online</span>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="transition-colors hover:text-foreground">
+              首页
+            </Link>
+            <Link href="/learn" className="transition-colors hover:text-foreground">
+              教程
+            </Link>
+            <a href="#" className="transition-colors hover:text-foreground">
+              隐私
+            </a>
+          </div>
+        </footer>
       </div>
     </div>
   )

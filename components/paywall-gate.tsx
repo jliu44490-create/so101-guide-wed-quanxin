@@ -25,7 +25,7 @@ export function PaywallGate({ what = '本节内容', unlockHref = '/unlock' }: P
       </div>
       <h1 className="mt-6 text-2xl font-bold sm:text-3xl">{what}已锁定</h1>
       <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-        第 1 课永久免费，可随时体验。解锁后即可学习全部 9 节课、查看完整文档，并参与社区讨论。
+        前两章永久免费，可随时体验。解锁后即可学习全部 9 节课、查看完整文档，并参与社区讨论。
       </p>
 
       <div className="mx-auto mt-8 max-w-md rounded-2xl border border-border/60 bg-card/40 p-6 text-left">

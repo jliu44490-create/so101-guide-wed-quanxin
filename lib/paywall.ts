@@ -10,8 +10,8 @@
 
 export const PAYWALL_ENABLED = process.env.NEXT_PUBLIC_PAYWALL_ENABLED === 'true'
 
-/** Chapters that stay free forever as a trial. Chapter 1 is the taster. */
-export const FREE_CHAPTER_IDS = [1] as const
+/** Chapters that stay free forever as a trial — chapters 1 and 2 are the taster. */
+export const FREE_CHAPTER_IDS = [1, 2] as const
 
 export function isChapterFree(chapterId: number): boolean {
   return FREE_CHAPTER_IDS.includes(chapterId as (typeof FREE_CHAPTER_IDS)[number])

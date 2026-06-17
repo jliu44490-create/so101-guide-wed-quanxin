@@ -16,7 +16,7 @@
    → 用户被解锁，前端 useEntitlement 读到记录 → 内容打开
 ```
 
-第 1 课永久免费，其余 8 课 + 完整文档 + 社区发帖需解锁。
+前两课永久免费，其余 7 课 + 完整文档 + 社区发帖需解锁。
 
 ---
 
@@ -69,7 +69,7 @@ Supabase → Settings → **API Keys** → **Secret keys** → 复制那个 `sb_
 
 1. Stripe 右上角切到 **Test mode**，用测试 key（`sk_test_` / 测试 `price_` / 测试 webhook secret）
 2. 测试卡号：`4242 4242 4242 4242`，任意未来日期 + 任意 CVC
-3. 流程：登录 → /unlock → 购买 → 测试卡付款 → 跳回 → 第 2-9 课解锁、社区可发帖
+3. 流程：登录 → /unlock → 购买 → 测试卡付款 → 跳回 → 第 3-9 课解锁、社区可发帖
 4. 验证 Supabase `entitlements` 表里多了你的一行
 5. 一切 OK 后切回 **Live mode**，把 Vercel 的 key 换成 live key，重新部署
 
@@ -78,7 +78,7 @@ Supabase → Settings → **API Keys** → **Secret keys** → 复制那个 `sb_
 ## 调价 / 改免费章节
 
 - **价格**：在 Stripe 改价格（建新 price，更新 env 里的 price ID）。显示用的文案在 `lib/paywall.ts` 的 `PRICING`。
-- **哪些课免费**：`lib/paywall.ts` 的 `FREE_CHAPTER_IDS`（默认 `[1]`）。
+- **哪些课免费**：`lib/paywall.ts` 的 `FREE_CHAPTER_IDS`（默认 `[1, 2]`）。
 - **临时全场免费**：把 `NEXT_PUBLIC_PAYWALL_ENABLED` 删掉或设为非 `true`，Redeploy。
 
 ## 已知限制（v1）

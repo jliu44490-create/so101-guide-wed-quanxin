@@ -108,7 +108,7 @@ function UnlockContent() {
           </Reveal>
           <Reveal delay={200}>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground sm:text-lg">
-              第 1 课永久免费体验。解锁后,全部 9 节互动课、完整文档、社区发帖权限,
+              前两章永久免费体验。解锁后,全部 9 节互动课、完整文档、社区发帖权限,
               一次付费,永久有效 —— 包括以后新增的章节。
             </p>
           </Reveal>

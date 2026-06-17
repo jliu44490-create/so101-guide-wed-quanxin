@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { ScrollToTop } from '@/components/scroll-to-top'
 import { CommandPalette } from '@/components/command-palette'
 import { HtmlLangSync } from '@/components/html-lang-sync'
+import { AuthGate } from '@/components/auth-gate'
 import { siteConfig } from '@/lib/site-config'
 import { analyticsEnabled } from '@/lib/region'
 import './globals.css'
@@ -87,7 +88,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <HtmlLangSync />
-          {children}
+          <AuthGate>{children}</AuthGate>
           <CommandPalette />
           <ScrollToTop />
           <Toaster position="bottom-right" richColors closeButton />

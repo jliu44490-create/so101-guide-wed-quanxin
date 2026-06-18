@@ -98,6 +98,15 @@ export const cloudbaseAuthBackend: AuthBackend = {
     return null
   },
 
+  async updateProfile(): Promise<ActionResult> {
+    // Profile editing for the CN region lands with the community slice.
+    return notReady
+  },
+
+  async uploadAvatar(): Promise<{ url: string | null; error: string | null }> {
+    return { url: null, error: 'not_configured' }
+  },
+
   async signInWithOAuth(_provider: OAuthProvider, _redirectTo?: string) {
     // No social login in the CN region (phase 1). WeChat QR sign-in lands later.
   },

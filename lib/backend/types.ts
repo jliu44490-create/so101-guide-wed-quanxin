@@ -57,6 +57,15 @@ export interface AuthBackend {
   /** Fetch the public profile row for a user. */
   loadProfile(userId: string): Promise<Profile | null>
 
+  /** Update the current user's editable profile fields. */
+  updateProfile(
+    userId: string,
+    patch: { username?: string; bio?: string; avatar_url?: string }
+  ): Promise<ActionResult>
+
+  /** Upload an avatar image; returns its public URL on success. */
+  uploadAvatar(userId: string, file: File): Promise<{ url: string | null; error: string | null }>
+
   /** Redirect-based social sign-in. No-op where unsupported (e.g. CN). */
   signInWithOAuth(provider: OAuthProvider, redirectTo?: string): Promise<void>
 

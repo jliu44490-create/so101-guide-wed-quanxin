@@ -235,3 +235,27 @@ create policy "users can read own entitlement"
 -- 注意：故意不建 insert/update/delete 策略。
 -- 只有 service_role（webhook 服务端，绕过 RLS）能写入权益，
 -- 前端无论如何都无法自己给自己开通 —— 这是付费墙的安全根基。
+
+
+-- 10. 头像存储桶（公开读，用户只能传到自己的目录） -----------------------
+-- 给「账号设置」页的头像上传用。在 Supabase SQL Editor 跑一次（可重复执行）。
+-- 路径约定：<user_id>/avatar.<ext> —— 策略校验首层目录 = 当前用户 id。
+
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+drop policy if exists "avatar public read" on storage.objects;
+create policy "avatar public read"
+  on storage.objects for select
+  using (bucket_id = 'avatars');
+
+drop policy if exists "avatar upload own" on storage.objects;
+create policy "avatar upload own"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "avatar update own" on storage.objects;
+create policy "avatar update own"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);

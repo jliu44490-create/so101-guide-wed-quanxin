@@ -50,6 +50,24 @@ export const supabaseAuthBackend: AuthBackend = {
     return (data as Profile) ?? null
   },
 
+  async updateProfile(userId, patch): Promise<ActionResult> {
+    if (!supabase) return notConfigured
+    const { error } = await supabase.from('profiles').update(patch).eq('id', userId)
+    return { error: error?.message ?? null }
+  },
+
+  async uploadAvatar(userId, file) {
+    if (!supabase) return { url: null, error: 'not_configured' }
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase()
+    const path = `${userId}/avatar.${ext}`
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true, cacheControl: '3600' })
+    if (error) return { url: null, error: error.message }
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+    return { url: `${data.publicUrl}?v=${Date.now()}`, error: null }
+  },
+
   async signInWithOAuth(provider: OAuthProvider, redirectTo?: string) {
     if (!supabase) return
     await supabase.auth.signInWithOAuth({

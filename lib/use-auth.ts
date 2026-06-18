@@ -122,6 +122,24 @@ export function useAuth() {
     setProfile(null)
   }, [])
 
+  const updateProfile = useCallback(
+    async (patch: { username?: string; bio?: string; avatar_url?: string }) => {
+      if (!user) return { error: 'not_logged_in' }
+      const res = await authBackend.updateProfile(user.id, patch)
+      if (!res.error) setProfile((p) => (p ? { ...p, ...patch } : p))
+      return res
+    },
+    [user]
+  )
+
+  const uploadAvatar = useCallback(
+    async (file: File) => {
+      if (!user) return { url: null, error: 'not_logged_in' }
+      return authBackend.uploadAvatar(user.id, file)
+    },
+    [user]
+  )
+
   return {
     /** true once we know whether the user is logged in (or backend is absent). */
     ready,
@@ -144,6 +162,8 @@ export function useAuth() {
     resendOtp,
     resetPasswordForEmail,
     updatePassword,
-    signOut
+    signOut,
+    updateProfile,
+    uploadAvatar
   }
 }

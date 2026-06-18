@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LogOut, User as UserIcon } from 'lucide-react'
+import { LogOut, Settings, User as UserIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,6 +21,7 @@ type AuthLocale = 'zh' | 'ja'
 interface AuthLabels {
   userFallback: string
   accountMenu: string
+  settings: string
   signedOut: string
   signOut: string
   login: string
@@ -30,6 +31,7 @@ const labels: Record<AuthLocale, AuthLabels> = {
   zh: {
     userFallback: '我',
     accountMenu: '账号菜单',
+    settings: '账号设置',
     signedOut: '已退出登录',
     signOut: '退出登录',
     login: '登录'
@@ -37,6 +39,7 @@ const labels: Record<AuthLocale, AuthLabels> = {
   ja: {
     userFallback: '私',
     accountMenu: 'アカウントメニュー',
+    settings: 'アカウント設定',
     signedOut: 'ログアウトしました',
     signOut: 'ログアウト',
     login: 'ログイン'
@@ -47,7 +50,7 @@ const labels: Record<AuthLocale, AuthLabels> = {
  * Header auth control.
  *  - backend not configured → renders nothing (community layer dormant)
  *  - logged out → "登录" button that links to /login?next=<current>
- *  - logged in  → avatar dropdown with username + sign out
+ *  - logged in  → avatar dropdown with username, settings link + sign out
  */
 export function AuthButton({ locale = 'zh' }: { locale?: AuthLocale }) {
   const t = labels[locale]
@@ -78,6 +81,12 @@ export function AuthButton({ locale = 'zh' }: { locale?: AuthLocale }) {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/settings">
+              <Settings className="mr-2 h-3.5 w-3.5" />
+              {t.settings}
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onClick={async () => {
               await signOut()

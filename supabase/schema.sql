@@ -259,3 +259,77 @@ drop policy if exists "avatar update own" on storage.objects;
 create policy "avatar update own"
   on storage.objects for update to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+
+-- 11. LVJIN AI 用量计量（按 UTC 天累计 token） -----------------------------
+-- 每行 = 某用户某天的 token 总用量。/api/ai/chat 答复前读、答复后用 add_ai_usage 累加。
+-- 普通用户只能读自己的；写入只走 service_role / 下面的 security-definer 函数。
+
+create table if not exists public.ai_usage (
+  user_id     uuid not null references public.profiles(id) on delete cascade,
+  day         date not null default (now() at time zone 'utc')::date,
+  tokens_used bigint not null default 0,
+  primary key (user_id, day)
+);
+
+alter table public.ai_usage enable row level security;
+
+drop policy if exists "users read own ai usage" on public.ai_usage;
+create policy "users read own ai usage"
+  on public.ai_usage for select using (auth.uid() = user_id);
+-- 故意不建 insert/update 策略：只有 service_role 和下面的函数能写。
+
+-- 原子累加（避免读改写竞态）。security definer 让它绕过 RLS 写入。
+create or replace function public.add_ai_usage(p_user uuid, p_tokens bigint)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into public.ai_usage (user_id, day, tokens_used)
+  values (p_user, (now() at time zone 'utc')::date, p_tokens)
+  on conflict (user_id, day)
+  do update set tokens_used = public.ai_usage.tokens_used + excluded.tokens_used;
+$$;
+
+
+-- 12. AI 额外配额积分（按量另付，购买的 token 不过期） ----------------------
+-- 当日含量用尽后从这里扣。webhook（service_role）用 add_ai_credits 充值，
+-- /api/ai/chat 用 spend_ai_credits 扣减。普通用户只读自己的余额。
+
+create table if not exists public.ai_credits (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  balance bigint not null default 0
+);
+
+alter table public.ai_credits enable row level security;
+
+drop policy if exists "users read own ai credits" on public.ai_credits;
+create policy "users read own ai credits"
+  on public.ai_credits for select using (auth.uid() = user_id);
+-- 故意不建 insert/update 策略：只有 service_role 和下面的函数能写。
+
+-- 充值（Stripe webhook 调用）。
+create or replace function public.add_ai_credits(p_user uuid, p_tokens bigint)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  insert into public.ai_credits (user_id, balance)
+  values (p_user, p_tokens)
+  on conflict (user_id)
+  do update set balance = public.ai_credits.balance + excluded.balance;
+$$;
+
+-- 扣减（答复后调用），floor 到 0，避免负数。
+create or replace function public.spend_ai_credits(p_user uuid, p_tokens bigint)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.ai_credits
+  set balance = greatest(0, balance - p_tokens)
+  where user_id = p_user;
+$$;

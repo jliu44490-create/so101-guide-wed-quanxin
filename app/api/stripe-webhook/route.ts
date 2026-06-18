@@ -17,6 +17,7 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
+import { AI_OVERAGE } from '@/lib/ai-config'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -59,18 +60,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'admin not configured' }, { status: 503 })
     }
 
-    const { error } = await admin.from('entitlements').upsert(
-      {
-        user_id: userId,
-        product: 'all-access',
-        source: 'stripe',
-        stripe_session_id: session.id
-      },
-      { onConflict: 'user_id' }
-    )
-    if (error) {
+    if (session.metadata?.product === 'ai_credits') {
+      // AI overage pack → top up the user's prepaid credit balance.
+      const { error } = await admin.rpc('add_ai_credits', {
+        p_user: userId,
+        p_tokens: AI_OVERAGE.tokens
+      })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    } else {
+      // All-access course unlock → grant the entitlement.
+      const { error } = await admin.from('entitlements').upsert(
+        {
+          user_id: userId,
+          product: 'all-access',
+          source: 'stripe',
+          stripe_session_id: session.id
+        },
+        { onConflict: 'user_id' }
+      )
       // Return 500 so Stripe retries — we don't want to lose a paid grant.
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     }
   }
 

@@ -50,7 +50,7 @@ export const siteConfig = {
     { href: '/learn', label: '学习路径' },
     { href: '/community', label: '社区' },
     { href: '/diagnose', label: '诊断' },
-    { href: '/assistant', label: 'AI 助手' }
+    { href: '/ai', label: 'LVJIN AI' }
   ],
   navExtra: [
     { href: '/glossary', label: '术语表' },

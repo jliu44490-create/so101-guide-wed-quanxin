@@ -27,13 +27,16 @@ export const AI_OVERAGE = {
   priceLabel: '¥9.9'
 }
 
+export type AiProvider = 'deepseek' | 'anthropic'
+
 /**
  * Which provider/model each tier uses. Plan C: both tiers run the same open
- * model (DeepSeek); Plus differs only by quota + course access.
+ * model (DeepSeek); Plus differs only by quota + course access. The `provider`
+ * union keeps the anthropic path live for when Plus moves to Claude.
  */
-export const AI_MODELS = {
-  free: { provider: 'deepseek' as const, model: 'deepseek-chat' },
-  plus: { provider: 'deepseek' as const, model: 'deepseek-chat' }
+export const AI_MODELS: Record<AiTier, { provider: AiProvider; model: string }> = {
+  free: { provider: 'deepseek', model: 'deepseek-chat' },
+  plus: { provider: 'deepseek', model: 'deepseek-chat' }
 }
 
 /** Cap how much of the client-sent history we forward (cost + abuse control). */

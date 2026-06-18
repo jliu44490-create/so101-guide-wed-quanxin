@@ -201,9 +201,14 @@ export async function POST(req: Request) {
       }
       const totalTokens = dsTotal || inTok + outTok
       if (totalTokens > 0) {
-        await admin.rpc('add_ai_usage', { p_user: user.id, p_tokens: totalTokens }).catch(() => {})
-        if (fromCredit) {
-          await admin.rpc('spend_ai_credits', { p_user: user.id, p_tokens: totalTokens }).catch(() => {})
+        // Best-effort accounting — a logging failure must never break the answer.
+        try {
+          await admin.rpc('add_ai_usage', { p_user: user.id, p_tokens: totalTokens })
+          if (fromCredit) {
+            await admin.rpc('spend_ai_credits', { p_user: user.id, p_tokens: totalTokens })
+          }
+        } catch (e) {
+          console.error('[ai] usage accounting failed', e)
         }
       }
       controller.close()

@@ -181,7 +181,7 @@ export default function AiPage() {
               </div>
               <p className="mt-4 text-sm font-medium">问我任何关于 SO-101 / 模仿学习的问题</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {isPlus ? 'Plus：Claude Sonnet 4.6 · 更高用量' : 'Free：开源模型 · 升级 Plus 可用更强模型与更多用量'}
+                {isPlus ? 'Plus · 课程全解锁 · 更高每日用量' : 'Free · 升级 Plus 可解锁全部课程并获更高每日用量'}
               </p>
               <div className="mt-6 grid w-full max-w-md gap-2 sm:grid-cols-2">
                 {SUGGESTIONS.map((s) => (

@@ -6,13 +6,13 @@
 
 - **永远用简体中文回复。** 本仓库含大量日文 `/ja` 内容,不要被它带偏成日文输出 —— 跟随用户语言(中文)。
 - **推送/发布前先问用户。** 正式推送目标是 `origin`(官方仓库);`amjlta` 镜像只有用户明确要求才动。
-- **绝不把密钥放进 `NEXT_PUBLIC_*` 或前端。** `SUPABASE_SERVICE_ROLE_KEY` / `sb_secret_…` 仅服务端。
-- **`NEXT_PUBLIC_PAYWALL_ENABLED` 在 Stripe 完全接通前保持不设**,否则站点会"锁了却买不了"。
+- **绝不把密钥放进 `NEXT_PUBLIC_*` 或前端。** `SUPABASE_SERVICE_ROLE_KEY` / `sb_secret_…` / `DEEPSEEK_API_KEY` 仅服务端。
+- **付费墙已上线正式收款**:`NEXT_PUBLIC_PAYWALL_ENABLED=true`(Stripe live,前 2 章免费、其余买断)。动付费/解锁/会员逻辑时记得它是开着的。
 - 提交署名:`Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`。
 
 ## 项目概览
 
-SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui。中文为主,`/ja` 日文镜像。Supabase(账号+社区)、Stripe(付费墙,**当前关闭/免费**)、Resend(自有域名邮件)。
+SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router) + TypeScript + Tailwind v4 + shadcn/ui。中文为主,`/ja` 日文镜像。Supabase(账号+社区+AI 历史/配额)、Stripe(付费墙**已开启·正式收款**,前 2 章免费)、DeepSeek(站内 AI)、Resend(自有域名邮件)。
 
 - 本地路径:`C:\Users\Q\so101-site`
 - 官方仓库:`github.com/jliu44490-create/so101-guide-wed-quanxin`(remote `origin`,分支 `main`)
@@ -26,7 +26,8 @@ SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router)
 - `components/prose.tsx` + `chat-message-renderer.tsx` — Markdown 渲染。**字号由调用方控制**:renderer 不再写死 `text-sm`;`<Prose size="inherit">` 继承父级字号
 - `lib/site-config.ts` / `site-config-ja.ts` — 站点配置(**已故意移除自家 GitHub 链接,别加回**)
 - `lib/paywall.ts`、`use-entitlement.ts`、`supabase.ts` — 付费/鉴权(靠 env flag 优雅降级:`isSupabaseConfigured`、`PAYWALL_ENABLED`)
-- `supabase/schema.sql` — 数据库;`app/api/checkout`、`app/api/stripe-webhook` — Stripe
+- `supabase/schema.sql` — 数据库(§1–10 社区/付费/头像;§11–12 AI 计量/积分;§13 AI 历史表;§14 伴侣开关列);`app/api/checkout`、`app/api/stripe-webhook` — Stripe
+- **LVJIN AI(站内 AI 助手 + 电子学习伴侣)** — 页面 `app/ai/page.tsx`;后端 `app/api/ai/chat`(原始 fetch+SSE,**无 SDK**);配置 `lib/ai-config.ts`;多会话历史 `lib/ai-conversations.ts`、配额读取 `lib/ai-usage.ts`;伴侣 `components/learning-companion.tsx` + `lib/companion-bus.ts` + `companion-intro-dialog.tsx` + `companion-explain-button.tsx`。**详细配置见 `AI.md`**。
 
 ## LeRobot 命令规范（教程内容,务必用新版 CLI）
 
@@ -37,7 +38,9 @@ SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router)
 
 ## 已完成
 
-站点上线(lvjin.online + SSL)、社区(Supabase + Resend 邮件,不限流)、9 章文档 + 中文互动课、付费墙已建但**关闭**(免费)、移除 GitHub 入口、命令现代化、性能/SEO/无障碍修复、互动课字号修复、对比度修复(浅色 muted 文本 ~5.8:1)、章节状态修复。最新提交见 `git log`。
+站点上线(lvjin.online + SSL)、社区(Supabase + Resend 邮件,不限流)、9 章文档 + 中文互动课、**付费墙已上线正式收款**(Stripe live,前 2 章免费、其余买断)、整站登录墙(`components/auth-gate.tsx`)、账号设置页、移除 GitHub 入口、命令现代化、性能/SEO/无障碍修复、章节状态修复。最新提交见 `git log`。
+
+**LVJIN AI v2(2026-06-19 上线)**:站内 AI 助手 `/ai` —— 多会话历史、打开即自我介绍 + 互动选项芯片、科幻界面、左栏「今日额度」配额条 + 手机端药丸。**仅 Plus** 的电子学习伴侣(全站浮动小球:互动课答对祝贺/答错「讲讲」、文档页「让 LVJIN 讲讲」;设置里可开关,首次弹说明窗)。两档都用 **DeepSeek**(`deepseek-chat`),Plus = 课程全解锁 + 更高每日配额(Free 50k / Plus 300k token/日),超额按 ¥9.9 / 100 万 token 买(`STRIPE_PRICE_AI_CREDITS`)。旧关键词搜索 `/assistant` 已永久重定向到 `/ai`(旧引擎已删)。**Supabase 迁移 §11–14 已跑**。详见 `AI.md`。
 
 ## 🚧 当前进行中：中国版（大陆可直连版）
 
@@ -48,7 +51,6 @@ SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router)
 ## 待办 / 已搁置（需要时再做）
 
 - **Geist 字体**:目前是系统字体,用户可能想换回 Geist
-- **Stripe 付费墙**:等公司主体可开真实收款(步骤见 `PAYMENTS.md`)
 - **Batch B 业务页**:联系/询价表单、特定商取引法表示、隐私政策、案例展示
 - **日文版**:`/ja` 目前只有文档(互动课与社区仅中文)
 - **企业邮箱** `hello@lvjin.online`(Zoho/腾讯)

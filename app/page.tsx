@@ -224,9 +224,9 @@ export default function HomePage() {
                   </Magnetic>
                   <Magnetic strength={0.5} range={140}>
                     <Button asChild variant="outline" size="lg" className="h-12">
-                      <Link href="/assistant">
+                      <Link href="/ai">
                         <Bot className="mr-1.5 h-4 w-4" />
-                        询问 AI 助手
+                        询问 LVJIN AI
                       </Link>
                     </Button>
                   

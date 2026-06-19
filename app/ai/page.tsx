@@ -5,6 +5,7 @@ import Link from 'next/link'
 import {
   ArrowUp,
   Bot,
+  Gauge,
   Loader2,
   MessageSquarePlus,
   PanelLeftClose,
@@ -34,6 +35,7 @@ import {
   saveMessage,
   titleFromText
 } from '@/lib/ai-conversations'
+import { getUsage, type UsageInfo } from '@/lib/ai-usage'
 import { cn } from '@/lib/utils'
 
 interface Msg {
@@ -63,6 +65,50 @@ function relTime(iso: string): string {
   const day = Math.floor(h / 24)
   if (day < 30) return `${day} 天前`
   return new Date(iso).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
+}
+
+/** Compact token formatter: 8200 → 8.2k, 50000 → 50k, 1000000 → 1M. */
+function fmtTok(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`
+  if (n >= 1000) return `${(n / 1000).toFixed(n % 1000 && n < 10_000 ? 1 : 0)}k`
+  return `${n}`
+}
+
+const APPROX_TOKENS_PER_QA = 3150 // for a friendly "≈ N 次" estimate
+
+/** Today's quota meter shown at the bottom of the sidebar. */
+function QuotaBar({ usage }: { usage: UsageInfo | null }) {
+  if (!usage) return null
+  const pct = usage.limit ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0
+  const near = pct >= 80
+  const remainingQA = Math.floor((usage.remaining + usage.credits) / APPROX_TOKENS_PER_QA)
+  return (
+    <div className="shrink-0 rounded-xl border border-border/50 bg-card/40 p-3">
+      <div className="mb-1.5 flex items-center justify-between text-xs">
+        <span className="flex items-center gap-1 font-medium text-muted-foreground">
+          <Gauge className="size-3.5" /> 今日额度
+        </span>
+        <span className="font-mono text-[11px] text-muted-foreground">
+          {fmtTok(usage.used)}/{fmtTok(usage.limit)}
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all',
+            near ? 'bg-amber-500' : 'bg-gradient-to-r from-primary to-accent'
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+        <span>剩 {fmtTok(usage.remaining)} · 约 {remainingQA} 次</span>
+        {usage.credits > 0 && (
+          <span className="font-medium text-primary">额外 {fmtTok(usage.credits)}</span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 /** Glowing AI avatar orb — the assistant's identity across the page. */
@@ -102,24 +148,29 @@ export default function AiPage() {
   const [quotaReached, setQuotaReached] = useState(false)
   const [buying, setBuying] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false) // mobile drawer
+  const [usage, setUsage] = useState<UsageInfo | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Load the conversation list once we know the user.
+  // Load the conversation list + quota once we know the user.
   useEffect(() => {
     if (!userId) return
     listConversations(userId).then(setConversations)
+    getUsage(userId).then(setUsage)
   }, [userId])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, streaming])
 
-  // Returning from a credit-pack purchase.
+  // Handle return-from-purchase and a ?q= handoff (e.g. from 报错诊断).
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('topup') === 'success') {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('topup') === 'success') {
       toast.success('额外配额已到账，可以继续提问了')
-      window.history.replaceState({}, '', '/ai')
     }
+    const q = params.get('q')
+    if (q) setInput(q)
+    if (params.get('topup') || q) window.history.replaceState({}, '', '/ai')
   }, [])
 
   const newChat = useCallback(() => {
@@ -265,6 +316,7 @@ export default function AiPage() {
       toast.error('网络错误，请重试')
     } finally {
       setStreaming(false)
+      if (userId) getUsage(userId).then(setUsage)
     }
   }
 
@@ -326,6 +378,8 @@ export default function AiPage() {
           ))
         )}
       </div>
+
+      <QuotaBar usage={usage} />
     </div>
   )
 
@@ -369,6 +423,15 @@ export default function AiPage() {
                 </span>
               </h1>
             </div>
+            {usage && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-border/50 bg-card/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground md:hidden"
+                aria-label="今日额度"
+              >
+                <Gauge className="size-3" />剩 {fmtTok(usage.remaining + usage.credits)}
+              </button>
+            )}
             {isPlus ? (
               <Badge className="gap-1 bg-gradient-to-r from-primary to-accent text-primary-foreground">
                 <Sparkles className="size-3" /> Plus

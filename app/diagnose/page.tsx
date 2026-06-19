@@ -217,8 +217,8 @@ function DiagnoseContent() {
                       <p className="mt-3 font-medium">没有匹配的错误</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         换个关键词，或者{' '}
-                        <Link href="/assistant" className="text-primary hover:underline">
-                          询问 AI 助手
+                        <Link href="/ai" className="text-primary hover:underline">
+                          询问 LVJIN AI
                         </Link>
                       </p>
                     </CardContent>
@@ -286,11 +286,11 @@ function DiagnoseContent() {
                   <div className="min-w-0 flex-1 text-sm">
                     <p className="font-medium">没有命中？让 AI 帮你排查</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      把完整的错误栈、运行命令一起喂给 AI 助手，会更准。
+                      把完整的错误栈、运行命令一起喂给 LVJIN AI，会更准。
                     </p>
                   </div>
                   <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
-                    <Link href={query ? `/assistant?q=${encodeURIComponent(query)}` : '/assistant'}>
+                    <Link href={query ? `/ai?q=${encodeURIComponent(query)}` : '/ai'}>
                       去咨询
                       <ArrowRight className="ml-1 h-3.5 w-3.5" />
                     </Link>

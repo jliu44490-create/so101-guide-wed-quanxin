@@ -36,7 +36,7 @@ const sectionsZh: { title: string; links: LinkItem[] }[] = [
     title: '工具',
     links: [
       { label: '报错诊断', href: '/diagnose' },
-      { label: 'AI 助手', href: '/assistant' }
+      { label: 'LVJIN AI', href: '/ai' }
     ]
   },
   {

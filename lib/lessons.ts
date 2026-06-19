@@ -1409,10 +1409,10 @@ export const lessons: Record<number, Lesson> = {
       {
         id: 'c9-08-ask-ai-here',
         type: 'reveal',
-        prompt: '本站就内置了一个 AI 助手。它有什么特别？',
+        prompt: '本站就内置了一个 AI 助教。它有什么特别？',
         revealCta: '说说',
         reveal:
-          '## 本站 AI 助手 🤖\n\n- **全站知识库索引**：9 章内容 + 13 条错误库 + 16 个术语表都喂给它了\n- **中英混合分词 + 同义词扩展**：「校准」和 "calibration" 都能命中\n- **意图识别**：自动判断你是问概念 / 报错 / 命令 / 比较\n- **来源引用**：每个回答都附章节链接，方便你深入\n\n用法很简单：[去 AI 助手](/assistant)。\n\n比 Discord 等回复快，比 Google 上下文更对口（它知道你是用 SO101 + LeRobot）。',
+          '## 本站 LVJIN AI 🤖\n\n- **真·大模型**：会写命令、讲概念、帮你排错——不是关键词搜索\n- **懂站内上下文**：边答边检索本站 9 章 + 错误库 + 术语（RAG），比通用 ChatGPT 更对口你的 SO-101 + LeRobot\n- **多轮对话 + 历史**：像 ChatGPT 一样开新对话、回看历史\n- **Plus 专属电子学习伴侣**：全站陪你，答错在旁讲解\n\n用法很简单：[去 LVJIN AI](/ai)。\n\n比 Discord 回复快，比 Google 上下文更对口。',
         followCta: '继续 →'
       },
       {
@@ -1425,7 +1425,7 @@ export const lessons: Record<number, Lesson> = {
           '📋 三大错误类型：**ImportError / RuntimeError / FileNotFoundError**',
           '💾 `2>&1 | tee error.log` 完整保存错误',
           '🙋 提问要附 **错误栈 + 命令 + 已尝试**，别只发截图',
-          '🤖 本站 [AI 助手](/assistant) 是首选求助渠道'
+          '🤖 本站 [LVJIN AI](/ai) 是首选求助渠道'
         ]
       },
       {

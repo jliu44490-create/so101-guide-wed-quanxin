@@ -1601,9 +1601,9 @@ GPU 不够强、每帧推理 > 33ms 时实际跑不到 30 fps，会丢帧依旧�
         note: '十几条 LeRobot/ACT 常见报错的原因+解法+下一步，排错第 3 步的主战场。'
       },
       {
-        title: '本站 · AI 助手',
-        url: '/assistant',
-        note: '索引了全站章节+错误库+术语，比英文 Discord 更懂你的上下文，求助首选。'
+        title: '本站 · LVJIN AI',
+        url: '/ai',
+        note: '懂全站章节+错误库+术语的中文 AI 助教，比英文 Discord 更懂你的上下文，求助首选。'
       }
     ],
 

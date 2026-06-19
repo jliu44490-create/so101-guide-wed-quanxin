@@ -38,7 +38,7 @@ const commandLabels = {
     chapters: '章节',
     errors: '常见错误',
     actions: '操作',
-    askAssistant: '询问 AI 助手'
+    askAssistant: '询问 LVJIN AI'
   },
   ja: {
     title: 'コマンドパレット',
@@ -98,7 +98,8 @@ export function CommandPalette() {
     '/': Home,
     '/learn': LayoutGrid,
     '/diagnose': Zap,
-    '/assistant': Bot,
+    '/ai': Bot,
+    '/assistant': Bot, // JA mirror still uses /ja/assistant (normalizes to /assistant)
     '/glossary': Library,
     '/resources': Layers,
     '/about': Info
@@ -187,7 +188,7 @@ export function CommandPalette() {
         <CommandGroup heading={t.actions}>
           <CommandItem
             value="action-ai-assistant"
-            onSelect={() => go(isJa ? '/ja/assistant' : '/assistant')}
+            onSelect={() => go(isJa ? '/ja/assistant' : '/ai')}
           >
             <Sparkles className="mr-2 h-4 w-4 text-primary" />
             <span>{t.askAssistant}</span>

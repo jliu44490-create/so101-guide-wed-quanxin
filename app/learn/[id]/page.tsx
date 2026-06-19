@@ -32,6 +32,7 @@ import { Prose } from '@/components/prose'
 import { Mermaid } from '@/components/mermaid'
 import { Discussion } from '@/components/discussion'
 import { ContentGate } from '@/components/content-gate'
+import { CompanionExplainButton } from '@/components/companion-explain-button'
 import {
   ExerciseList,
   PitfallList,
@@ -608,11 +609,15 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="w-full justify-start">
-                    <Link href="/assistant">
+                    <Link href="/ai">
                       <ChevronRight className="mr-2 h-3.5 w-3.5" />
-                      AI 助手提问
+                      问 LVJIN AI
                     </Link>
                   </Button>
+                  <CompanionExplainButton
+                    topic={`第 ${chapter.id} 章：${chapter.title}`}
+                    context={chapter.description}
+                  />
                 </div>
               </div>
             </div>

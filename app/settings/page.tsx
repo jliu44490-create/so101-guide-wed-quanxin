@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Camera, Crown, Loader2, LogOut, Mail, Save, Sparkles } from 'lucide-react'
+import { Bot, Camera, Crown, Loader2, LogOut, Mail, Save, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
@@ -12,7 +12,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { CompanionIntroDialog } from '@/components/companion-intro-dialog'
 import { useAuth } from '@/lib/use-auth'
 import { useEntitlement } from '@/lib/use-entitlement'
 
@@ -37,14 +39,49 @@ export default function SettingsPage() {
   const [pw2, setPw2] = useState('')
   const [savingPw, setSavingPw] = useState(false)
 
+  const [companionOn, setCompanionOn] = useState(false)
+  const [companionDialog, setCompanionDialog] = useState(false)
+  const [savingCompanion, setSavingCompanion] = useState(false)
+
   // Hydrate the form once the profile arrives.
   useEffect(() => {
     if (profile) {
       setUsername(profile.username ?? '')
       setBio(profile.bio ?? '')
       setAvatarUrl(profile.avatar_url ?? null)
+      setCompanionOn(!!profile.companion_enabled)
     }
   }, [profile])
+
+  const toggleCompanion = async (next: boolean) => {
+    if (next) {
+      // Turning ON → explain first, persist on confirm.
+      setCompanionDialog(true)
+      return
+    }
+    setSavingCompanion(true)
+    const res = await updateProfile({ companion_enabled: false })
+    setSavingCompanion(false)
+    if (res.error) {
+      toast.error('保存失败，请重试')
+      return
+    }
+    setCompanionOn(false)
+    toast.success('已关闭电子学习伴侣')
+  }
+
+  const enableCompanion = async () => {
+    setSavingCompanion(true)
+    const res = await updateProfile({ companion_enabled: true })
+    setSavingCompanion(false)
+    if (res.error) {
+      toast.error('保存失败，请重试')
+      return
+    }
+    setCompanionOn(true)
+    setCompanionDialog(false)
+    toast.success('电子学习伴侣已开启，它会在全站陪着你～')
+  }
 
   if (!ready) {
     return (
@@ -248,6 +285,37 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* 电子学习伴侣（仅 Plus） */}
+        {hasAccess && !entLoading && (
+          <Card className="mb-6 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Bot className="size-4 text-primary" />
+                电子学习伴侣
+                <Badge variant="secondary" className="ml-1 gap-1 text-[10px]">
+                  <Sparkles className="size-2.5" /> Plus
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">在全站开启 AI 学习伙伴</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    答题时祝贺/讲解，文档里随手帮你「讲讲」。会消耗你的 AI 每日配额，随时可关。
+                  </p>
+                </div>
+                <Switch
+                  checked={companionOn}
+                  onCheckedChange={toggleCompanion}
+                  disabled={savingCompanion}
+                  aria-label="电子学习伴侣开关"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 修改密码 */}
         <Card className="mb-6">
           <CardHeader>
@@ -297,6 +365,15 @@ export default function SettingsPage() {
           退出登录
         </Button>
       </main>
+
+      <CompanionIntroDialog
+        open={companionDialog}
+        onOpenChange={setCompanionDialog}
+        onEnable={enableCompanion}
+        busy={savingCompanion}
+        dismissLabel="取消"
+      />
+
       <Footer />
     </div>
   )

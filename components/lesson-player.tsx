@@ -32,6 +32,7 @@ import { CodeBlock } from '@/components/code-block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useProgress } from '@/lib/use-progress'
+import { emitCompanion } from '@/lib/companion-bus'
 import { cn } from '@/lib/utils'
 import type {
   Card,
@@ -66,6 +67,14 @@ function hashText(value: string) {
 }
 
 const CONFETTI_SYMBOLS = ['🎉', '✨', '🎊', '⭐', '💫', '🌟', '🎈']
+
+/** Best-effort question text for a card, for the companion's "讲讲" prompt. */
+function questionOf(card: Card): string | undefined {
+  if ('question' in card && card.question) return card.question
+  if ('prompt' in card && card.prompt) return card.prompt
+  if ('title' in card && card.title) return card.title
+  return undefined
+}
 
 /* ────────────────────────────────────────────────────────────────────── */
 /* Confetti — pure CSS particles, no library                              */
@@ -157,11 +166,14 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const onCorrect = useCallback(() => {
     setStreak((s) => s + 1)
     triggerConfetti()
+    // Cheer from the 学习伴侣 (no-op unless an opted-in Plus user is watching).
+    emitCompanion({ type: 'lesson-correct' })
   }, [triggerConfetti])
 
   const onWrong = useCallback(() => {
     setStreak(0)
-  }, [])
+    emitCompanion({ type: 'lesson-wrong', chapterId: lesson.chapterId, question: questionOf(card) })
+  }, [card, lesson.chapterId])
 
   // Keyboard nav: Enter / → to advance, ← to go back (when not in input).
   useEffect(() => {

@@ -60,7 +60,7 @@ export interface AuthBackend {
   /** Update the current user's editable profile fields. */
   updateProfile(
     userId: string,
-    patch: { username?: string; bio?: string; avatar_url?: string }
+    patch: { username?: string; bio?: string; avatar_url?: string; companion_enabled?: boolean }
   ): Promise<ActionResult>
 
   /** Upload an avatar image; returns its public URL on success. */

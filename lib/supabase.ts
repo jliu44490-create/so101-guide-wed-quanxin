@@ -45,6 +45,8 @@ export interface Profile {
   avatar_url: string | null
   bio: string | null
   created_at: string
+  /** Plus-only opt-in: show the cross-site 电子学习伴侣. Default false. */
+  companion_enabled?: boolean
 }
 
 export interface CommentRow {

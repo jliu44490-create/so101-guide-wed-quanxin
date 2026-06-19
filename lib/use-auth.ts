@@ -123,7 +123,7 @@ export function useAuth() {
   }, [])
 
   const updateProfile = useCallback(
-    async (patch: { username?: string; bio?: string; avatar_url?: string }) => {
+    async (patch: { username?: string; bio?: string; avatar_url?: string; companion_enabled?: boolean }) => {
       if (!user) return { error: 'not_logged_in' }
       const res = await authBackend.updateProfile(user.id, patch)
       if (!res.error) setProfile((p) => (p ? { ...p, ...patch } : p))

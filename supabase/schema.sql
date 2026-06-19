@@ -333,3 +333,57 @@ as $$
   set balance = greatest(0, balance - p_tokens)
   where user_id = p_user;
 $$;
+
+
+-- 13. LVJIN AI 多会话历史（像 ChatGPT/Claude：可保存多段对话、随时回看） --------
+-- ai_conversations = 一段对话；ai_messages = 其中的每条消息。
+-- 全部受 RLS 保护：用户只能读写自己的对话与消息。客户端用 anon key 直接增删查，
+-- /api/ai/chat 仍只负责生成与计量，消息持久化交给前端（带用户会话，RLS 兜底）。
+
+create table if not exists public.ai_conversations (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.profiles(id) on delete cascade,
+  title       text not null default '新对话',
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+create index if not exists ai_conversations_user_idx
+  on public.ai_conversations (user_id, updated_at desc);
+
+alter table public.ai_conversations enable row level security;
+
+drop policy if exists "users manage own conversations" on public.ai_conversations;
+create policy "users manage own conversations"
+  on public.ai_conversations for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create table if not exists public.ai_messages (
+  id              uuid primary key default gen_random_uuid(),
+  conversation_id uuid not null references public.ai_conversations(id) on delete cascade,
+  user_id         uuid not null references public.profiles(id) on delete cascade,
+  role            text not null check (role in ('user', 'assistant')),
+  content         text not null,
+  model           text,
+  created_at      timestamptz not null default now()
+);
+
+create index if not exists ai_messages_conversation_idx
+  on public.ai_messages (conversation_id, created_at);
+
+alter table public.ai_messages enable row level security;
+
+drop policy if exists "users manage own messages" on public.ai_messages;
+create policy "users manage own messages"
+  on public.ai_messages for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+
+-- 14. 电子学习伴侣开关（仅 Plus 可用，用户自行开启） ----------------------------
+-- 默认关闭。Plus 用户在「账号设置」里开启后，伴侣才在全站浮现。
+-- 复用 profiles 的「users can update own profile」更新策略，无需新策略。
+
+alter table public.profiles
+  add column if not exists companion_enabled boolean not null default false;

@@ -4,6 +4,21 @@
 
 页面：`/ai`（已进导航「LVJIN AI」）。后端：`app/api/ai/chat`。配置：`lib/ai-config.ts`。
 
+## 已有能力（v2）
+
+**对话（全员 Free + Plus）**
+- **多会话历史**：每段对话存进 Supabase（`ai_conversations` / `ai_messages`，RLS 保护，只看得到自己的），左侧栏可回看、切换、删除。
+- **新对话** 一键开新；**打开即自我介绍 + 互动选项**：空对话显示 LVJIN AI 的问候与分组「潜在问题」芯片，点一下即开问。
+- 界面重做为科幻风（发光 AI 球、玻璃面板、二进制底纹）。
+
+**电子学习伴侣（仅 Plus，需自行开启）**
+- 全站浮动 AI 伙伴：互动课**答对发祝贺**（无 token 消耗）、**答错在旁讲解**（点「讲讲」才花 token）、文档页「让 LVJIN 讲讲本章」生动讲解。
+- Plus 用户首次弹**说明弹窗**自行决定；也可在「账号设置 → 电子学习伴侣」随时开关。`profiles.companion_enabled` 控制，默认关。
+- 讲解走同一条 `/api/ai/chat`，**消耗用户当日 AI 配额**。
+- 文件：`learning-companion.tsx` / `companion-bus.ts` / `companion-intro-dialog.tsx` / `companion-explain-button.tsx`。
+
+> ⚠️ 伴侣「仅 Plus」靠 `useEntitlement().hasAccess` 判定，**依赖 `NEXT_PUBLIC_PAYWALL_ENABLED=true`**。付费墙没开时所有登录用户都被当成 Plus（即都能用伴侣）。
+
 ## 配额与定价（在 `lib/ai-config.ts` 改）
 
 | | 每日含量 | ≈问答次数 | 模型 |
@@ -30,7 +45,12 @@
 ---
 
 ## 第 1 步：建表（Supabase SQL Editor）
-把 `supabase/schema.sql` 的 **第 11 节（`ai_usage`）和第 12 节（`ai_credits`）** 一起跑一遍（含 `add_ai_usage` / `add_ai_credits` / `spend_ai_credits` 三个函数，可重复执行）。
+把 `supabase/schema.sql` 的 **第 11–14 节** 一起跑一遍（可重复执行，安全）：
+- §11 `ai_usage` + §12 `ai_credits`（计量与积分，含三个函数）；
+- **§13 `ai_conversations` / `ai_messages`**（多会话历史，新）；
+- **§14 给 `profiles` 加 `companion_enabled` 列**（电子学习伴侣开关，新）。
+
+> 没跑 §13/§14 的话：历史不会保存（页面不报错，只是空）、设置里的伴侣开关会保存失败。
 
 ## 第 2 步：Stripe 建「额外配额包」价格
 Stripe（Live）→ Products → 新建产品 `LVJIN AI 额外配额包`：

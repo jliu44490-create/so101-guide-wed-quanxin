@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
+  ArrowRight,
   ArrowUp,
   Bot,
   Gauge,
@@ -12,11 +13,13 @@ import {
   Plus,
   Sparkles,
   Trash2,
-  User as UserIcon
+  User as UserIcon,
+  Wrench
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Header } from '@/components/header'
 import { BinaryField } from '@/components/binary-field'
+import { SetupWizard } from '@/components/setup-wizard'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -477,6 +480,19 @@ export default function AiPage() {
                     我是你学 SO-101 / LeRobot 模仿学习的专属助教。校准、采集、训练、部署——
                     从一条命令到一个报错，随时问我。挑一个开始，或直接在下面打字：
                   </p>
+
+                  <div className="mt-5 flex justify-center">
+                    <SetupWizard
+                      onAskAi={(t) => send(t)}
+                      trigger={
+                        <button className="group flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-foreground transition-all hover:-translate-y-0.5 hover:border-primary/60 hover:bg-primary/15">
+                          <Wrench className="size-4 text-primary" />
+                          零基础？用「环境向导」一键搭好
+                          <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                      }
+                    />
+                  </div>
 
                   <div className="mt-7 grid gap-3 sm:grid-cols-2">
                     {INTRO_GROUPS.map((g) => (

@@ -9,7 +9,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { AuroraBackground, FloatingOrbs, Reveal, ShimmerText } from '@/components/effects'
+import {
+  AuroraBackground,
+  ConicBorder,
+  FloatingOrbs,
+  Reveal,
+  ShimmerText,
+  SpotlightCard
+} from '@/components/effects'
 import { Prose } from '@/components/prose'
 import {
   getRecentComments,
@@ -135,14 +142,15 @@ function ComingSoon() {
           { icon: TrendingUp, title: '热门讨论流', body: '一眼看出大家在卡哪儿' },
           { icon: Users, title: '贡献者主页', body: '帮助别人多的人会被看见' }
         ].map((f, i) => (
-          <div
-            key={i}
-            className="rounded-xl border border-border/60 bg-card/40 p-5 text-center"
-          >
-            <f.icon className="mx-auto h-6 w-6 text-primary" />
-            <p className="mt-2 text-sm font-semibold">{f.title}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{f.body}</p>
-          </div>
+          <Reveal key={i} delay={i * 80}>
+            <SpotlightCard className="group block h-full rounded-xl">
+              <div className="h-full rounded-xl border border-border/60 bg-card/40 p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/40">
+                <f.icon className="mx-auto h-6 w-6 text-primary transition-transform group-hover:scale-110" />
+                <p className="mt-2 text-sm font-semibold">{f.title}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{f.body}</p>
+              </div>
+            </SpotlightCard>
+          </Reveal>
         ))}
       </div>
 
@@ -154,9 +162,10 @@ function ComingSoon() {
 function SeedState() {
   return (
     <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <Reveal direction="scale">
       <Card className="border-dashed border-primary/30 bg-primary/5">
         <CardContent className="space-y-4 py-10 text-center">
-          <p className="text-2xl">🌱</p>
+          <p className="animate-bounce text-3xl">🌱</p>
           <h2 className="text-xl font-semibold">这里还没有讨论</h2>
           <p className="text-sm leading-relaxed text-muted-foreground">
             社区刚开张，目前还没人发言。<br />
@@ -170,6 +179,7 @@ function SeedState() {
           </Button>
         </CardContent>
       </Card>
+      </Reveal>
 
       <StarterTopics />
     </section>
@@ -183,21 +193,22 @@ function StarterTopics() {
         可以先从这些话题开始
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        {starterTopics.map((topic) => (
-          <Link
-            key={topic.title}
-            href={topic.href}
-            className="group rounded-xl border border-border/60 bg-card/40 p-4 text-left transition-colors hover:border-primary/30 hover:bg-card/70"
-          >
-            <p className="text-sm font-semibold">{topic.title}</p>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              {topic.body}
-            </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
-              去相关章节
-              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
-            </span>
-          </Link>
+        {starterTopics.map((topic, i) => (
+          <Reveal key={topic.title} delay={i * 80} className="h-full">
+            <Link
+              href={topic.href}
+              className="group flex h-full flex-col rounded-xl border border-border/60 bg-card/40 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5"
+            >
+              <p className="text-sm font-semibold">{topic.title}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                {topic.body}
+              </p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary">
+                去相关章节
+                <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          </Reveal>
         ))}
       </div>
     </div>
@@ -229,7 +240,7 @@ function LiveContent({ recent, contributors }: LiveProps) {
               return (
                 <div
                   key={c.id}
-                  className="group rounded-xl border border-border/60 bg-card/40 p-4 transition-colors hover:border-primary/30 hover:bg-card/60"
+                  className="group rounded-xl border border-border/60 bg-card/40 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
                 >
                   <div className="flex items-start gap-3">
                     <Link href={`/u/${c.author_username}`} className="shrink-0">
@@ -287,10 +298,12 @@ function LiveContent({ recent, contributors }: LiveProps) {
               <Link
                 key={u.id}
                 href={`/u/${u.username}`}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-3 transition-colors hover:border-primary/30 hover:bg-card/80"
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/80"
               >
-                <span className="w-4 text-center font-mono text-xs text-muted-foreground">
-                  {i + 1}
+                <span className="w-5 shrink-0 text-center text-sm">
+                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (
+                    <span className="font-mono text-xs text-muted-foreground">{i + 1}</span>
+                  )}
                 </span>
                 <Avatar className="h-8 w-8 shrink-0">
                   {u.avatar_url && <AvatarImage src={u.avatar_url} alt={u.username} />}

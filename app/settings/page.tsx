@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { CompanionIntroDialog } from '@/components/companion-intro-dialog'
+import { Reveal, ShimmerText } from '@/components/effects'
 import { useAuth } from '@/lib/use-auth'
 import { useEntitlement } from '@/lib/use-entitlement'
 
@@ -171,12 +172,17 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">账号设置</h1>
-          <p className="mt-1 text-sm text-muted-foreground">管理你的头像、昵称与账号信息。</p>
-        </div>
+        <Reveal>
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              <ShimmerText>账号设置</ShimmerText>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">管理你的头像、昵称与账号信息。</p>
+          </div>
+        </Reveal>
 
         {/* 个人资料 */}
+        <Reveal delay={60}>
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base">个人资料</CardTitle>
@@ -242,8 +248,10 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+        </Reveal>
 
         {/* 账号 */}
+        <Reveal delay={120}>
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base">账号</CardTitle>
@@ -284,9 +292,11 @@ export default function SettingsPage() {
             )}
           </CardContent>
         </Card>
+        </Reveal>
 
         {/* 电子学习伴侣（仅 Plus） */}
         {hasAccess && !entLoading && (
+          <Reveal delay={180}>
           <Card className="mb-6 border-primary/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -314,9 +324,11 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+          </Reveal>
         )}
 
         {/* 修改密码 */}
+        <Reveal delay={240}>
         <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-base">修改密码</CardTitle>
@@ -352,6 +364,7 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+        </Reveal>
 
         <Button
           variant="ghost"

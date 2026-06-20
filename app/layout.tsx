@@ -62,10 +62,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#1a1626' }
-  ],
+  themeColor: '#1a1626',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5
@@ -84,8 +81,7 @@ export default function RootLayout({
       <body className="min-h-screen overflow-x-clip bg-background font-sans antialiased">
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem
+          forcedTheme="dark"
           disableTransitionOnChange
         >
           <HtmlLangSync />

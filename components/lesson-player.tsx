@@ -33,6 +33,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useProgress } from '@/lib/use-progress'
 import { emitCompanion } from '@/lib/companion-bus'
+import { playSfx } from '@/lib/lesson-sfx'
+import {
+  CountUp,
+  ComboPopup,
+  XpFloat,
+  SparkBurst,
+  StarRating,
+  SfxToggle,
+  ClickSparkLayer
+} from '@/components/lesson-fx'
 import { cn } from '@/lib/utils'
 import type {
   Card,
@@ -67,6 +77,19 @@ function hashText(value: string) {
 }
 
 const CONFETTI_SYMBOLS = ['🎉', '✨', '🎊', '⭐', '💫', '🌟', '🎈']
+
+/** XP awarded per answer. Correct scales with the streak multiplier; a wrong
+ *  answer still earns a little — effort is always rewarded, never punished. */
+const BASE_XP = 10
+const WRONG_XP = 3
+
+/** Running tally shown in the HUD and summarised on the completion card. */
+interface LessonStats {
+  xp: number
+  bestStreak: number
+  correctCount: number
+  answeredCount: number
+}
 
 /** Best-effort question text for a card, for the companion's "讲讲" prompt. */
 function questionOf(card: Card): string | undefined {
@@ -133,8 +156,17 @@ interface LessonPlayerProps {
 
 export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const [index, setIndex] = useState(0)
+  const [dir, setDir] = useState<'next' | 'prev'>('next')
   const [streak, setStreak] = useState(0)
   const [confettiKey, setConfettiKey] = useState(0)
+  // Gamification — pure positive feedback, never a penalty.
+  const [xp, setXp] = useState(0)
+  const [bestStreak, setBestStreak] = useState(0)
+  const [correctCount, setCorrectCount] = useState(0)
+  const [answeredCount, setAnsweredCount] = useState(0)
+  const [combo, setCombo] = useState<{ streak: number; key: number } | null>(null)
+  const [sparkKey, setSparkKey] = useState(0)
+  const [xpFloat, setXpFloat] = useState<{ amount: number; key: number } | null>(null)
   const { markCompleted } = useProgress()
 
   const total = lesson.cards.length
@@ -142,12 +174,15 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const isLast = index === total - 1
   const progress = ((index + 1) / total) * 100
 
+  const stats: LessonStats = { xp, bestStreak, correctCount, answeredCount }
+
   const triggerConfetti = useCallback(() => {
     setConfettiKey((k) => k + 1)
   }, [])
 
   const next = useCallback(() => {
     if (index < total - 1) {
+      setDir('next')
       setIndex((i) => i + 1)
       window.scrollTo({ top: 0, behavior: 'instant' })
     } else {
@@ -158,20 +193,36 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
 
   const prev = useCallback(() => {
     if (index > 0) {
+      setDir('prev')
       setIndex((i) => i - 1)
       window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }, [index])
 
   const onCorrect = useCallback(() => {
-    setStreak((s) => s + 1)
+    const ns = streak + 1
+    // Streak multiplier ramps 1.0 → 1.9x, rewarding chains without runaway.
+    const gained = Math.round(BASE_XP * (1 + Math.min(ns - 1, 9) * 0.1))
+    setStreak(ns)
+    setBestStreak((b) => Math.max(b, ns))
+    setXp((x) => x + gained)
+    setCorrectCount((c) => c + 1)
+    setAnsweredCount((a) => a + 1)
+    setXpFloat({ amount: gained, key: Date.now() })
+    setSparkKey((k) => k + 1)
     triggerConfetti()
+    if (ns >= 2) setCombo({ streak: ns, key: Date.now() })
+    playSfx(ns >= 3 ? 'combo' : 'correct', ns)
     // Cheer from the 学习伴侣 (no-op unless an opted-in Plus user is watching).
     emitCompanion({ type: 'lesson-correct' })
-  }, [triggerConfetti])
+  }, [streak, triggerConfetti])
 
   const onWrong = useCallback(() => {
     setStreak(0)
+    setAnsweredCount((a) => a + 1)
+    setXp((x) => x + WRONG_XP) // still positive — effort counts
+    setXpFloat({ amount: WRONG_XP, key: Date.now() })
+    playSfx('wrong')
     emitCompanion({ type: 'lesson-wrong', chapterId: lesson.chapterId, question: questionOf(card) })
   }, [card, lesson.chapterId])
 
@@ -225,13 +276,22 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
               <span>
                 第 {lesson.chapterId} 课 · {index + 1} / {total}
               </span>
-              {streak >= 2 && (
-                <span className="inline-flex items-center gap-0.5 text-orange-500">
-                  🔥 {streak} 连对
+              <div className="flex items-center gap-3">
+                <span className="relative inline-flex items-center gap-1 font-semibold text-amber-400">
+                  ⚡ {xp} XP
+                  {xpFloat && <XpFloat key={xpFloat.key} amount={xpFloat.amount} />}
                 </span>
-              )}
+                {streak >= 2 && (
+                  <span className="inline-flex items-center gap-0.5 text-orange-400">
+                    🔥 {streak} 连对
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Mute toggle — always visible */}
+          <SfxToggle />
 
           {/* Mobile-only doc shortcut (icon button) */}
           <Link
@@ -247,7 +307,10 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
       <main className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-12 lg:py-20">
         <div
           key={card.id}
-          className="w-full max-w-3xl animate-in fade-in slide-in-from-bottom-2 duration-300 lg:max-w-4xl"
+          className={cn(
+            'w-full max-w-3xl animate-in fade-in duration-300 lg:max-w-4xl',
+            dir === 'next' ? 'slide-in-from-right-6' : 'slide-in-from-left-6'
+          )}
         >
           <CardSwitch
             card={card}
@@ -255,6 +318,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             onNext={next}
             onCorrect={onCorrect}
             onWrong={onWrong}
+            stats={stats}
           />
         </div>
       </main>
@@ -284,7 +348,25 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
         </div>
       </footer>
 
+      {sparkKey > 0 && <SparkBurst key={`spark-${sparkKey}`} />}
+      {combo && <ComboPopup key={`combo-${combo.key}`} streak={combo.streak} />}
       {confettiKey > 0 && <Confetti key={confettiKey} />}
+      <ClickSparkLayer />
+      <style>{`
+        @keyframes answer-pop {
+          0%   { transform: scale(1); }
+          40%  { transform: scale(1.035); }
+          70%  { transform: scale(.992); }
+          100% { transform: scale(1); }
+        }
+        @keyframes answer-shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+      `}</style>
     </div>
   )
 }
@@ -298,6 +380,7 @@ interface CardCallbacks {
   onNext: () => void
   onCorrect: () => void
   onWrong: () => void
+  stats: LessonStats
 }
 
 function CardSwitch({ card, ...cb }: { card: Card } & CardCallbacks) {
@@ -463,6 +546,16 @@ function ChoiceCardView({
               type="button"
               onClick={() => handlePick(opt)}
               disabled={!!picked}
+              style={
+                isPicked
+                  ? {
+                      animation:
+                        opt.correct || !anyCorrect
+                          ? 'answer-pop 440ms cubic-bezier(.2,.8,.3,1)'
+                          : 'answer-shake 400ms ease'
+                    }
+                  : undefined
+              }
               className={cn(
                 'group flex w-full items-start gap-3 rounded-xl border bg-card/60 p-4 text-left transition-all sm:gap-4 sm:p-5 lg:p-6',
                 !picked && 'hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-md hover:shadow-primary/5',
@@ -547,6 +640,16 @@ function MCQCardView({
               type="button"
               onClick={() => handlePick(opt.id)}
               disabled={!!picked}
+              style={
+                isPicked
+                  ? {
+                      animation:
+                        opt.id === card.correctOptionId
+                          ? 'answer-pop 440ms cubic-bezier(.2,.8,.3,1)'
+                          : 'answer-shake 400ms ease'
+                    }
+                  : undefined
+              }
               className={cn(
                 'group flex w-full items-start gap-3 rounded-xl border bg-card/60 p-4 text-left transition-all sm:gap-4 sm:p-5 lg:p-6',
                 !picked && 'hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card',
@@ -984,16 +1087,56 @@ function RecapCardView({
 /* Completion                                                              */
 /* ────────────────────────────────────────────────────────────────────── */
 
+function StatTile({
+  label,
+  value,
+  accent = false
+}: {
+  label: string
+  value: React.ReactNode
+  accent?: boolean
+}) {
+  return (
+    <div
+      className={cn(
+        'rounded-2xl border p-4 text-center sm:p-5',
+        accent
+          ? 'border-amber-400/40 bg-amber-400/10'
+          : 'border-border/60 bg-card/50'
+      )}
+    >
+      <div
+        className={cn(
+          'text-2xl font-black tabular-nums sm:text-3xl',
+          accent ? 'text-amber-300' : 'text-foreground'
+        )}
+      >
+        {value}
+      </div>
+      <div className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground sm:text-xs">
+        {label}
+      </div>
+    </div>
+  )
+}
+
 function CompletionCardView({
   card,
-  onNext
+  onNext,
+  stats
 }: { card: CompletionCard } & CardCallbacks) {
   const triggeredRef = useRef(false)
+
+  const accuracy = stats.answeredCount > 0 ? stats.correctCount / stats.answeredCount : 1
+  const accuracyPct = Math.round(accuracy * 100)
+  const stars = accuracy >= 0.85 ? 3 : accuracy >= 0.6 ? 2 : 1
+  const badge = stars === 3 ? '完美通关 💎' : stars === 2 ? '顺利通关 🌟' : '通关达成 ✅'
 
   useEffect(() => {
     if (triggeredRef.current) return
     triggeredRef.current = true
     onNext() // marks chapter completed in useProgress + toast
+    playSfx('complete')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1002,13 +1145,36 @@ function CompletionCardView({
   const currentChapterId = card.nextChapterId ? card.nextChapterId - 1 : 1
   return (
     <CardShell>
-      <div className="text-center text-7xl sm:text-9xl">🏆</div>
+      <div
+        className="text-center text-7xl sm:text-9xl"
+        style={{ animation: 'trophy-bounce 700ms cubic-bezier(.2,.8,.3,1) both' }}
+      >
+        🏆
+      </div>
       <h1 className="text-center text-3xl font-bold sm:text-5xl lg:text-6xl">
         {card.title}
       </h1>
+
+      <StarRating value={stars} />
+
+      <div className="mx-auto grid max-w-xl grid-cols-3 gap-3 sm:gap-4">
+        <StatTile label="获得 XP" accent value={<CountUp to={stats.xp} />} />
+        <StatTile label="正确率" value={`${accuracyPct}%`} />
+        <StatTile label="最高连对" value={`🔥${stats.bestStreak}`} />
+      </div>
+
+      <p className="text-center text-lg font-bold text-amber-300 sm:text-xl">{badge}</p>
+
       <div className="mx-auto max-w-2xl text-center text-base text-muted-foreground sm:text-xl lg:text-2xl lg:leading-snug">
         <Prose content={card.body} size="inherit" />
       </div>
+      <style>{`
+        @keyframes trophy-bounce {
+          0%   { transform: scale(0) rotate(-15deg); opacity: 0; }
+          60%  { transform: scale(1.2) rotate(6deg); opacity: 1; }
+          100% { transform: scale(1) rotate(0); opacity: 1; }
+        }
+      `}</style>
       <div className="grid gap-3 sm:grid-cols-3">
         {card.nextChapterId && (
           <Button

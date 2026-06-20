@@ -233,10 +233,10 @@ function DiagnoseContent() {
                         type="button"
                         onClick={() => setActiveKey(key)}
                         className={cn(
-                          'group flex w-full min-w-0 items-start gap-3 rounded-xl border bg-card/60 p-3.5 text-left transition-all',
+                          'group flex w-full min-w-0 items-start gap-3 rounded-xl border bg-card/60 p-3.5 text-left transition-all duration-300',
                           isActive
                             ? 'border-primary/40 bg-primary/5 shadow-md shadow-primary/5'
-                            : 'border-border/60 hover:border-primary/30 hover:bg-card'
+                            : 'border-border/60 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-md hover:shadow-primary/5'
                         )}
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
@@ -265,11 +265,11 @@ function DiagnoseContent() {
 
             <div className="min-w-0 space-y-4">
               {active ? (
-                <ErrorDetail entry={active} onSelect={(k) => setActiveKey(k)} />
+                <ErrorDetail key={active.key} entry={active} onSelect={(k) => setActiveKey(k)} />
               ) : (
                 <Card className="border-dashed border-border/60 bg-card/30">
                   <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 ring-1 ring-border/60">
+                    <div className="mx-auto mb-4 flex h-14 w-14 animate-pulse items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-accent/15 shadow-[0_0_28px_rgba(124,92,252,0.22)] ring-1 ring-border/60">
                       <Terminal className="h-6 w-6 text-primary" />
                     </div>
                     <p className="text-sm font-medium">选择一条错误查看详情</p>
@@ -317,7 +317,7 @@ function ErrorDetail({
   const cfg = categoryConfig[entry.result.category ?? 'misc']
   const { result } = entry
   return (
-    <div className="min-w-0 space-y-4">
+    <div className="min-w-0 space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
       <Card className="border-destructive/30">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">

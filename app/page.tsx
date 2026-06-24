@@ -155,7 +155,7 @@ export default function HomePage() {
   const previewCount = 6
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main>

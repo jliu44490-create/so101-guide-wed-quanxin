@@ -50,7 +50,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const comments = await getUserCommentsByUserId(user.id, 50)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
@@ -160,7 +160,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
 function PlaceholderProfile({ username }: { username: string }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
       <main className="mx-auto flex max-w-md flex-col items-center px-4 py-20 text-center">
         <Users className="h-10 w-10 text-muted-foreground" />

@@ -34,7 +34,7 @@ const totalCommands = chaptersJa.reduce((acc, c) => acc + c.commands.length, 0)
 
 export default function LearnPageJa() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main>

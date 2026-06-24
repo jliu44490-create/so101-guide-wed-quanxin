@@ -387,7 +387,7 @@ export default function AiPage() {
   )
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-screen flex-col">
       <Header />
 
       <div className="relative flex min-h-0 flex-1">

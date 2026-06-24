@@ -209,7 +209,7 @@ function AssistantContent() {
   )
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col">
       <Header />
 
       <main className="flex flex-1 flex-col">

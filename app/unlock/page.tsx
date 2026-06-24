@@ -16,7 +16,7 @@ import { PAYWALL_ENABLED, PRICING, UNLOCK_BENEFITS, type PriceCurrency } from '@
 
 export default function UnlockPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
       <Suspense fallback={null}>
         <UnlockContent />

@@ -113,7 +113,7 @@ const audience = [
 
 export default function AboutPageJa() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main>

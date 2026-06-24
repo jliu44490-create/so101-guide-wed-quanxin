@@ -169,7 +169,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
         <Reveal>

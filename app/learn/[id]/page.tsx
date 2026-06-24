@@ -115,7 +115,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   ].filter((s) => s.available)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <ReadingProgress />
       <Header />
 

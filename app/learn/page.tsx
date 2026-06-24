@@ -35,7 +35,7 @@ const totalCommands = chapters.reduce((acc, c) => acc + c.commands.length, 0)
 
 export default function LearnPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main>

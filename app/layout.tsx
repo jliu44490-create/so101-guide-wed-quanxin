@@ -6,6 +6,7 @@ import { ScrollToTop } from '@/components/scroll-to-top'
 import { CommandPalette } from '@/components/command-palette'
 import { HtmlLangSync } from '@/components/html-lang-sync'
 import { AuthGate } from '@/components/auth-gate'
+import { SiteBackground } from '@/components/site-background'
 import { LearningCompanion } from '@/components/learning-companion'
 import { siteConfig } from '@/lib/site-config'
 import { analyticsEnabled } from '@/lib/region'
@@ -85,6 +86,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <HtmlLangSync />
+          <SiteBackground />
           <AuthGate>{children}</AuthGate>
           <LearningCompanion />
           <CommandPalette />

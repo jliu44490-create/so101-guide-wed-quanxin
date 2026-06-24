@@ -159,7 +159,7 @@ export default function HomePageJa() {
   const totalChapters = chaptersJa.length
   const previewCount = 6
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main>

@@ -69,7 +69,7 @@ export default async function CommunityPage() {
   const isLive = isSupabaseConfigured && recent.length > 0
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
 
       <main>

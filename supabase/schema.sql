@@ -245,10 +245,9 @@ insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
+-- 公开桶:对象 URL 靠 bucket 的 public 标志直接可读,无需宽 SELECT 策略
+-- （宽 SELECT 会让客户端列举桶内所有文件）。故意不建;保留 drop 以清掉旧策略。
 drop policy if exists "avatar public read" on storage.objects;
-create policy "avatar public read"
-  on storage.objects for select
-  using (bucket_id = 'avatars');
 
 drop policy if exists "avatar upload own" on storage.objects;
 create policy "avatar upload own"
@@ -333,6 +332,18 @@ as $$
   set balance = greatest(0, balance - p_tokens)
   where user_id = p_user;
 $$;
+
+-- ── 安全:把上面这些 SECURITY DEFINER 辅助函数锁给服务端(service_role)专用 ──
+-- 否则 PostgREST 会把它们暴露成 anon/authenticated 可调的 RPC(可白嫖 AI 额度 /
+-- 篡改任意用户用量)。Supabase 默认会把 EXECUTE 直接授给 anon/authenticated,
+-- 所以必须显式从这两个角色 revoke,而不仅是从 public。
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.add_ai_usage(uuid, bigint) from public, anon, authenticated;
+revoke execute on function public.add_ai_credits(uuid, bigint) from public, anon, authenticated;
+revoke execute on function public.spend_ai_credits(uuid, bigint) from public, anon, authenticated;
+grant execute on function public.add_ai_usage(uuid, bigint) to service_role;
+grant execute on function public.add_ai_credits(uuid, bigint) to service_role;
+grant execute on function public.spend_ai_credits(uuid, bigint) to service_role;
 
 
 -- 13. LVJIN AI 多会话历史（像 ChatGPT/Claude：可保存多段对话、随时回看） --------

@@ -360,7 +360,7 @@ export default function AiPage() {
                 'group/item flex items-center gap-2 rounded-lg border px-2.5 py-2 text-sm transition-colors',
                 c.id === activeId
                   ? 'border-primary/40 bg-primary/10 text-foreground'
-                  : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/60 hover:text-foreground'
+                  : 'border-transparent text-muted-foreground hover:border-border/60 hover:bg-card/75 backdrop-blur-md hover:text-foreground'
               )}
             >
               <button
@@ -429,7 +429,7 @@ export default function AiPage() {
             {usage && (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-border/50 bg-card/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground md:hidden"
+                className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-border/50 bg-card/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-medium text-muted-foreground md:hidden"
                 aria-label="今日额度"
               >
                 <Gauge className="size-3" />剩 {fmtTok(usage.remaining + usage.credits)}
@@ -592,7 +592,7 @@ export default function AiPage() {
           {/* Composer */}
           <div className="border-t border-border/40 bg-background/80 px-4 py-3 backdrop-blur">
             <div className="mx-auto w-full max-w-3xl">
-              <div className="relative rounded-2xl border border-border/60 bg-card/60 shadow-sm transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/25">
+              <div className="relative rounded-2xl border border-border/60 bg-card/75 backdrop-blur-md shadow-sm transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/25">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}

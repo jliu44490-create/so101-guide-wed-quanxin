@@ -25,11 +25,10 @@ import { Footer } from '@/components/footer'
 import { RouteLoadingShell } from '@/components/route-loading-shell'
 import { CodeBlock } from '@/components/code-block'
 import {
-  AuroraBackground,
-  FloatingOrbs,
   Reveal,
   ShimmerText
 } from '@/components/effects'
+import { HeroAura } from '@/components/hero-aura'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -120,9 +119,8 @@ function DiagnoseContent() {
       <Header />
 
       <main>
-        <section className="relative overflow-hidden border-b border-border/40">
-          <AuroraBackground intensity="subtle" />
-          <FloatingOrbs count={3} />
+        <section className="relative overflow-hidden">
+          <HeroAura />
           <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <Reveal>
               <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">

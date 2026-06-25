@@ -5,11 +5,10 @@ import { Footer } from '@/components/footer'
 import { ChapterFilter } from '@/components/chapter-filter'
 import { LearnStats } from '@/components/learn-stats'
 import {
-  AuroraBackground,
-  FloatingOrbs,
   Reveal,
   ShimmerText
 } from '@/components/effects'
+import { HeroAura } from '@/components/hero-aura'
 import { chaptersJa } from '@/lib/course-data-ja'
 
 export const metadata: Metadata = {
@@ -38,9 +37,8 @@ export default function LearnPageJa() {
       <Header />
 
       <main>
-        <section className="relative overflow-hidden border-b border-border/40">
-          <AuroraBackground intensity="subtle" />
-          <FloatingOrbs count={3} />
+        <section className="relative overflow-hidden">
+          <HeroAura />
           <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <Reveal>
               <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">

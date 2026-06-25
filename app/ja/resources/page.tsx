@@ -20,12 +20,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
-  AuroraBackground,
-  FloatingOrbs,
   Reveal,
   ShimmerText,
   TiltCard
 } from '@/components/effects'
+import { HeroAura } from '@/components/hero-aura'
 import { resourcesJa, resourceCategoriesJa } from '@/lib/resources-ja'
 import { cn } from '@/lib/utils'
 
@@ -71,9 +70,8 @@ export default function ResourcesPageJa() {
       <Header />
 
       <main>
-        <section className="relative overflow-hidden border-b border-border/40">
-          <AuroraBackground intensity="subtle" />
-          <FloatingOrbs count={3} />
+        <section className="relative overflow-hidden">
+          <HeroAura />
           <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <Reveal>
               <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">

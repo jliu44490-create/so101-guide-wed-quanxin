@@ -8,7 +8,8 @@ import { toast } from 'sonner'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { Button } from '@/components/ui/button'
-import { AuroraBackground, FloatingOrbs, Reveal, ShimmerText } from '@/components/effects'
+import { Reveal, ShimmerText } from '@/components/effects'
+import { HeroAura } from '@/components/hero-aura'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuth } from '@/lib/use-auth'
 import { useEntitlement } from '@/lib/use-entitlement'
@@ -92,9 +93,8 @@ function UnlockContent() {
 
   return (
     <main>
-      <section className="relative overflow-hidden border-b border-border/40">
-        <AuroraBackground intensity="subtle" />
-        <FloatingOrbs count={3} />
+      <section className="relative overflow-hidden">
+        <HeroAura />
         <div className="relative mx-auto max-w-3xl px-4 py-16 text-center sm:px-6">
           <Reveal>
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-border/60">

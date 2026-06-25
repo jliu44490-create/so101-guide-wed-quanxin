@@ -7,6 +7,7 @@ import { CommandPalette } from '@/components/command-palette'
 import { HtmlLangSync } from '@/components/html-lang-sync'
 import { AuthGate } from '@/components/auth-gate'
 import { SiteBackground } from '@/components/site-background'
+import { SideRails } from '@/components/side-rails'
 import { LearningCompanion } from '@/components/learning-companion'
 import { siteConfig } from '@/lib/site-config'
 import { analyticsEnabled } from '@/lib/region'
@@ -87,6 +88,7 @@ export default function RootLayout({
         >
           <HtmlLangSync />
           <SiteBackground />
+          <SideRails />
           <AuthGate>{children}</AuthGate>
           <LearningCompanion />
           <CommandPalette />

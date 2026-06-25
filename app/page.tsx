@@ -285,7 +285,7 @@ export default function HomePage() {
             <Reveal key={feature.title} delay={i * 80}>
               <TiltCard
                 spotlight
-                className="group relative h-full overflow-hidden rounded-xl border border-border/60 bg-card/60"
+                className="group relative h-full overflow-hidden rounded-xl border border-border/60 bg-card/75 backdrop-blur-md"
               >
                 <div
                   className={cn(
@@ -421,7 +421,7 @@ export default function HomePage() {
               <AccordionItem
                 key={i}
                 value={`faq-${i}`}
-                className="overflow-hidden rounded-xl border border-border/60 bg-card/40 px-4 last:border-b"
+                className="overflow-hidden rounded-xl border border-border/60 bg-card/65 backdrop-blur-md px-4 last:border-b"
               >
                 <AccordionTrigger className="py-4 text-left text-sm font-medium hover:no-underline">
                   {faq.q}

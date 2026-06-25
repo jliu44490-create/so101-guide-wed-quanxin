@@ -46,7 +46,7 @@ export function LearnHud() {
       {/* Level + XP */}
       <Reveal className="lg:col-span-1">
         <SpotlightCard className="block h-full rounded-2xl">
-          <div className="h-full rounded-2xl border border-amber-400/30 bg-card/60 p-5">
+          <div className="h-full rounded-2xl border border-amber-400/30 bg-card/75 backdrop-blur-xl p-5">
             <div className="flex items-center justify-between">
               <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <Zap className="h-4 w-4 text-amber-400" />
@@ -81,7 +81,7 @@ export function LearnHud() {
 
       {/* Badge wall */}
       <Reveal delay={160} className="lg:col-span-3">
-        <div className="rounded-2xl border border-border/60 bg-card/40 p-4 sm:p-5">
+        <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl p-4 sm:p-5">
           <p className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
             <Trophy className="h-3.5 w-3.5" />
             {t.wall}
@@ -122,7 +122,7 @@ function StatChip({
 }) {
   return (
     <SpotlightCard className="block h-full rounded-2xl">
-      <div className="flex h-full flex-col justify-center rounded-2xl border border-border/60 bg-card/60 p-5">
+      <div className="flex h-full flex-col justify-center rounded-2xl border border-border/60 bg-card/75 backdrop-blur-xl p-5">
         <Icon className={cn('h-5 w-5', color)} />
         <div className="mt-2 text-2xl font-bold leading-none tabular-nums">{value}</div>
         <div className="mt-1 text-xs text-muted-foreground">{label}</div>

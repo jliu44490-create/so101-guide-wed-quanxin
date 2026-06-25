@@ -26,11 +26,10 @@ import { RouteLoadingShell } from '@/components/route-loading-shell'
 import { CodeBlock } from '@/components/code-block'
 import { Discussion } from '@/components/discussion'
 import {
-  AuroraBackground,
-  FloatingOrbs,
   Reveal,
   ShimmerText
 } from '@/components/effects'
+import { HeroAura } from '@/components/hero-aura'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -121,9 +120,8 @@ function DiagnoseContent() {
       <Header />
 
       <main>
-        <section className="relative overflow-hidden border-b border-border/40">
-          <AuroraBackground intensity="subtle" />
-          <FloatingOrbs count={3} />
+        <section className="relative overflow-hidden">
+          <HeroAura />
           <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <Reveal>
               <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
@@ -146,7 +144,7 @@ function DiagnoseContent() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <Card className="border-border/60 bg-card/60">
+          <Card className="border-border/60 bg-card/75 backdrop-blur-md">
             <CardContent className="space-y-4 p-5">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -233,7 +231,7 @@ function DiagnoseContent() {
                         type="button"
                         onClick={() => setActiveKey(key)}
                         className={cn(
-                          'group flex w-full min-w-0 items-start gap-3 rounded-xl border bg-card/60 p-3.5 text-left transition-all duration-300',
+                          'group flex w-full min-w-0 items-start gap-3 rounded-xl border bg-card/75 backdrop-blur-md p-3.5 text-left transition-all duration-300',
                           isActive
                             ? 'border-primary/40 bg-primary/5 shadow-md shadow-primary/5'
                             : 'border-border/60 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card hover:shadow-md hover:shadow-primary/5'

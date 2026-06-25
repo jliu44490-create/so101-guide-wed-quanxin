@@ -58,7 +58,7 @@ export function LearnPath() {
                 {/* card */}
                 <div
                   className={cn(
-                    'group flex-1 rounded-2xl border bg-card/50 p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/5 sm:p-5',
+                    'group flex-1 rounded-2xl border bg-card/75 backdrop-blur-xl p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:bg-card hover:shadow-lg hover:shadow-primary/5 sm:p-5',
                     active ? 'border-primary/40' : 'border-border/60'
                   )}
                 >

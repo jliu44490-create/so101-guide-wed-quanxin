@@ -10,13 +10,12 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  AuroraBackground,
   ConicBorder,
-  FloatingOrbs,
   Reveal,
   ShimmerText,
   SpotlightCard
 } from '@/components/effects'
+import { HeroAura } from '@/components/hero-aura'
 import { Prose } from '@/components/prose'
 import {
   getRecentComments,
@@ -74,9 +73,8 @@ export default async function CommunityPage() {
 
       <main>
         {/* HERO */}
-        <section className="relative overflow-hidden border-b border-border/40">
-          <AuroraBackground intensity="subtle" />
-          <FloatingOrbs count={3} />
+        <section className="relative overflow-hidden">
+          <HeroAura />
           <div className="relative mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
             <Reveal>
               <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
@@ -144,7 +142,7 @@ function ComingSoon() {
         ].map((f, i) => (
           <Reveal key={i} delay={i * 80}>
             <SpotlightCard className="group block h-full rounded-xl">
-              <div className="h-full rounded-xl border border-border/60 bg-card/40 p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/40">
+              <div className="h-full rounded-xl border border-border/60 bg-card/70 backdrop-blur-md p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/40">
                 <f.icon className="mx-auto h-6 w-6 text-primary transition-transform group-hover:scale-110" />
                 <p className="mt-2 text-sm font-semibold">{f.title}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{f.body}</p>
@@ -197,7 +195,7 @@ function StarterTopics() {
           <Reveal key={topic.title} delay={i * 80} className="h-full">
             <Link
               href={topic.href}
-              className="group flex h-full flex-col rounded-xl border border-border/60 bg-card/40 p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5"
+              className="group flex h-full flex-col rounded-xl border border-border/60 bg-card/70 backdrop-blur-md p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5"
             >
               <p className="text-sm font-semibold">{topic.title}</p>
               <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
@@ -240,7 +238,7 @@ function LiveContent({ recent, contributors }: LiveProps) {
               return (
                 <div
                   key={c.id}
-                  className="group rounded-xl border border-border/60 bg-card/40 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
+                  className="group rounded-xl border border-border/60 bg-card/70 backdrop-blur-md p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/60 hover:shadow-lg hover:shadow-primary/5"
                 >
                   <div className="flex items-start gap-3">
                     <Link href={`/u/${c.author_username}`} className="shrink-0">
@@ -298,7 +296,7 @@ function LiveContent({ recent, contributors }: LiveProps) {
               <Link
                 key={u.id}
                 href={`/u/${u.username}`}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/80"
+                className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/70 backdrop-blur-md p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-card/80"
               >
                 <span className="w-5 shrink-0 text-center text-sm">
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (

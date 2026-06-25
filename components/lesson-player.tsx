@@ -32,6 +32,7 @@ import { CodeBlock } from '@/components/code-block'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useProgress } from '@/lib/use-progress'
+import { usePrefersReducedMotion } from '@/lib/hooks'
 import { emitCompanion } from '@/lib/companion-bus'
 import { playSfx } from '@/lib/lesson-sfx'
 import {
@@ -168,6 +169,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const [sparkKey, setSparkKey] = useState(0)
   const [xpFloat, setXpFloat] = useState<{ amount: number; key: number } | null>(null)
   const { markCompleted } = useProgress()
+  const reduce = usePrefersReducedMotion()
 
   const total = lesson.cards.length
   const card = lesson.cards[index]
@@ -209,13 +211,15 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     setCorrectCount((c) => c + 1)
     setAnsweredCount((a) => a + 1)
     setXpFloat({ amount: gained, key: Date.now() })
-    setSparkKey((k) => k + 1)
-    triggerConfetti()
-    if (ns >= 2) setCombo({ streak: ns, key: Date.now() })
+    if (!reduce) {
+      setSparkKey((k) => k + 1)
+      triggerConfetti()
+      if (ns >= 2) setCombo({ streak: ns, key: Date.now() })
+    }
     playSfx(ns >= 3 ? 'combo' : 'correct', ns)
     // Cheer from the 学习伴侣 (no-op unless an opted-in Plus user is watching).
     emitCompanion({ type: 'lesson-correct' })
-  }, [streak, triggerConfetti])
+  }, [streak, triggerConfetti, reduce])
 
   const onWrong = useCallback(() => {
     setStreak(0)
@@ -351,7 +355,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
       {sparkKey > 0 && <SparkBurst key={`spark-${sparkKey}`} />}
       {combo && <ComboPopup key={`combo-${combo.key}`} streak={combo.streak} />}
       {confettiKey > 0 && <Confetti key={confettiKey} />}
-      <ClickSparkLayer />
+      {!reduce && <ClickSparkLayer />}
       <style>{`
         @keyframes answer-pop {
           0%   { transform: scale(1); }

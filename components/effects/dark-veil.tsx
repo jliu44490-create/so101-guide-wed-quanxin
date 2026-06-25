@@ -129,6 +129,7 @@ export default function DarkVeil({
 
     const start = performance.now()
     let frame = 0
+    let disposed = false
     let visible = true
     const onVisibility = () => {
       visible = !document.hidden
@@ -136,6 +137,9 @@ export default function DarkVeil({
     document.addEventListener('visibilitychange', onVisibility)
 
     const loop = () => {
+      // Bail the moment this instance is torn down (StrictMode remount / route
+      // change), so a stale loop never renders on a lost GL context.
+      if (disposed) return
       frame = requestAnimationFrame(loop)
       if (!visible) return
       program.uniforms.uTime.value = ((performance.now() - start) / 1000) * speed
@@ -144,12 +148,19 @@ export default function DarkVeil({
       program.uniforms.uScan.value = scanlineIntensity
       program.uniforms.uScanFreq.value = scanlineFrequency
       program.uniforms.uWarp.value = warpAmount
-      renderer.render({ scene: mesh })
+      try {
+        renderer.render({ scene: mesh })
+      } catch {
+        // GL context lost during teardown — stop quietly.
+        disposed = true
+        cancelAnimationFrame(frame)
+      }
     }
 
     loop()
 
     return () => {
+      disposed = true
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVisibility)

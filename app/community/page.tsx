@@ -9,12 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  ConicBorder,
-  Reveal,
-  ShimmerText,
-  SpotlightCard
-} from '@/components/effects'
+import { Reveal, ShimmerText, SpotlightCard } from '@/components/effects'
 import { HeroAura } from '@/components/hero-aura'
 import { Prose } from '@/components/prose'
 import {

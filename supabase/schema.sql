@@ -24,7 +24,7 @@ create policy "profiles are viewable by everyone"
 
 drop policy if exists "users can update own profile" on public.profiles;
 create policy "users can update own profile"
-  on public.profiles for update using (auth.uid() = id);
+  on public.profiles for update using ((select auth.uid()) = id);
 
 -- 注册时自动创建 profile，用户名优先取 GitHub 用户名，否则用 user_前8位id
 create or replace function public.handle_new_user()
@@ -71,6 +71,10 @@ create table if not exists public.comments (
 create index if not exists comments_thread_idx
   on public.comments (thread_key, created_at);
 
+-- 外键覆盖索引（性能顾问 unindexed_foreign_keys）
+create index if not exists comments_author_idx on public.comments (author_id);
+create index if not exists comments_parent_idx on public.comments (parent_id);
+
 alter table public.comments enable row level security;
 
 drop policy if exists "comments are viewable by everyone" on public.comments;
@@ -79,15 +83,15 @@ create policy "comments are viewable by everyone"
 
 drop policy if exists "authenticated users can insert own comments" on public.comments;
 create policy "authenticated users can insert own comments"
-  on public.comments for insert with check (auth.uid() = author_id);
+  on public.comments for insert with check ((select auth.uid()) = author_id);
 
 drop policy if exists "users can update own comments" on public.comments;
 create policy "users can update own comments"
-  on public.comments for update using (auth.uid() = author_id);
+  on public.comments for update using ((select auth.uid()) = author_id);
 
 drop policy if exists "users can delete own comments" on public.comments;
 create policy "users can delete own comments"
-  on public.comments for delete using (auth.uid() = author_id);
+  on public.comments for delete using ((select auth.uid()) = author_id);
 
 
 -- 3. 点赞表 ----------------------------------------------------------------
@@ -99,6 +103,9 @@ create table if not exists public.comment_votes (
   primary key (comment_id, user_id)
 );
 
+-- 外键覆盖索引（PK 以 comment_id 打头，user_id 方向另建）
+create index if not exists comment_votes_user_idx on public.comment_votes (user_id);
+
 alter table public.comment_votes enable row level security;
 
 drop policy if exists "votes are viewable by everyone" on public.comment_votes;
@@ -107,11 +114,11 @@ create policy "votes are viewable by everyone"
 
 drop policy if exists "users can vote" on public.comment_votes;
 create policy "users can vote"
-  on public.comment_votes for insert with check (auth.uid() = user_id);
+  on public.comment_votes for insert with check ((select auth.uid()) = user_id);
 
 drop policy if exists "users can unvote" on public.comment_votes;
 create policy "users can unvote"
-  on public.comment_votes for delete using (auth.uid() = user_id);
+  on public.comment_votes for delete using ((select auth.uid()) = user_id);
 
 
 -- 4. 带点赞数 + 作者信息的视图（前端一次查询拿全） ------------------------
@@ -230,7 +237,7 @@ alter table public.entitlements enable row level security;
 
 drop policy if exists "users can read own entitlement" on public.entitlements;
 create policy "users can read own entitlement"
-  on public.entitlements for select using (auth.uid() = user_id);
+  on public.entitlements for select using ((select auth.uid()) = user_id);
 
 -- 注意：故意不建 insert/update/delete 策略。
 -- 只有 service_role（webhook 服务端，绕过 RLS）能写入权益，
@@ -275,7 +282,7 @@ alter table public.ai_usage enable row level security;
 
 drop policy if exists "users read own ai usage" on public.ai_usage;
 create policy "users read own ai usage"
-  on public.ai_usage for select using (auth.uid() = user_id);
+  on public.ai_usage for select using ((select auth.uid()) = user_id);
 -- 故意不建 insert/update 策略：只有 service_role 和下面的函数能写。
 
 -- 原子累加（避免读改写竞态）。security definer 让它绕过 RLS 写入。
@@ -305,7 +312,7 @@ alter table public.ai_credits enable row level security;
 
 drop policy if exists "users read own ai credits" on public.ai_credits;
 create policy "users read own ai credits"
-  on public.ai_credits for select using (auth.uid() = user_id);
+  on public.ai_credits for select using ((select auth.uid()) = user_id);
 -- 故意不建 insert/update 策略：只有 service_role 和下面的函数能写。
 
 -- 充值（Stripe webhook 调用）。
@@ -367,8 +374,8 @@ alter table public.ai_conversations enable row level security;
 drop policy if exists "users manage own conversations" on public.ai_conversations;
 create policy "users manage own conversations"
   on public.ai_conversations for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 create table if not exists public.ai_messages (
   id              uuid primary key default gen_random_uuid(),
@@ -383,13 +390,16 @@ create table if not exists public.ai_messages (
 create index if not exists ai_messages_conversation_idx
   on public.ai_messages (conversation_id, created_at);
 
+-- 外键覆盖索引（性能顾问 unindexed_foreign_keys）
+create index if not exists ai_messages_user_idx on public.ai_messages (user_id);
+
 alter table public.ai_messages enable row level security;
 
 drop policy if exists "users manage own messages" on public.ai_messages;
 create policy "users manage own messages"
   on public.ai_messages for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 
 -- 14. 电子学习伴侣开关（仅 Plus 可用，用户自行开启） ----------------------------

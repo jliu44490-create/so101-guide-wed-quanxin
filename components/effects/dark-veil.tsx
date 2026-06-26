@@ -1,4 +1,5 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck — vendored reactbits WebGL shader; intentionally skips TS checks
 'use client'
 
 /**

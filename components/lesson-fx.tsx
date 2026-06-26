@@ -6,7 +6,7 @@
  * a game: number count-ups, combo pops, spark bursts, star ratings.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isSfxMuted, setSfxMuted, SFX_MUTE_EVENT } from '@/lib/lesson-sfx'
@@ -99,19 +99,19 @@ export function XpFloat({ amount }: { amount: number }) {
 /* ── Spark burst — radial sparks from center (reactbits "Click Spark" idea) ─ */
 
 export function SparkBurst() {
-  const sparks = useMemo(
-    () =>
-      Array.from({ length: 12 }, (_, i) => {
-        const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.3
-        const dist = 90 + Math.random() * 70
-        return {
-          dx: Math.cos(angle) * dist,
-          dy: Math.sin(angle) * dist,
-          dur: 480 + Math.random() * 260,
-          hue: i % 2 === 0
-        }
-      }),
-    []
+  // Lazy initial state: random spark vectors computed once at mount (the
+  // useState initializer is exempt from the render-purity rule).
+  const [sparks] = useState(() =>
+    Array.from({ length: 12 }, (_, i) => {
+      const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.3
+      const dist = 90 + Math.random() * 70
+      return {
+        dx: Math.cos(angle) * dist,
+        dy: Math.sin(angle) * dist,
+        dur: 480 + Math.random() * 260,
+        hue: i % 2 === 0
+      }
+    })
   )
   return (
     <>
@@ -180,14 +180,15 @@ export function StarRating({ value }: { value: number }) {
 /* ── Click spark — sparks fly from the cursor on every tap (reactbits) ──── */
 
 function ClickSpark({ x, y }: { x: number; y: number }) {
-  const parts = useMemo(
-    () =>
-      Array.from({ length: 8 }, (_, i) => {
-        const a = (i / 8) * Math.PI * 2
-        const d = 18 + Math.random() * 16
-        return { dx: Math.cos(a) * d, dy: Math.sin(a) * d, dur: 380 + Math.random() * 180 }
-      }),
-    []
+  // Lazy initial state: the random spark offsets are computed once at mount.
+  // (useState initializer is exempt from the render-purity rule; a useMemo with
+  // Math.random() is not, and would also be free to recompute on re-render.)
+  const [parts] = useState(() =>
+    Array.from({ length: 8 }, (_, i) => {
+      const a = (i / 8) * Math.PI * 2
+      const d = 18 + Math.random() * 16
+      return { dx: Math.cos(a) * d, dy: Math.sin(a) * d, dur: 380 + Math.random() * 180 }
+    })
   )
   return (
     <div className="absolute" style={{ left: x, top: y }}>

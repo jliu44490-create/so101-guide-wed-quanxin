@@ -275,6 +275,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: '模型服务返回错误，请稍后重试' }, { status: 502 })
   }
 
+  // Reserve a conservative amount up-front so a burst of concurrent requests
+  // can't all slip past the quota check during the (multi-second) stream. The
+  // pre-check + this reservation happen back-to-back, shrinking the race window
+  // from "the whole stream" to "one RPC". Reconciled to the true token count
+  // when the stream finishes (the delta may be negative — add_ai_usage just adds
+  // it, refunding the over-reservation).
+  const RESERVE = AI_MAX_OUTPUT_TOKENS
+  let reserved = 0
+  try {
+    await admin.rpc('add_ai_usage', { p_user: user.id, p_tokens: RESERVE })
+    reserved = RESERVE
+  } catch (e) {
+    console.error('[ai] usage reserve failed', e)
+  }
+
   // 6. Pipe text deltas to the client; tally tokens; (optionally) run one tool
   //    round; record usage at the end.
   const encoder = new TextEncoder()
@@ -403,16 +418,20 @@ export async function POST(req: Request) {
         console.error('[ai] stream error', e)
       }
       const totalTokens = dsTotal || inTok + outTok
-      if (totalTokens > 0) {
-        // Best-effort accounting — a logging failure must never break the answer.
-        try {
-          await admin.rpc('add_ai_usage', { p_user: user.id, p_tokens: totalTokens })
-          if (fromCredit) {
-            await admin.rpc('spend_ai_credits', { p_user: user.id, p_tokens: totalTokens })
-          }
-        } catch (e) {
-          console.error('[ai] usage accounting failed', e)
+      // Reconcile the up-front reservation to the actual usage. delta can be
+      // negative (the response was smaller than reserved) — add_ai_usage adds it,
+      // refunding the difference. Best-effort: a logging failure must never break
+      // the answer the user already received.
+      const delta = totalTokens - reserved
+      try {
+        if (delta !== 0) {
+          await admin.rpc('add_ai_usage', { p_user: user.id, p_tokens: delta })
         }
+        if (fromCredit && totalTokens > 0) {
+          await admin.rpc('spend_ai_credits', { p_user: user.id, p_tokens: totalTokens })
+        }
+      } catch (e) {
+        console.error('[ai] usage accounting failed', e)
       }
       controller.close()
     }

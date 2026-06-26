@@ -431,13 +431,25 @@ function SignupContent() {
             />
             <span className="text-[11px] leading-relaxed text-muted-foreground">
               我已阅读并同意
-              <a href="#" className="mx-1 underline underline-offset-2 hover:text-foreground">
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mx-1 underline underline-offset-2 hover:text-foreground"
+              >
                 服务条款
-              </a>
+              </Link>
               与
-              <a href="#" className="mx-1 underline underline-offset-2 hover:text-foreground">
+              <Link
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="mx-1 underline underline-offset-2 hover:text-foreground"
+              >
                 隐私政策
-              </a>
+              </Link>
             </span>
           </label>
 

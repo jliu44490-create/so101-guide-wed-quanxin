@@ -90,6 +90,15 @@ export function Footer() {
     ? isJa ? '/' : '/ja'
     : isJa ? stripJaPrefix(pathname) : addJaPrefix(pathname)
   const switchLabel = isJa ? '中文' : '日本語'
+  const legalLinks: LinkItem[] = isJa
+    ? [
+        { label: '利用規約', href: '/terms' },
+        { label: 'プライバシー', href: '/privacy' }
+      ]
+    : [
+        { label: '服务条款', href: '/terms' },
+        { label: '隐私政策', href: '/privacy' }
+      ]
   const builtWithLabel = isJa
     ? 'Built with Next.js · Tailwind · LeRobot'
     : 'Built with Next.js · Tailwind · LeRobot'
@@ -159,7 +168,16 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border/40 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center">
           <p>{copyright}</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {legalLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
             <span className="font-mono uppercase tracking-[0.12em] text-muted-foreground">
               {builtWithLabel}
             </span>

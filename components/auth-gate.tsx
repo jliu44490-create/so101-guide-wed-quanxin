@@ -23,6 +23,8 @@ const PUBLIC_PREFIXES = [
   '/about',
   '/unlock',
   '/community',
+  '/terms',
+  '/privacy',
   '/ja'
 ]
 

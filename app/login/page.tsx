@@ -206,13 +206,13 @@ function LoginContent() {
 
         <p className="text-[11px] leading-relaxed text-muted-foreground">
           继续即表示同意我们的
-          <a href="#" className="mx-1 underline underline-offset-2 hover:text-foreground">
+          <Link href="/terms" className="mx-1 underline underline-offset-2 hover:text-foreground">
             服务条款
-          </a>
+          </Link>
           与
-          <a href="#" className="mx-1 underline underline-offset-2 hover:text-foreground">
+          <Link href="/privacy" className="mx-1 underline underline-offset-2 hover:text-foreground">
             隐私政策
-          </a>
+          </Link>
           。
         </p>
       </div>

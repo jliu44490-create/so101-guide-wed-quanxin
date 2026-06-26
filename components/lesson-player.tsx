@@ -15,6 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   ArrowLeft,
   ArrowRight,
@@ -60,6 +61,93 @@ import type {
   RevealCard,
   VizCard
 } from '@/lib/lesson-types'
+
+/**
+ * Locale-aware labels + link base for the player chrome. Detected from the
+ * pathname (/ja → Japanese) so the same player serves both locales. The lesson
+ * *content* comes from the data (lessons.ts / lessons-ja.ts); this only covers
+ * the surrounding UI (buttons, HUD, result screen) and the /learn link prefix.
+ */
+function useLessonT() {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
+  const base = isJa ? '/ja' : ''
+  const t = isJa
+    ? {
+        interactive: 'インタラクティブ講座',
+        doc: 'ドキュメント',
+        exit: 'この講座を終了',
+        viewDoc: 'ドキュメントを見る',
+        streak: '連続正解',
+        prevCard: '前のカード',
+        keyHint: '← / → めくる · Esc 終了',
+        viewFullDoc: '完全なドキュメント',
+        continue: '次へ',
+        gotIt: 'わかった →',
+        finishLesson: 'この講座を完了 →',
+        correct: '✅ 正解',
+        wrongReveal: '🤔 大丈夫 — 本当の答えは：',
+        allMatched: '✨ 3組すべて結べた',
+        matchHint: 'この3語はこの先くり返し出てきます。覚える価値あり。',
+        enterNumber: '数字を入力してください',
+        numberPlaceholder: '数字を入力',
+        submit: '回答する',
+        showHint: '分からない？ ヒントを見る',
+        hideHint: 'ヒントを隠す',
+        expected: '出力例',
+        tip: 'ヒント',
+        warning: '注意',
+        doneToast: '🎉 この講座を完了しました',
+        badgePerfect: 'パーフェクト 💎',
+        badgeGood: 'クリア 🌟',
+        badgeDone: '達成 ✅',
+        xpGained: '獲得 XP',
+        accuracy: '正答率',
+        bestStreak: '最高連続',
+        viewChapterDoc: 'この章のドキュメント',
+        backToPath: '学習パスに戻る',
+        lessonNum: (n: number) => `第 ${n} 課`,
+        wrongNumeric: (v: string, a: number, u: string) =>
+          `❌ ${v} と入力。正解は ${a}${u}`
+      }
+    : {
+        interactive: '互动课',
+        doc: '文档',
+        exit: '退出本课',
+        viewDoc: '查看文档',
+        streak: '连对',
+        prevCard: '上一卡',
+        keyHint: '← / → 翻卡 · Esc 退出',
+        viewFullDoc: '查看完整文档',
+        continue: '继续',
+        gotIt: '懂了 →',
+        finishLesson: '完成本课 →',
+        correct: '✅ 答对了',
+        wrongReveal: '🤔 别灰心 — 真正的答案是：',
+        allMatched: '✨ 三对全配出来了',
+        matchHint: '这三个词后面会反复出现，记住它们值。',
+        enterNumber: '请输入一个数字',
+        numberPlaceholder: '输入数字',
+        submit: '提交答案',
+        showHint: '想不出来？看一下提示',
+        hideHint: '收起提示',
+        expected: '你应该看到',
+        tip: '小提示',
+        warning: '注意',
+        doneToast: '🎉 这一课已完成',
+        badgePerfect: '完美通关 💎',
+        badgeGood: '顺利通关 🌟',
+        badgeDone: '通关达成 ✅',
+        xpGained: '获得 XP',
+        accuracy: '正确率',
+        bestStreak: '最高连对',
+        viewChapterDoc: '看本章文档',
+        backToPath: '回到学习路径',
+        lessonNum: (n: number) => `第 ${n} 课`,
+        wrongNumeric: (v: string, a: number, u: string) =>
+          `❌ 你写了 ${v}，正确答案是 ${a}${u}`
+      }
+  return { isJa, base, t }
+}
 
 function seededRandom(seed: number) {
   let value = seed + 0x6d2b79f5
@@ -170,6 +258,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const [xpFloat, setXpFloat] = useState<{ amount: number; key: number } | null>(null)
   const { markCompleted } = useProgress()
   const reduce = usePrefersReducedMotion()
+  const { base, t } = useLessonT()
 
   const total = lesson.cards.length
   const card = lesson.cards[index]
@@ -189,9 +278,9 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
       window.scrollTo({ top: 0, behavior: 'instant' })
     } else {
       markCompleted(lesson.chapterId)
-      toast.success('🎉 这一课已完成')
+      toast.success(t.doneToast)
     }
-  }, [index, total, markCompleted, lesson.chapterId])
+  }, [index, total, markCompleted, lesson.chapterId, t])
 
   const prev = useCallback(() => {
     if (index > 0) {
@@ -254,9 +343,9 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
           <Link
-            href="/learn"
+            href={`${base}/learn`}
             className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="退出本课"
+            aria-label={t.exit}
           >
             <X className="h-4 w-4" />
           </Link>
@@ -265,14 +354,14 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
           <div className="hidden shrink-0 items-center gap-0.5 rounded-full border border-border/60 bg-card/60 p-0.5 sm:flex">
             <span className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
               <Gamepad2 className="h-3 w-3" />
-              互动课
+              {t.interactive}
             </span>
             <Link
-              href={`/learn/${lesson.chapterId}`}
+              href={`${base}/learn/${lesson.chapterId}`}
               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               <BookOpen className="h-3 w-3" />
-              文档
+              {t.doc}
             </Link>
           </div>
 
@@ -285,7 +374,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             </div>
             <div className="mt-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
               <span>
-                第 {lesson.chapterId} 课 · {index + 1} / {total}
+                {t.lessonNum(lesson.chapterId)} · {index + 1} / {total}
               </span>
               <div className="flex items-center gap-3">
                 <span className="relative inline-flex items-center gap-1 font-semibold text-amber-400">
@@ -294,7 +383,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
                 </span>
                 {streak >= 2 && (
                   <span className="inline-flex items-center gap-0.5 text-orange-400">
-                    🔥 {streak} 连对
+                    🔥 {streak} {t.streak}
                   </span>
                 )}
               </div>
@@ -306,9 +395,9 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
 
           {/* Mobile-only doc shortcut (icon button) */}
           <Link
-            href={`/learn/${lesson.chapterId}`}
+            href={`${base}/learn/${lesson.chapterId}`}
             className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground sm:hidden"
-            aria-label="查看文档"
+            aria-label={t.viewDoc}
           >
             <BookOpen className="h-4 w-4" />
           </Link>
@@ -344,17 +433,17 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             className="text-xs text-muted-foreground"
           >
             <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-            上一卡
+            {t.prevCard}
           </Button>
           <p className="hidden text-[10px] text-muted-foreground sm:block">
-            ← / → 翻卡 · Esc 退出
+            {t.keyHint}
           </p>
           <Link
-            href={`/learn/${lesson.chapterId}`}
+            href={`${base}/learn/${lesson.chapterId}`}
             className="hidden items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
           >
             <BookOpen className="h-3.5 w-3.5" />
-            查看完整文档
+            {t.viewFullDoc}
           </Link>
         </div>
       </footer>
@@ -425,7 +514,7 @@ function CardSwitch({ card, ...cb }: { card: Card } & CardCallbacks) {
 
 function NextButton({
   onClick,
-  label = '继续',
+  label,
   size = 'lg',
   variant = 'default'
 }: {
@@ -434,6 +523,8 @@ function NextButton({
   size?: 'sm' | 'lg'
   variant?: 'default' | 'outline'
 }) {
+  const { t } = useLessonT()
+  const text = label ?? t.continue
   return (
     <Button
       onClick={onClick}
@@ -445,7 +536,7 @@ function NextButton({
         variant === 'default' && 'glow-primary'
       )}
     >
-      {label}
+      {text}
       <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5 sm:h-5 sm:w-5" />
     </Button>
   )
@@ -479,7 +570,7 @@ function IntroCardView({
         <Prose content={card.body} size="inherit" />
       </div>
       <div className="flex justify-center pt-2 sm:pt-4">
-        <NextButton onClick={onNext} label={card.cta ?? '继续'} />
+        <NextButton onClick={onNext} label={card.cta} />
       </div>
     </CardShell>
   )
@@ -512,7 +603,7 @@ function RevealCardView({
             </div>
           </div>
           <div className="flex justify-center">
-            <NextButton onClick={onNext} label={card.followCta ?? '继续'} />
+            <NextButton onClick={onNext} label={card.followCta} />
           </div>
         </div>
       )}
@@ -626,6 +717,7 @@ function MCQCardView({
   onCorrect,
   onWrong
 }: { card: MCQCard } & CardCallbacks) {
+  const { t } = useLessonT()
   const [picked, setPicked] = useState<string | null>(null)
   const correct = picked === card.correctOptionId
 
@@ -699,7 +791,7 @@ function MCQCardView({
             )}
           >
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider sm:text-sm">
-              {correct ? '✅ 答对了' : '🤔 别灰心 — 真正的答案是：'}
+              {correct ? t.correct : t.wrongReveal}
             </p>
             <div className="text-base leading-relaxed sm:text-lg">
               <Prose content={card.explanation} size="inherit" />
@@ -723,6 +815,7 @@ function MatchCardView({
   onNext,
   onCorrect
 }: { card: MatchCard } & CardCallbacks) {
+  const { t } = useLessonT()
   // Shuffled right column. Generate once.
   const shuffledRights = useMemo(() => {
     const arr = card.pairs.map((p, i) => ({ value: p.right, originalIdx: i }))
@@ -826,9 +919,9 @@ function MatchCardView({
       {allMatched && (
         <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4 sm:space-y-6">
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 text-center sm:p-7">
-            <p className="text-lg font-semibold sm:text-xl">✨ 三对全配出来了</p>
+            <p className="text-lg font-semibold sm:text-xl">{t.allMatched}</p>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              这三个词后面会反复出现，记住它们值。
+              {t.matchHint}
             </p>
           </div>
           <div className="flex justify-center">
@@ -848,6 +941,7 @@ function VizCardView({
   card,
   onNext
 }: { card: VizCard } & CardCallbacks) {
+  const { t } = useLessonT()
   return (
     <CardShell>
       {card.title && (
@@ -883,7 +977,7 @@ function VizCardView({
         </figure>
       )}
       <div className="flex justify-center">
-        <NextButton onClick={onNext} label="懂了 →" />
+        <NextButton onClick={onNext} label={t.gotIt} />
       </div>
     </CardShell>
   )
@@ -899,6 +993,7 @@ function NumericCardView({
   onCorrect,
   onWrong
 }: { card: NumericCard } & CardCallbacks) {
+  const { t } = useLessonT()
   const [value, setValue] = useState('')
   const [showHint, setShowHint] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -913,7 +1008,7 @@ function NumericCardView({
     if (submitted || !value) return
     const num = parseFloat(value)
     if (Number.isNaN(num)) {
-      toast.error('请输入一个数字')
+      toast.error(t.enterNumber)
       return
     }
     const tol = card.tolerance ?? 0
@@ -940,7 +1035,7 @@ function NumericCardView({
             if (e.key === 'Enter') submit()
           }}
           disabled={submitted}
-          placeholder="输入数字"
+          placeholder={t.numberPlaceholder}
           className="h-14 text-center text-xl sm:h-16 sm:text-2xl"
         />
         {card.unit && (
@@ -957,7 +1052,7 @@ function NumericCardView({
             className="glow-primary h-12 px-8 text-base sm:h-14 sm:px-12 sm:text-lg"
           >
             <Check className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
-            提交答案
+            {t.submit}
           </Button>
           {card.hint && (
             <button
@@ -965,7 +1060,7 @@ function NumericCardView({
               onClick={() => setShowHint((s) => !s)}
               className="text-xs text-muted-foreground hover:text-foreground hover:underline sm:text-sm"
             >
-              {showHint ? '收起提示' : '想不出来？看一下提示'}
+              {showHint ? t.hideHint : t.showHint}
             </button>
           )}
           {showHint && card.hint && (
@@ -985,9 +1080,7 @@ function NumericCardView({
             )}
           >
             <p className="mb-3 text-xs font-semibold uppercase tracking-wider sm:text-sm">
-              {correct
-                ? '✅ 答对了'
-                : `❌ 你写了 ${value}，正确答案是 ${card.answer}${card.unit ?? ''}`}
+              {correct ? t.correct : t.wrongNumeric(value, card.answer, card.unit ?? '')}
             </p>
             <div className="text-base leading-relaxed sm:text-lg">
               <Prose content={card.explanation} size="inherit" />
@@ -1010,6 +1103,7 @@ function CommandCardView({
   card,
   onNext
 }: { card: CommandCard } & CardCallbacks) {
+  const { t } = useLessonT()
   return (
     <CardShell>
       <h2 className="text-center text-2xl font-bold sm:text-4xl lg:text-5xl">
@@ -1031,7 +1125,7 @@ function CommandCardView({
         {card.expectedOutput && (
           <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5">
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-              ✨ 你应该看到
+              ✨ {t.expected}
             </p>
             <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs leading-relaxed sm:text-sm">
               {card.expectedOutput}
@@ -1041,7 +1135,7 @@ function CommandCardView({
         {card.tip && (
           <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 sm:p-5">
             <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-yellow-700 dark:text-yellow-300">
-              💡 小提示
+              💡 {t.tip}
             </p>
             <div className="text-sm leading-relaxed sm:text-base">
               <Prose content={card.tip} size="sm" />
@@ -1051,7 +1145,7 @@ function CommandCardView({
         {card.warning && (
           <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-4 sm:p-5">
             <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-              ⚠️ 注意
+              ⚠️ {t.warning}
             </p>
             <div className="text-sm leading-relaxed sm:text-base">
               <Prose content={card.warning} size="sm" />
@@ -1060,7 +1154,7 @@ function CommandCardView({
         )}
       </div>
       <div className="flex justify-center pt-2">
-        <NextButton onClick={onNext} label="懂了 →" />
+        <NextButton onClick={onNext} label={t.gotIt} />
       </div>
     </CardShell>
   )
@@ -1074,6 +1168,7 @@ function RecapCardView({
   card,
   onNext
 }: { card: RecapCard } & CardCallbacks) {
+  const { t } = useLessonT()
   return (
     <CardShell>
       <h2 className="text-center text-2xl font-bold sm:text-4xl lg:text-5xl">{card.title}</h2>
@@ -1089,7 +1184,7 @@ function RecapCardView({
         ))}
       </ul>
       <div className="flex justify-center pt-2">
-        <NextButton onClick={onNext} label="完成本课 →" />
+        <NextButton onClick={onNext} label={t.finishLesson} />
       </div>
     </CardShell>
   )
@@ -1137,12 +1232,13 @@ function CompletionCardView({
   onNext,
   stats
 }: { card: CompletionCard } & CardCallbacks) {
+  const { base, t } = useLessonT()
   const triggeredRef = useRef(false)
 
   const accuracy = stats.answeredCount > 0 ? stats.correctCount / stats.answeredCount : 1
   const accuracyPct = Math.round(accuracy * 100)
   const stars = accuracy >= 0.85 ? 3 : accuracy >= 0.6 ? 2 : 1
-  const badge = stars === 3 ? '完美通关 💎' : stars === 2 ? '顺利通关 🌟' : '通关达成 ✅'
+  const badge = stars === 3 ? t.badgePerfect : stars === 2 ? t.badgeGood : t.badgeDone
 
   useEffect(() => {
     if (triggeredRef.current) return
@@ -1170,9 +1266,9 @@ function CompletionCardView({
       <StarRating value={stars} />
 
       <div className="mx-auto grid max-w-xl grid-cols-3 gap-3 sm:gap-4">
-        <StatTile label="获得 XP" accent value={<CountUp to={stats.xp} />} />
-        <StatTile label="正确率" value={`${accuracyPct}%`} />
-        <StatTile label="最高连对" value={`🔥${stats.bestStreak}`} />
+        <StatTile label={t.xpGained} accent value={<CountUp to={stats.xp} />} />
+        <StatTile label={t.accuracy} value={`${accuracyPct}%`} />
+        <StatTile label={t.bestStreak} value={`🔥${stats.bestStreak}`} />
       </div>
 
       <p className="text-center text-lg font-bold text-amber-300 sm:text-xl">{badge}</p>
@@ -1194,8 +1290,8 @@ function CompletionCardView({
             size="lg"
             className="glow-primary h-14 px-4 text-base sm:h-16 sm:text-lg"
           >
-            <Link href={`/learn/${card.nextChapterId}/play`}>
-              🎮 第 {card.nextChapterId} 课
+            <Link href={`${base}/learn/${card.nextChapterId}/play`}>
+              🎮 {t.lessonNum(card.nextChapterId)}
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -1206,9 +1302,9 @@ function CompletionCardView({
           variant="outline"
           className="h-14 px-4 text-base sm:h-16 sm:text-lg"
         >
-          <Link href={`/learn/${currentChapterId}`}>
+          <Link href={`${base}/learn/${currentChapterId}`}>
             <BookOpen className="mr-1 h-4 w-4" />
-            看本章文档
+            {t.viewChapterDoc}
           </Link>
         </Button>
         <Button
@@ -1217,7 +1313,7 @@ function CompletionCardView({
           variant="ghost"
           className="h-14 px-4 text-base sm:h-16 sm:text-lg"
         >
-          <Link href="/learn">回到学习路径</Link>
+          <Link href={`${base}/learn`}>{t.backToPath}</Link>
         </Button>
       </div>
     </CardShell>

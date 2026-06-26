@@ -647,7 +647,131 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
         solution: '--robot.port=/dev/ttyACM0 を追加し、実際のポートは ls /dev/tty* で確認します。',
         command: 'lerobot-calibrate --help'
       }
-    ]
+    ],
+
+    introduction: `2本の USB を挿し、\`ls /dev/tty*\` で ttyUSB0 と ttyUSB1 も見えています。でもデータ収集を始めるには、あと2ステップ必要です：
+
+1. **どのポートが Leader でどれが Follower かを LeRobot に伝える** —— コマンド引数に書く
+2. **キャリブレーション** —— 各モータの「本当の零点」を PC に教える
+
+キャリブレーションがこの章の要で、もっとも見落とされやすく、見落とすと必ず問題になる一歩です。ロボットアームは出荷時、各モータの零点に組み立て公差があります：「30度へ」と言っても、実際には 31度や 28度に行くことがあります。キャリブレーションしないと、Follower の追従がずれ、録ったデータが歪み、学習したモデルは必ず崩れます。
+
+この一歩は**飛ばせません**が、スクリプトが一歩ずつ案内してくれるので 3 分で終わります。`,
+
+    whyItMatters: `キャリブレーションはデータ品質の最初の関門です：
+
+- 未キャリブレーション → Leader が 30度を読むのに Follower が実際 33度 → A の動作を録ったつもりが、データセットに入るのは B → モデルは誤ったものを学ぶ
+- ポート設定ミス → スクリプトが \`Missing required field(s) port\` を出す、または接続できない
+- キャリブレーションは「ゴミを入れればゴミが出る」の最前段：**ここでずれると、後で学習にどれだけ力を入れても無駄**`,
+
+    keyTerms: ['キャリブレーション', 'Leader / Follower', 'シリアルポート'],
+
+    diagrams: [
+      {
+        title: 'キャリブレーション前 vs 後',
+        source: `flowchart LR
+    subgraph Before ["未キャリブレーション"]
+        B1["Leader が 30度を読む"] -.->|"3度のずれ"| B2["Follower 実際 33度"]
+    end
+    subgraph After ["キャリブレーション後"]
+        A1["Leader が 30度を読む"] -->|"一致"| A2["Follower 実際 30度"]
+    end
+    style Before fill:#fef2f2,stroke:#dc2626
+    style After fill:#f0fdf4,stroke:#16a34a`,
+        caption: 'キャリブレーションは Leader の読み値と Follower の実姿勢を揃える。未実施だと 1〜5 度のずれがデータセット全体を汚染する。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: 'どのポートがどのアームかを見分ける',
+        body: `もっとも確実な手作業：\`ls /dev/tty*\` を一度見る → Leader の USB を抜く → もう一度見る。減った方が Leader です。
+
+LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポートに「あなたは何番モータ？」と順に尋ねて対応を教えてくれます。ケーブルを抜かずに済みます。`,
+        command: {
+          description: 'シリアルを確認（抜く前後で比較）',
+          code: 'ls /dev/tty*'
+        },
+        expectedOutput: '1回目:  ttyUSB0  ttyUSB1\n2回目:  ttyUSB0            ← ttyUSB1 が消えた = いま抜いた Leader'
+      },
+      {
+        title: 'ポートをコマンド引数に書く',
+        body: `どの ttyUSB がどの役割か分かったら、ポートを新版 LeRobot CLI 引数に直接書きます：Follower は \`--robot.port\`、Leader は \`--teleop.port\`。
+
+例えば Follower が \`/dev/ttyACM0\`、Leader が \`/dev/ttyACM1\`。以降のキャリブレーション・遠隔操作・データ録画もこの2つのポートを使います。`,
+        command: {
+          description: '新版 CLI のポート引数',
+          code: '--robot.port=/dev/ttyACM0\n--teleop.port=/dev/ttyACM1'
+        },
+        warning: '再起動後はポート番号が入れ替わることがあります。その際はまず `ls /dev/tty*` を実行し直し、コマンド引数を更新してください。'
+      },
+      {
+        title: 'キャリブレーションを実行',
+        body: `キャリブレーションスクリプトを実行すると、ロボットアームを**手で指定姿勢に動かす**よう一歩ずつ案内されます（完全伸展、零位など）。1姿勢ごとに Enter を押します。全体で 1〜2 分、データは自動で \`~/.cache/.../calibration.json\` に保存されます。`,
+        command: {
+          description: 'キャリブレーション開始',
+          code: 'lerobot-calibrate \\\n  --robot.type=so101_follower \\\n  --robot.port=/dev/ttyACM0 \\\n  --robot.id=so101_follower'
+        },
+        expectedOutput: 'Calibrating leader_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration ... Done!',
+        warning: '手で姿勢を作るときは**やさしく動かす**こと。SO101 のモータはダンパが無く、無理に動かすとギアを傷める恐れがあります。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: 'キャリブレーションしたのに、Follower の追従がまだずれる。',
+        cause: '姿勢合わせが不正確 —— 「完全伸展」が実は8割しか伸びておらず、基準点がずれた。',
+        fix: 'キャリブレーションをやり直し、指示/図に厳密に合わせる。定規で照合してもよい。データは旧いものを上書きするので、やり直しは安全。'
+      },
+      {
+        symptom: '`Missing required field(s) port`',
+        cause: 'yaml に port が無い、またはインデントが誤っていて解析されていない。',
+        fix: 'leader_arms / follower_arms の下に、正しいインデントで `port:` を補う。YAML はインデントに敏感。Tab ではなくスペースを使う。'
+      },
+      {
+        symptom: '「キャリブレーションは一度やれば永久でしょ？」',
+        cause: 'キャリブレーションが終身有効だと思い込んでいる。',
+        fix: 'データはディスクに保存され、電源を切っても消えない；ただし**モータ交換・分解組立・輸送の振動**の後は零点が変わるので再実施が必要。普段は繰り返さなくてよい。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '再キャリブレーションの要否を判断する',
+        instructions: `次のうち再キャリブレーションが必要なのは？\n\nA. 一晩電源を切り、翌日起動\nB. ロボットアームを机から落とした\nC. モータを1つ交換した\nD. USB を挿し直しただけ`,
+        hint: 'キャリブレーションデータはディスクにある。失われるのは「物理的な零点」であってファイルではない。',
+        expectedResult: '要再実施：**B（落下）、C（モータ交換）**。不要：A（データはディスクにあり消えない）、D（USB の抜き差しはモータ零点に影響しないが、ttyUSB 番号が変わる可能性があるので yaml のポートは確認）。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'キャリブレーションせずにデータ収集するとどうなる？',
+        answer: 'Leader の読み値と Follower の実姿勢が合わず、データセットに録る (s, a) がずれます。このデータで学習すると、モデルが学ぶ写像自体が歪んでいて、いくら学習しても精度が出ません。'
+      },
+      {
+        question: '1本のアームで何個のモータをキャリブレーションする？',
+        answer: '6個（各関節1つ）。スクリプトが自動で順に進めるので手動選択は不要。2本なら 12 個。'
+      },
+      {
+        question: 'ロボットアームの役割（Leader/Follower）はどう決まる？',
+        answer: '設定ファイルの leader_arms / follower_arms にそれぞれ書く port で決まり、ハードウェアの出荷時に決まるのではありません。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'LeRobot ロボット制御スクリプトのドキュメント',
+        url: 'https://github.com/huggingface/lerobot',
+        note: '新版 LeRobot CLI の calibrate / teleoperate / record コマンドの説明。'
+      }
+    ],
+
+    summary: `2ステップ：**ポートを見分ける**（抜線法または find_motors）→ 新版 CLI の \`--robot.port\` / \`--teleop.port\` に書く；**キャリブレーション**（lerobot-calibrate を実行し、手で姿勢を作って零点を記録）。
+
+キャリブレーションは Leader の読み値と Follower の実姿勢を揃える、データ品質の最初の関門。ハードウェアに変更が無ければやり直し不要。
+
+次章はいちばん楽しい部分：実際にロボットアームを持って動作を実演し、データを録る。`
   },
   {
     id: 5,

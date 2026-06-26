@@ -1145,7 +1145,135 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         solution: 'batch_size を縮小するか勾配累積を有効にします。',
         command: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act --batch_size=8'
       }
-    ]
+    ],
+
+    introduction: `データは 50 件・7500 フレーム揃いました。いよいよ AI の部分 —— ACT モデルの学習です。
+
+多くの人は ACT を「1つのモデル」だと思いますが、実は**3つの構成要素の組み合わせ**です：Transformer Encoder（画像＋状態から特徴抽出）、CVAE（「同じ状況に複数の妥当な行動」という多峰性を扱う）、Transformer Decoder（未来 100 ステップの行動を一度に出力）。3つ目が肝心 —— 第1章で述べた複合誤差は、まさに「一度に行動の塊を予測する」ことで抑え込まれます。
+
+この章では学習の起動、loss 曲線の読み方、NaN の応急処置、wandb での監視、そして「なぜ 50 件のデータで 20 万ステップ学習できるのか」を明確にします。`,
+
+    whyItMatters: `学習はデータを能力に変える変換器で、同時にもっとも「一晩回して無駄になりやすい」工程です：
+
+- 健康な loss の姿を知らない → 8時間回して成功か失敗か分からない
+- NaN を救えない → 勾配が爆発して全工程が無駄になり、再学習が必要だと思い込む
+- batch_size を調整できない → OOM になるか、VRAM を無駄にして収束が遅い
+- wandb を使わない → ターミナルを眺めるだけで、複数実験を比較できない
+
+この章を理解すれば、毎回の学習が「自分が何をしているか分かっている」ものになります。`,
+
+    keyTerms: ['ACT', 'CVAE', 'Action Chunking', 'CUDA / AMP', 'wandb'],
+
+    diagrams: [
+      {
+        title: 'ACT の3段構成',
+        source: `flowchart LR
+    Img["📷 カメラフレーム"] --> Enc["Transformer Encoder"]
+    State["📐 関節状態"] --> Enc
+    Enc --> CVAE["CVAE (latent z)"]
+    CVAE --> Dec["Transformer Decoder"]
+    Dec --> Out["📦 未来 100 ステップの行動"]
+    style Enc fill:#7c5cff,stroke:#7c5cff,color:#fff
+    style CVAE fill:#f59e0b,stroke:#f59e0b,color:#fff
+    style Dec fill:#22c55e,stroke:#22c55e,color:#fff
+    style Out fill:#0ea5e9,stroke:#0ea5e9,color:#fff`,
+        caption: '画像＋状態 → Encoder が特徴抽出 → CVAE が多峰性を注入 → Decoder が一気に 100 ステップの行動を出す（Action Chunking）。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '学習を起動する',
+        body: `1コマンドで完了（前提：第5章でデータセットを録り終えていること）。\`--policy.type=act\` で ACT を選び、\`--dataset.repo_id=...\` で自分のデータセットを指定します。
+
+デフォルトで 20 万ステップ、RTX 3060 で約 6〜8 時間、CPU では 1〜2 日。途中で Ctrl+C でき、\`resume=true\` を付けて続行できます。`,
+        command: {
+          description: 'ACT 学習を起動',
+          code: 'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --output_dir=outputs/train/act_so101'
+        },
+        expectedOutput: '[INFO] Building ACT model (params: 84.5M)...\nstep 0    loss 1.247\nstep 100  loss 0.456\nstep 500  loss 0.182\n...',
+        tip: 'checkpoint は自動保存されるので、中断しても `resume=true` で続けられます。'
+      },
+      {
+        title: 'loss 曲線を読む',
+        body: `健康な loss：**最初の 1000 ステップで急降下**（学び始め）→ 中盤は安定して低下 → 後半は変化 < 5%（収束、止めてよい）。
+
+不健康なサイン：loss が NaN になる（勾配爆発）、loss が反転して上昇（学習率が大きすぎ）、loss が初期値で止まって下がらない（データに問題）。`,
+        tip: '最初の 1000 ステップを見れば「学習が立ち上がったか」が判断でき、数時間待つ必要はありません。'
+      },
+      {
+        title: 'NaN loss の救出＋ batch_size 調整',
+        body: `loss の NaN はほぼ常に勾配爆発です。応急の二手：学習率を一桁下げる＋勾配クリッピングを有効化。NaN は不可逆なので、ここからやり直すしかなく「自然に回復」はしません。
+
+batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正確、収束が速い）。12 GB なら一般に 32 程度入る；OOM なら下げる。`,
+        command: {
+          description: 'NaN 救出 / パラメータ調整',
+          code: 'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --optimizer.lr=1e-5 --optimizer.grad_clip_norm=10 \\\n  --batch_size=8'
+        },
+        warning: 'NaN が出た後は、それまでの進捗は無効（重みが汚染）。学習率を下げて再学習するしかなく、続行（resume）はできません。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: 'loss が走っているうちに NaN になる。',
+        cause: '学習率が大きすぎて勾配爆発（データに極端値がある場合も）。',
+        fix: '学習率 ÷10（例：1e-4 → 1e-5）＋ `grad_clip_norm` を有効化。学習をやり直す。NaN は不可逆。'
+      },
+      {
+        symptom: '`CUDA out of memory` で学習が立ち上がらない。',
+        cause: 'VRAM に対して batch_size が大きすぎる。',
+        fix: 'まず `training.batch_size=4`；駄目なら `grad_accumulation_steps=4`；さらに `amp=true` 混合精度。9割は最初の一手で解決。'
+      },
+      {
+        symptom: '「ACT が BC より強いのは Transformer を使ってるからでしょ？」',
+        cause: 'backbone を創新点だと取り違えている。',
+        fix: 'Transformer は骨格にすぎない。ACT を強くしているのは **Action Chunking**（一度に行動の塊を出して複合誤差を治す）＋ **CVAE**（多峰性を扱う）。論文のアブレーションでは Chunking を外すと性能が 50%+ 落ちる。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '1 epoch が何ステップか計算する',
+        instructions: '50 件のデモ、各 ~150 フレーム = 7500 サンプル、batch_size=8。1 epoch（データを一通り見る）は約何 step？　20 万ステップは約何 epoch？',
+        hint: '1 epoch の step = 総サンプル ÷ batch_size。',
+        expectedResult: '7500 ÷ 8 ≈ **938 step / epoch**；20 万ステップ ÷ 938 ≈ **213 epoch**。各サンプルをモデルが 213 回見る —— これが「50 件でも足りる」理由：1件が高度に再利用される。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'ACT は何で構成され、どの部分が最も重要？',
+        answer: 'Transformer Encoder ＋ CVAE ＋ Transformer Decoder。最重要は Decoder の **Action Chunking**（100 ステップの行動を一度に予測し、複合誤差を治す）、次いで CVAE（多峰性を扱う）。Transformer は骨格にすぎない。'
+      },
+      {
+        question: 'loss が NaN になったらどうする？',
+        answer: '学習率を一桁下げる＋勾配クリッピングを有効化し、再学習する。NaN は勾配爆発の結果で不可逆。自然回復は待てない。'
+      },
+      {
+        question: 'なぜ 50 件のデータで 20 万ステップ学習できる？',
+        answer: '各サンプルが繰り返し使われるから。7500 サンプル / batch 8 ≈ 938 ステップで1 epoch、20 万ステップ ≈ 213 epoch、各サンプルを 200 回以上学ぶ。模倣学習には十分。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'ACT 原論文 (Zhao et al. 2023)',
+        url: 'https://arxiv.org/abs/2304.13705',
+        note: 'Action Chunking / CVAE の数学とアブレーションを理解したいならこれ。'
+      },
+      {
+        title: 'Weights & Biases (wandb)',
+        url: 'https://wandb.ai/',
+        note: '学習監視の定番。`wandb.enable=true` を付ければ loss 曲線をリアルタイムで見られ、実験比較もできる。'
+      }
+    ],
+
+    summary: `**ACT = Transformer Encoder ＋ CVAE ＋ Decoder（一度に 100 ステップ出力）**。強さの源は Action Chunking ＋ CVAE で、Transformer 自体ではない。
+
+\`--dataset.repo_id=... --policy.type=act\` で起動；健康な loss は最初の 1k で急降下し後半で収束；NaN → 学習率÷10＋勾配クリッピングで再学習；OOM → batch_size を下げる；wandb で監視。
+
+次章では学習済みモデルを実機ロボットアームにデプロイする。`
   },
   {
     id: 8,
@@ -1190,7 +1318,136 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         cause: '制御周波数が不安定、もしくはモデル出力にノイズが多い。',
         solution: 'fps 設定を確認し、必要に応じてスムージングフィルタを追加します。'
       }
-    ]
+    ],
+
+    introduction: `学習が完了し、ディスクには数百 MB の checkpoint が眠っています。これを**本当にロボットアームを動かす**ために使います。
+
+心の準備を：**初回の推論成功率はしばしば 10〜30% にすぎません**。これは正常で、あなたのミスではありません。学習 loss が低い ≠ 実機で高い —— 学習データは有限、実環境には揺らぎがあり、第1章の複合誤差は ACT で大幅に緩和されても完全には消えません。
+
+この章では checkpoint をロードして稼働、fps を固定、EMA でガタつきを抑え、成功率を一歩ずつ上げる方法を教えます。`,
+
+    whyItMatters: `推論は「学習できる」から「本当に使える」への最後の1マイルで、調整のセンスがもっとも問われる場所です：
+
+- 初回成功率が元々低いと知らない → 効果が悪いと見るや、前の工程が全部無駄だったと思い込んで諦める
+- fps が不安定 → ガタつきの最大原因。固定しないと調整できない
+- EMA を使えない → 動作が粗く、見るからに不安
+- 複合誤差が再現すると理解していない → 「最初は滑らか、後半で歪む」のがなぜか分からない
+
+この章を押さえれば、「かろうじて動く」モデルを「安定して使える」まで仕上げられます。`,
+
+    keyTerms: ['EMA 平滑化', '複合誤差', 'Action Chunking', 'fps'],
+
+    diagrams: [
+      {
+        title: '推論時のリアルタイムループ',
+        source: `flowchart LR
+    Cam["📷 カメラ + 状態"] --> Pre["前処理/正規化"]
+    Pre --> Policy["🧠 ACT 方策"]
+    Policy --> Chunk["📦 100 ステップの行動"]
+    Chunk --> Smooth["✨ EMA 平滑化"]
+    Smooth --> Motor["🦾 Follower が実行"]
+    Motor -.->|"30 fps で次フレームへ"| Cam
+    style Policy fill:#22c55e,stroke:#22c55e,color:#fff
+    style Smooth fill:#f59e0b,stroke:#f59e0b,color:#fff`,
+        caption: 'カメラ+状態 → 方策が 100 ステップ出力 → EMA 平滑化 → モータ実行 → 次フレーム。EMA はガタつきの「最後の保険」。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: 'checkpoint をロードして稼働',
+        body: `推論は \`lerobot-record\` を使い、\`--policy.path\` で学習出力内の \`checkpoints/last/pretrained_model\` を指します。Enter を押すと Follower が**自分で動き始め**、Leader は引退（人の操作は不要）。`,
+        command: {
+          description: '推論を実行',
+          code: 'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/train/act_so101/checkpoints/last/pretrained_model \\\n  --display_data=true'
+        },
+        expectedOutput: '[INFO] Loading policy from checkpoints/last/...\n[INFO] Robot ready. Press Enter to start inference episode 1/5.',
+        tip: '途中の checkpoint を使いたければ last を step_50000 などに替える。'
+      },
+      {
+        title: 'fps を学習時の値に固定する',
+        body: `不安定な fps はガタつきの系統的な元凶。推論 fps を**学習データと同じ**（通常 30）に固定します —— モデルが「感じる」リズムが学習時と同じである必要があり、ずれすぎると混乱します。
+
+GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fps 出ず、フレーム落ちで依然ガタつく。その場合は GPU を替えるか、学習時も低い fps を使う。`,
+        command: {
+          description: '推論フレームレートを固定',
+          code: 'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/.../pretrained_model \\\n  --display_data=true'
+        },
+        warning: '推論 fps と学習 fps の不一致は、「シミュレーションでは良いのに実機で乱れる」という初心者によくある隠れ原因です。'
+      },
+      {
+        title: 'EMA 平滑化でガタつきを治す',
+        body: `EMA（指数移動平均）は現在の行動と直前の行動を重みで融合し、高周波のガタつきを抑えます。1行で書けます：
+
+\`smoothed = α × current + (1-α) × previous\`、α は一般に 0.3（新しい行動が 30%）。アームは明らかに滑らかになり、代償は応答がやや遅れること（多くのタスクで許容範囲）。`,
+        command: {
+          description: '推論ループ内の EMA',
+          code: 'prev = None\nalpha = 0.3\nfor obs in robot_loop():\n    action = policy(obs)\n    if prev is not None:\n        action = alpha * action + (1 - alpha) * prev\n    robot.send_action(action)\n    prev = action'
+        },
+        tip: 'α はつまみ：0.3 強平滑（推奨の出発点）、0.1 極強（応答遅い）、0.5 中程度。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '初回の推論成功率が低い。前の工程は無駄だった？',
+        cause: '学習 loss が低ければ実機で高いはず、と誤解している。',
+        fix: '初回 10〜30% は正常。まず fps 固定、EMA 追加、必要ならデータ補充、と一歩ずつ調整。sim2real ギャップは常に存在し、調整は当たり前。'
+      },
+      {
+        symptom: '最初の数秒は滑らかなのに、後半ほど歪む。',
+        cause: '複合誤差 —— ACT で緩和されたが根絶はされず、塊と塊の間で依然蓄積する。',
+        fix: 'これは想定内。より安定した fps ＋ EMA ＋ Temporal Ensembling でさらに抑える；長いタスクで特に顕著。必要なら中後半の状態をカバーする学習データを増やす。'
+      },
+      {
+        symptom: 'EMA を入れてもまだガタつく。',
+        cause: 'ガタつきの原因は1つではない（fps、ノイズ、USB、データ）。',
+        fix: '順に切り分け：① fps 固定（最重要）② α を小さく（0.3→0.2→0.1）③ Temporal Ensembling ④ USB 配線を確認 ⑤ 学習データ補充。9割は③までで解決。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: 'EMA の α を理解する',
+        instructions: '直前の行動が 10、モデルの今回の出力が 20、α=0.3。EMA 平滑後に実際モータへ送る行動は？　α を 0.1 にすると？　どちらが「手に追従」する？',
+        hint: 'smoothed = α×current + (1-α)×prev。',
+        expectedResult: 'α=0.3：0.3×20 + 0.7×10 = **13**。α=0.1：0.1×20 + 0.9×10 = **11**。α が大きいほど追従的（新行動 20 に近い）だが平滑は弱い；小さいほど平滑だが応答が遅い。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '初回の推論成功率が 20% だけ。正常？',
+        answer: '正常です。学習 loss が低くても実機で高いとは限らず、sim2real ギャップ＋複合誤差＋環境の揺らぎがあります。まず fps 固定、EMA 追加、その後で段階的に調整。初回が悪くても諦めないこと。'
+      },
+      {
+        question: 'なぜ推論 fps と学習 fps を一致させる？',
+        answer: 'モデルは学習時の時間リズムで学ぶため、推論のリズムが大きくずれると「違和感」で出力が劣化します。一致させて初めて学習時の挙動を再現できます。'
+      },
+      {
+        question: 'EMA 平滑化の代償は？',
+        answer: '応答が遅くなること —— 現在の行動が古い行動に「引っ張られる」ため。高速タスクでは精度に影響しうるが、多くの操作タスクでは得られる滑らかさに見合う。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'ACT 原論文：Temporal Ensembling の節',
+        url: 'https://arxiv.org/abs/2304.13705',
+        note: 'EMA を超えるより強い平滑化。複数の chunk の予測を加重平均する。'
+      },
+      {
+        title: 'ALOHA プロジェクトのホームページ',
+        url: 'https://tonyzhaozh.github.io/aloha/',
+        note: 'ACT が実機の双腕で推論する動画。「調整後に何ができるか」の期待値を作れる。'
+      }
+    ],
+
+    summary: `\`--policy.path\` で checkpoint をロードして稼働。**初回成功率 10〜30% は正常**、落ち込まないこと。
+
+ガタつき調整の順序：\`--dataset.fps 30\` を固定（学習と一致）→ EMA 平滑化（α=0.3、1行）→ Temporal Ensembling → 配線確認 → データ補充。複合誤差で長いタスクの後半が歪むのは想定内。
+
+最後の章では、あらゆる予期せぬ事態に体系的に対処する方法を学ぶ。`
   },
   {
     id: 9,
@@ -1225,7 +1482,137 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       '個人用のエラー知識ベースを作っている',
       'デバッグの体系的な進め方を理解している'
     ],
-    errors: []
+    errors: [],
+
+    introduction: `必ずエラーに出会います —— 誰もがそうです。違いはただ一つ：何時間も詰まって最後に諦める人と、5分で原因を特定して解決する人。差は才能ではなく、**体系的な切り分け方を持っているか**です。これこそがエンジニアの本当に価値ある能力です。
+
+この章は特定のエラーの解き方は教えません（それらは「トラブル診断」ライブラリにあります）。教えるのは**汎用4ステップ法**です：最終行を読む → 種類を判断 → サイト内ライブラリを引く → エラー文を正確に Google。9割は3ステップ目で解決します。
+
+さらに、多くの人ができないこともお教えします：**問題をどう明確に質問するか**。そうすれば AI アシスタントやコミュニティが本当に助けてくれます。`,
+
+    whyItMatters: `この章はコース全体でもっとも「応用が効く」章です —— 学ぶのは LeRobot のエラー修正だけでなく、**あらゆる**技術エラーの直し方です：
+
+- traceback を読める → 長い赤い文字列に怯えなくなる
+- エラーの種類を判断できる → 正しい方向へ直行し、闇雲に試さない
+- 質問できる → 一度の相談で有効な回答を得られる。「助けて」が「完全なエラーを貼って」で返ってこない
+- この方法を身につければ → 最初の8章を人に手取り足取り頼らず独力で走破できる`,
+
+    keyTerms: ['複合誤差', 'CUDA / AMP', 'LeRobot'],
+
+    diagrams: [
+      {
+        title: '切り分けの意思決定ツリー',
+        source: `flowchart TD
+    Err["💥 エラー"] --> Read["1. 最終行を読む"]
+    Read --> Type{"2. 種類を判断"}
+    Type -->|"環境/インストール"| KB["3. サイト内診断ライブラリ"]
+    Type -->|"ハードウェア/シリアル"| KB
+    Type -->|"データ/ファイル"| KB
+    Type -->|"学習/推論"| KB
+    KB --> Found{"見つかった？"}
+    Found -->|"はい"| Fix["✅ 修復"]
+    Found -->|"いいえ"| Google["4. エラー文を正確に Google"]
+    Google --> Fix
+    style Err fill:#dc2626,color:#fff
+    style Fix fill:#16a34a,color:#fff`,
+        caption: '汎用4ステップ法。各分岐が典型的なエラーの一類に対応し、大半は3ステップ目（サイト内ライブラリ）で解決する。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: 'ステップ1：最終行を読む（最初の行ではない）',
+        body: `Python の traceback は数十行に及ぶことがあります。**最終行**こそエラーの種類＋直接の原因の要約 —— まずそれを見ます。
+
+2番目に重要なのは、最終行に近い、**自分のコードのパスが書かれた**行。そこが直接直せる場所です。前の長い部分はライブラリ内部の呼び出しで、最初は無視してよい。`,
+        tip: '赤い文字の長さに怯えないこと。情報量の9割は最終行の一文にあります。'
+      },
+      {
+        title: 'ステップ2：種類を判断、ステップ3：サイト内ライブラリを引く',
+        body: `エラーを分類します：環境/インストール、ハードウェア/シリアル、データ/ファイル、学習、推論。種類が調べる方向を決めます。
+
+次に本サイトの「トラブル診断」でキーワード検索 —— 収録済みの十数件が一般的なエラーの8割（Permission denied、CUDA OOM、meta/info.json、NaN loss など）をカバーします。`,
+        tip: '検索はエラー内の英語キーワード（例 "CUDA out of memory"）を使うと、日本語の説明より圧倒的にヒットしやすい。'
+      },
+      {
+        title: 'エラーを完全に保存し、切り分け・相談しやすくする',
+        body: `エラー時はまず出力全体を保存し、スクロールで見失わないように。\`2>&1\` はエラー出力を通常出力に統合し、\`| tee\` は画面表示と同時にファイルへ書きます。
+
+人に相談するときはこの error.log を添えると、スクショより10倍明確 —— 相手がキーワードをそのままコピーして検索できます。`,
+        command: {
+          description: 'エラー全体をファイルに保存',
+          code: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act ... 2>&1 | tee error.log'
+        },
+        expectedOutput: '(出力が画面に表示されると同時に error.log へ書き込まれる)'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '長い traceback を見ると混乱し、最初の行から読む。',
+        cause: 'traceback の構造を知らない。',
+        fix: 'まず**最終行**（エラー要約）を読み、次に最も近い「自分のコード」の行を見る。前のライブラリ内部の呼び出しスタックは通常詳しく見なくてよい。'
+      },
+      {
+        symptom: 'コミュニティ/AI に「学習でエラーが出た、助けて」と聞いても誰も答えられない。',
+        cause: '情報量がゼロで、相手は再現も特定もできない。',
+        fix: '良い質問 = 完全なエラースタック＋実行したコマンド＋主要設定（info.json/yaml）＋試したこと。情報が揃うほど回答が正確になる。'
+      },
+      {
+        symptom: 'エラーを自分の言葉で言い換えて投稿する。',
+        cause: '言い換えると重要なエラーのキーワードが失われる。',
+        fix: '**生のエラーテキスト**を直接貼る（スクショや言い換えはダメ）。キーワードが一字一句一致して初めて検索/認識される。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '3種のエラーに原因を対応させる',
+        instructions: `次の3つのエラーと最も可能性の高い原因を結びつける：\n\nエラー：A) ImportError  B) CUDA out of memory  C) FileNotFoundError\n原因：① VRAM 不足、batch が大きすぎ  ② パス誤り/データセット未完走  ③ パッケージ不足または環境未有効化`,
+        hint: '前の各章で各エラーが出た場面を思い出す。',
+        expectedResult: 'A→③（パッケージ不足/環境未有効化）、B→①（VRAM 不足、batch を小さく）、C→②（パス誤りまたは meta 欠損）。この3類で遭遇するエラーの大半をカバーします。'
+      },
+      {
+        title: '合格点の相談文を書く',
+        instructions: '学習で NaN loss が出たとします。本章の「良い質問テンプレ」に沿って、添えるべき4つの情報を挙げる。',
+        hint: '相手が追加質問せずに助け始められるように。',
+        expectedResult: '① 完全なエラースタック/loss が NaN になったログ断片 ② 実行した完全なコマンド（ハイパラ含む）③ データセットの主要情報（info.json 要約）④ 試した方策と結果（例「lr を 1e-4 から 1e-5 に下げても NaN」）。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'traceback が数十行。まずどの行を見る？',
+        answer: '最終行 —— エラーの種類＋直接の原因の要約。次に最も近い、自分のコードに属する行。'
+      },
+      {
+        question: '汎用4ステップの切り分け法とは？',
+        answer: '① 最終行を読む ② エラーの種類を判断（環境/ハードウェア/データ/学習/推論）③ サイト内「トラブル診断」を引く ④ 引用符付きでエラー文を正確に Google。9割は3ステップ目で解決。'
+      },
+      {
+        question: 'どう質問すれば有効か？',
+        answer: '完全なエラースタック（スクショでなく原文を貼る）＋実行コマンド＋主要設定＋試した方策。情報量が回答の質を決める。「助けて」だけでは助けは得られない。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: '本サイト · トラブル診断ライブラリ',
+        url: '/ja/diagnose',
+        note: 'LeRobot/ACT の頻出エラー十数件の原因＋解法＋次の一手。切り分け3ステップ目の主戦場。'
+      },
+      {
+        title: '本サイト · AI アシスタント',
+        url: '/ja/assistant',
+        note: '全章＋エラーライブラリ＋用語を理解した AI アシスタント。英語 Discord より文脈を理解。相談の第一候補。'
+      }
+    ],
+
+    summary: `エラーは怖くない。足りないのは方法です。**汎用4ステップ法**：最終行を読む → 種類を判断 → サイト内[トラブル診断](/ja/diagnose) → エラー文を正確に Google。
+
+traceback は最終行を見る；3大エラー ImportError / CUDA OOM / FileNotFoundError にはそれぞれ定石がある；相談には「エラースタック＋コマンド＋設定＋試したこと」を添え、スクショだけにしない。
+
+おめでとう —— ここまで来れば、SO101 模倣学習の概念からデバッグまでの主線を一通り身につけたことになります。実機で走らせてみよう。`
   }
 ]
 

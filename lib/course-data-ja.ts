@@ -277,7 +277,144 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
         solution: 'ユーザーを dialout グループに追加します。',
         command: 'sudo usermod -a -G dialout $USER'
       }
-    ]
+    ],
+
+    introduction: `注文したロボットアームが届き、箱を開けると —— 中には**まったく同じアームが2本**入っています。1本ではありません。
+
+最初は戸惑う人が多いです：なぜ2本？　どっちがどっち？
+
+答えは SO101 の核となる設計にあります：**1本は手で操作する用（Leader / 主腕）、もう1本はあなたの動きをリアルタイムでコピーする用（Follower / 従腕）**。あなたが Leader を持って「コップの持ち方」を実演すると、PC は Follower を同じように動かして結果を見せつつ、Leader の各瞬間の関節角度を記録します —— この記録が第1章で言った (s, a) のデモデータです。
+
+この章ではハードウェアを徹底的に理解します：6つの関節とは何か、2本のアームをどう PC につなぐか、システム上でどう見分けるか、そして誰もが最初にぶつかる権限エラーの直し方。`,
+
+    whyItMatters: `**ハードウェアが分からないと、以降の各ステップで詰まります。**
+
+- どっちが Leader でどっちが Follower か分からない → 第4章のポート設定で混乱する
+- 「役割は配線で決まる」を理解していない → 再起動でシリアル順が変わると慌てる
+- \`Permission denied\` を直せない → 8割の人が初接続でここに詰まる
+
+この章は純粋なハードウェア理解で、**実機が無くても読み進められます**。届いたらすぐ着手できます。`,
+
+    keyTerms: ['Leader / Follower', '遠隔操作', 'SO101 / SO-ARM100', 'キャリブレーション'],
+
+    diagrams: [
+      {
+        title: 'Leader → PC → Follower のデータ経路',
+        source: `flowchart LR
+    H["👋 あなたの手"] -->|"関節を動かす"| L["🦾 Leader 主腕"]
+    L -->|"USB で関節角を読む"| PC["💻 PC"]
+    PC -->|"USB で指令を送る"| F["🦾 Follower 従腕"]
+    PC -->|"同期して記録"| D["📦 データセット (s, a)"]
+    style L fill:#7c5cff,stroke:#7c5cff,color:#fff
+    style F fill:#0ea5e9,stroke:#0ea5e9,color:#fff
+    style PC fill:#22c55e,stroke:#22c55e,color:#fff`,
+        caption: 'Leader を動かす → PC が関節角を読む → 同時に Follower で再現＋角度をデータセットに書き込む。30 fps で回り続ける。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: '6自由度を理解する',
+        body: `SO101 の1本のアームには **6つの関節** があり、各関節に1つのモータが付き、独立して回転します：土台の回転、肩、肘、手首の2自由度、グリッパの開閉。
+
+6自由度は産業用ロボットアームの標準構成で、末端（グリッパ）を三次元空間の **任意の位置**（x/y/z）＋ **任意の姿勢**（ピッチ/ヨー/ロール）に到達させるのに十分です。
+
+これが、第1章で状態 s を6次元とした理由でもあります：1関節が1次元の角度値を担います。`,
+        tip: '2本のアームはハードウェア的に完全に同じなので、合わせた状態/行動の次元は 6 + 6 = 12 次元です。'
+      },
+      {
+        title: '2本のアームを PC につなぎ、シリアルを見分ける',
+        body: `ロボットアームは USB-シリアル変換で PC に接続します。Linux / macOS では、各アームは \`/dev/ttyUSB0\` のような名前のデバイスファイルになります。
+
+もっとも確実な見分け方は「1本抜いてどれが消えるか」です：まず一覧を見て、Leader の USB を抜き、もう一度見る。減った方が Leader です。`,
+        command: {
+          description: 'すべてのシリアルデバイスを一覧表示',
+          code: 'ls /dev/tty*'
+        },
+        expectedOutput: '/dev/tty   /dev/ttyS0   /dev/ttyUSB0   /dev/ttyUSB1',
+        tip: '\`ttyUSB0\` / \`ttyUSB1\` があなたの2本のアーム。\`ttyS0\`、\`tty\` はシステム標準なので無視。'
+      },
+      {
+        title: '「役割は出荷時ではなく設定で決まる」を理解する',
+        body: `2本のアームは出荷時まったく同じで、「私は Leader」というラベルは貼られていません。**どちらが Leader でどちらが Follower かは、設定ファイルでどのポートをどの役割に書くかで決まります**（第4章で行います）。
+
+なので覚えるのは1つだけ：挿したらどの ttyUSB がどのアームかを見分け、あとはソフト側で指定するだけ。`,
+        warning: 'PC を再起動したり挿し直したりすると、ttyUSB0 / ttyUSB1 の番号が入れ替わることがあります —— Linux シリアルの古くからの問題です。起動のたびに「1本抜く」法で確認するか、udev ルールで固定します（上級トピック）。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '「2本とも同じ見た目。買い間違えた／1本多く届いた？」',
+        cause: 'SO101 がもともと双腕の主従設計だと知らない。',
+        fix: '間違いではありません。2本はセットで協調動作します：Leader を人が操作し、Follower が再現する。これがまさにデモデータの集め方です。'
+      },
+      {
+        symptom: 'アームをつなぐと \`Permission denied: /dev/ttyUSB0\` が出る。',
+        cause: 'アカウントがシリアルにアクセスできるグループ（Ubuntu の dialout / Arch の uucp）に入っていない。',
+        fix: '\`sudo usermod -a -G dialout $USER\` を実行し、**ログアウトして再ログイン**（または再起動）。ほぼ全員が一度はぶつかる落とし穴です。'
+      },
+      {
+        symptom: '\`ls /dev/tty*\` で ttyUSB がまったく見えない。',
+        cause: 'USB ケーブルが充電専用でデータ非対応、または CH340 シリアルドライバが無い。',
+        fix: '**データ対応**の USB ケーブルに替える；\`dmesg | tail\` で挿入時に認識情報が出るか確認；必要なら CH340 ドライバを導入。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: 'Leader と Follower を見分ける',
+        instructions: `2本の USB を挿した状態で：
+
+1. \`ls /dev/tty*\` を実行し、どの ttyUSB が出たか記録する
+2. そのうち1本（Leader にする予定の方）の USB を抜く
+3. もう一度 \`ls /dev/tty*\` を実行する
+
+消えた ttyUSB はどのアームを表す？`,
+        hint: '消えたもの = いま抜いたアーム。',
+        expectedResult: '消えた ttyUSB の番号が、抜いたアームに対応します。メモしておきましょう —— 第4章で yaml を設定するとき、leader_arms の port にこれを入れます。'
+      },
+      {
+        title: 'データ次元を計算する',
+        instructions: '2本の SO101 アームが協調し、各アーム6関節。1フレームの「状態＋行動」は合計で何次元？',
+        hint: '(状態次元 + 行動次元)。action を生むのは Leader だけ、Follower/状態は 6 次元であることに注意。',
+        expectedResult: '一般的な構成では：observation.state = 6 次元（Follower の現在角度）、action = 6 次元（目標角度）、合計 **12 次元**。両腕の状態を記録する構成ならさらに増える —— タスク設定次第。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: '目の前の同じ見た目の2本のうち、どちらが Leader か判別するには？',
+        answer: 'ハードウェアでは判別できません —— 出荷時は同一です。**ソフト設定**で決まります：どちらをどの USB につなぎ、yaml でそのポートを leader と書いたか。物理的には「1本抜いてどの ttyUSB が消えるか」でポートを特定できます。'
+      },
+      {
+        question: '\`Permission denied: /dev/ttyUSB0\` はハードウェアの故障？',
+        answer: 'いいえ。権限の問題です —— アカウントが dialout グループに入っていません。\`sudo usermod -a -G dialout $USER\` 後に再ログインすれば解決。アーム自体は正常です。'
+      },
+      {
+        question: 'なぜ状態ベクトルは6次元なのか？',
+        answer: '1本の SO101 アームには6つの関節があり、各関節に1つの角度値があるため、6関節 = 6次元です。6自由度は末端を三次元空間の任意位置＋任意姿勢に到達させるのに十分です。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'SO-ARM100 ハードウェアプロジェクト（GitHub）',
+        url: 'https://github.com/TheRobotStudio/SO-ARM100',
+        note: 'BOM、3D プリント部品、組み立てガイド。自作したい人や機構を知りたい人はここ。'
+      },
+      {
+        title: 'Linux シリアル権限と dialout グループの解説',
+        url: 'https://wiki.archlinux.org/title/Working_with_the_serial_console',
+        note: 'ttyUSB の権限モデルを理解できる。シリアル系のエラーで役立つ。'
+      }
+    ],
+
+    summary: `**SO101 は同じアームが2本**：Leader を手で操作し、Follower がリアルタイムで再現、PC が Leader の関節角を同期記録してデモデータにする。
+
+役割は出荷時ではなく、**配線＋設定**で決まる。アームはシステム上では \`/dev/ttyUSB*\` ファイル；初接続では高確率で \`Permission denied\` にぶつかるが、dialout グループに追加＋再ログインで解決。
+
+次章ではソフト環境を構築し（実機不要）、LeRobot を動かす。`
   },
   {
     id: 3,
@@ -328,7 +465,148 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
         solution: '正しい conda 環境を有効化したうえで再インストールします。',
         command: 'conda activate lerobot && pip install -e .'
       }
-    ]
+    ],
+
+    introduction: `この章は**実機がまったく不要**です —— ですが、初学者のおよそ8割を脱落させます。原因のほとんどは LeRobot 自体が難しいからではなく、**環境を綺麗に隔離していない**ことです：システムの Python にそのまま \`pip install\` を打ち込み、数日後にはシステムのランチャーまで壊す人がいます。
+
+ここでは **conda** で完全に独立した環境を作ります。Python パッケージだけでなく、**Python のバージョン自体**も隔離します —— システムに何のバージョンが入っていようと関係なく、conda が LeRobot 専用に綺麗な 3.10 を用意します。壊れたら？　環境を削除して作り直せばよく、システムは無傷です。
+
+この章では「環境を作る → LeRobot を入れる → PyTorch/CUDA を検証する」を一歩ずつ通し、いずれ必ず出会う \`CUDA out of memory\` も先に知っておきます。`,
+
+    whyItMatters: `環境は土台。土台が歪むと後がすべて崩れます：
+
+- システム Python に依存を入れる → いずれシステムを汚染し、収拾がつかない
+- PyTorch/CUDA を検証しない → 学習時に GPU が繋がっていないと気づき、数時間を無駄にする
+- OOM の応急処置を知らない → VRAM エラーが出るたびに「GPU が足りない」と思い込むが、実はパラメータを1つ変えるだけ
+
+この章を綺麗に通せば、以降のデータ収集・学習・推論はすべて、再現可能で削除して作り直せる環境の上に成り立ちます。`,
+
+    keyTerms: ['LeRobot', 'CUDA / AMP', 'HuggingFace Hub'],
+
+    diagrams: [
+      {
+        title: 'なぜ conda で隔離するのか',
+        source: `flowchart TB
+    OS["💻 OS"] --> Sys["🐍 システム Python（触らない）"]
+    OS --> Conda["📦 conda マネージャ"]
+    Conda --> E1["🟢 env: lerobot (Python 3.10)"]
+    Conda --> E2["🟡 env: 他のプロジェクト"]
+    style Sys fill:#7f1d1d,stroke:#7f1d1d,color:#fff
+    style E1 fill:#15803d,stroke:#15803d,color:#fff`,
+        caption: 'システム Python（赤）は OS 用に残す。conda は各プロジェクトに独立環境（緑）を与え、好きに入れて、壊れたら削除して作り直す。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: 'LeRobot 専用環境を作る',
+        body: `conda で \`lerobot\` という名前、Python バージョンを 3.10 に固定した独立環境を作ります。\`-y\` は「確認せずそのまま入れる」の意味です。
+
+conda がまだ無ければ、先に **Miniconda** を入れてください（Anaconda は重いので不要）。`,
+        command: {
+          description: '環境を作成して準備',
+          code: 'conda create -n lerobot python=3.10 -y'
+        },
+        expectedOutput: '...\nPreparing transaction: done\nVerifying transaction: done\nExecuting transaction: done\n#\n# To activate this environment, use\n#     $ conda activate lerobot',
+        tip: '"To activate ... conda activate lerobot" が出れば成功です。'
+      },
+      {
+        title: '環境を有効化して LeRobot をインストール',
+        body: `まず環境を有効化し（プロンプトに \`(lerobot)\` が付きます）、GitHub からクローンして編集可能モードでインストールします。
+
+**新しいターミナルを開くたびに必ず \`conda activate lerobot\`** —— 有効化忘れは ModuleNotFoundError の最大の原因です。`,
+        command: {
+          description: '有効化＋クローン＋インストール',
+          code: 'conda activate lerobot\ngit clone https://github.com/huggingface/lerobot.git\ncd lerobot && pip install -e .'
+        },
+        expectedOutput: '(lerobot) $\n... (ダウンロード・ビルドに約 3〜5 分) ...\nSuccessfully installed lerobot torch numpy ...',
+        warning: 'プロンプトに `(lerobot)` が無ければ環境が未有効です。その状態で pip が入れたものはすべて誤った場所に入ります。'
+      },
+      {
+        title: 'PyTorch が動くか＋ GPU が見えるかを検証',
+        body: `入れただけでは使えるとは限りません。1行のコードで2つを同時に検証します：PyTorch が入ったか、そして GPU が検出できるか。
+
+\`True\` を出力 = GPU 利用可能；\`False\` を出力 = PyTorch は正しく入ったが GPU が見つからない（GPU が無い、またはドライバ未導入）。`,
+        command: {
+          description: '検証スクリプト',
+          code: 'python -c "import torch; print(torch.cuda.is_available())"'
+        },
+        expectedOutput: 'True',
+        tip: 'False でも慌てずに —— 下の「よくある誤解」を参照。GPU が無くても最初の6章は学べます。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '検証で `False` が出た。入れ間違いで再インストールが必要？',
+        cause: '`False` は「利用可能な GPU が見つからない」だけで、PyTorch の入れ間違いではない。',
+        fix: 'GPU が無くても動きます。LeRobot は自動で CPU にフォールバックし、学習が 10〜30 倍遅くなるだけ。最初の6章（収集・データ・推論体験）は CPU で十分で、GPU が欲しいのは第7章の学習からです。削除して再インストールしても結果は同じなので、いじらないこと。'
+      },
+      {
+        symptom: '`ModuleNotFoundError: No module named lerobot`',
+        cause: '現在のターミナルで lerobot 環境を有効化していない、またはインストールが失敗している。',
+        fix: 'まず `conda activate lerobot` でプロンプトに `(lerobot)` が付くことを確認し、`pip install -e .`。`pip list` で入っているか確認できます。'
+      },
+      {
+        symptom: 'システム Python に直接 `pip install` してしまい、今システムが少し変。',
+        cause: 'システムの Python 環境を汚染した。',
+        fix: '今後すべてのプロジェクトで conda/venv を使って隔離し、システム Python には決して触れない。すでに汚染した場合、conda の新環境は綺麗な出発点になります。システム側の問題はディストリのドキュメントに従って修復を。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '正しい環境にいるか確認する',
+        instructions: '新しいターミナルを開き、まず何も有効化せずに `python -c "import lerobot"` を実行。何が起きる？　次に `conda activate lerobot` してもう一度実行。2回の結果を比べる。',
+        hint: '未有効化では import が失敗し、有効化後は成功する。',
+        expectedResult: '未有効化 → `ModuleNotFoundError`（システム Python には lerobot が無いため）。有効化後 → エラー無し。これが「新しいターミナルでは毎回 activate」の直接的な証拠です。'
+      },
+      {
+        title: 'OOM 応急のリハーサル',
+        instructions: '第7章の学習で `CUDA out of memory` が出たとします。ドキュメントを見ずに、この章の内容だけで、最初に変えるべきパラメータは？',
+        hint: 'VRAM 不足 ≈ 一度に GPU へ詰め込むサンプルが多すぎる。',
+        expectedResult: '`batch_size` を小さくする（例：`training.batch_size=4`）。それでも駄目なら勾配累積＋混合精度。OOM の9割は最初の一手で解決します。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'なぜシステム付属の Python を直接使わないのか？',
+        answer: 'システム Python は OS 自身が使うもので、無闇にパッケージを入れると汚染し、システムツールを壊す恐れがあります。conda で独立環境を作れば、パッケージと Python バージョンを隔離でき、壊れても削除して作り直せばシステムに影響しません。'
+      },
+      {
+        question: '`torch.cuda.is_available()` が False でも学習を続けられる？',
+        answer: '続けられます。LeRobot は自動で CPU を使い、遅くなるだけです。最初の6章は GPU 不要で、ACT を学習する第7章で GPU の恩恵が明確になります。'
+      },
+      {
+        question: '`CUDA out of memory` でまず試すべきことは？',
+        answer: '`batch_size` を小さくする。これが OOM の9割の根本原因です —— 一度に計算するサンプルが多すぎて VRAM に収まらない。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'Miniconda インストールドキュメント',
+        url: 'https://docs.conda.io/en/latest/miniconda.html',
+        note: 'conda 導入の公式入口。Anaconda ではなく Miniconda を選ぶ。'
+      },
+      {
+        title: 'LeRobot 公式リポジトリ README',
+        url: 'https://github.com/huggingface/lerobot',
+        note: 'もっとも信頼できるインストール手順。本章はこれに準拠。'
+      },
+      {
+        title: 'PyTorch Mixed Precision (AMP) ガイド',
+        url: 'https://pytorch.org/docs/stable/amp.html',
+        note: 'VRAM が厳しいときの公式解。第7章で使う。'
+      }
+    ],
+
+    summary: `**conda で独立環境を作り**、システム Python には触れない。\`conda create -n lerobot python=3.10\` → \`conda activate lerobot\` → クローン＋ \`pip install -e .\` → \`torch.cuda.is_available()\` で検証。
+
+鉄則は2つ：新しいターミナルではまず \`activate\`；\`CUDA out of memory\` はまず \`batch_size\` を小さく。
+
+次章では PC に実機の2本のシリアルを正しく認識させ、重要なキャリブレーションを行う。`
   },
   {
     id: 4,

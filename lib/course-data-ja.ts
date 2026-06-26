@@ -805,7 +805,145 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       'データファイルが正しく生成されている',
       '画像フレームレートが安定している'
     ],
-    errors: []
+    errors: [],
+
+    introduction: `準備はすべて整いました。いよいよ一番楽しく、一番疲れる一歩です：**自分の手で Leader を動かし、Follower を追従させ、その全過程を PC に録画する**。この録画が AI に与える「デモデータ」です。
+
+この章には直感に反するが極めて重要な考えがあります：**データの質 > 量、そして質の核心は「多様性」**。初心者がもっとも犯しがちな失敗は、同じ動作を同じ位置で 50 回きっちり録ること —— 結果、モデルはその1場面を「丸暗記」するだけで、コップが1cm ずれただけで動けなくなります。
+
+ここでは：遠隔操作の手応えをまず確認する方法、本番の録り方、何件録るか、そして「わざと変化をつけて」モデルに本当に汎化させる方法を明確にします。`,
+
+    whyItMatters: `データ収集はパイプライン全体で**もっとも人手がかかり、結果への影響も最大**の一歩です：
+
+- うまく録れた → モデルの汎化が強く、環境が変わっても耐える
+- 「綺麗すぎ・一様すぎ」に録った → 過学習し、本番で少しの揺らぎで崩れる
+- 失敗デモの扱いを誤る → 貴重な「修正信号」を捨てるか、比率が高すぎて目標を汚染する
+
+この一歩は GPU が無くてもでき、最終結果に自分の手で影響できる肝心な工程です。`,
+
+    keyTerms: ['遠隔操作', 'Leader / Follower', 'データセット', 'LeRobot Dataset'],
+
+    diagrams: [
+      {
+        title: '収集時、1フレームで何が起きるか',
+        source: `flowchart LR
+    Hand["👋 Leader を動かす"] --> Read["Leader の関節角を読む = action a"]
+    Read --> Follow["Follower が再現"]
+    Read --> Cam["カメラが1フレーム撮影 = 環境状態"]
+    Follow --> Save["データセット (s, a) に書き込み"]
+    Cam --> Save
+    Save -.->|"30 fps ループ"| Hand
+    style Save fill:#22c55e,stroke:#22c55e,color:#fff`,
+        caption: '各フレーム：Leader の角度を action として読む、カメラが環境を撮る、Follower が再現、すべてまとめてディスクへ。毎秒 30 回。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: 'まず純粋な遠隔操作で手応えを確認',
+        body: `いきなり録らない。まず teleoperate（データ保存なし）を実行し、Leader → Follower の同期が正常で遅延が小さいか確認します。Leader を動かすと、Follower がほぼリアルタイムで追従するはずです。
+
+30 秒試して手応えが良ければ Ctrl+C で抜け、本番録画へ。`,
+        command: {
+          description: '録画せず遠隔操作のみ',
+          code: 'lerobot-teleoperate \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --display_data=true'
+        },
+        expectedOutput: '[INFO] Connected to leader_arms/main\n[INFO] Connected to follower_arms/main\n[INFO] Teleoperation started. Move the leader arm.',
+        tip: '追従に明らかな遅延/ガタつき？　アームをハブ経由でなくマザーボードの USB に直挿しし、fps を 30 に固定。'
+      },
+      {
+        title: '本番のデータセット録画',
+        body: `record モードに切り替え、データセット名・録る件数・フレームレートを付けます。\`--dataset.repo_id\` は自分で付ける名前（実際に HuggingFace へ上げる必要はない）；\`--dataset.num_episodes\` は総件数；\`--dataset.fps 30\` は手頃なフレームレート。
+
+1件録るごとに Enter で次を開始する案内が出るので、物体を置き直せます。`,
+        command: {
+          description: 'デモを 50 件録る',
+          code: 'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --dataset.num_episodes=50 --dataset.fps=30 \\\n  --display_data=true'
+        },
+        expectedOutput: 'Recording episode 1/50...\n[INFO] Press Enter when ready, Ctrl+C to abort.\nEpisode 1 saved (132 frames, 4.4 s)',
+        warning: '録画は**最後まで完走**しないと meta/info.json が書かれません。途中で Ctrl+C 強制終了すると meta が欠落し、第6章/学習で FileNotFoundError になります。'
+      },
+      {
+        title: 'わざと多様性をつくる',
+        body: `これが成否を分ける一歩。50 件を録るとき**毎回同じにしない**：
+
+- 物体位置を毎回 ±3〜5 cm ずらす
+- 物体の向き（取っ手を左/右/手前）もいろいろ録る
+- 開始姿勢・動作の速さに変化をつける
+- 別の時間帯（光が違う）でも録る、机に邪魔物を置く
+- たまの失敗→やり直しも録る（誤りからの回復を教える）
+
+目標：50 件の中に**まったく同じものが2件と無い**こと。`,
+        tip: '単純な pick-place ≈ 50 件；USB 挿入のような難度 ≈ 100〜200 件；タオル畳みは 300 件以上。ただし多様な 50 件 > 似た 200 件。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '学習後、モデルが特定の固定位置でしか動かず、物体がずれると失敗する。',
+        cause: '収集時に物体を毎回同じ位置に置き、モデルがその座標に過学習した。',
+        fix: '録り直し、物体の位置/向き/光を意図的に変える。汎化は学習分布の広さから来るもので、繰り返し回数からではない。'
+      },
+      {
+        symptom: '10 件録っただけで学習を始めたら、学習できなかった。',
+        cause: 'データ量が大幅に不足し、カバーする状態空間が狭すぎる。',
+        fix: '単純なタスクでも最低 50 件、かつ多様に。10 件はほぼ確実に過学習する。'
+      },
+      {
+        symptom: 'あるデモが途中で失敗した（コップを落とした）。削除すべき？',
+        cause: '失敗データを「汚いデータ」だと思っている。',
+        fix: '残して失敗ラベルを付ける方がよい —— 「こうすると駄目」という負信号になる。ただし失敗比率は ~30% を超えないこと。超えると学習目標を汚染する。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: 'サンプル量を見積もる',
+        instructions: '30 fps で 50 件、平均5秒のデモを録った。合計で何フレーム（≈ 何個の (s, a) サンプル）？',
+        hint: 'fps × 1件の秒数 × 件数。',
+        expectedResult: '30 × 5 × 50 = **7500 フレーム**。1フレームに1つの (s, a) なので約 7500 個の学習サンプル —— ACT には十分。'
+      },
+      {
+        title: '自分の多様性チェックリストを作る',
+        instructions: '「コップを皿に置く」タスクで、50 件のデモ内で意図的に変化させる次元を4つ挙げる。',
+        hint: '環境の中で「次は違うかもしれない」ものを考える。',
+        expectedResult: '参考：① コップの初期位置 ② コップの向き/取っ手の方向 ③ 皿の位置 ④ 把持の速さ。加えて：光、机の邪魔物、アームの開始姿勢。妥当な4つならよい。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'なぜ同じ動作を同じ位置で 50 回録ってはいけない？',
+        answer: 'その固定場面に過学習し、「丸暗記」しかできず「応用」できなくなるから。環境が少し変わる（物体移動、光変化）と崩れる。汎化は学習分布の多様性から生まれる。'
+      },
+      {
+        question: '録画中に Ctrl+C するとどうなる？',
+        answer: 'meta/info.json が生成されません（全件録り終えてから一括で書かれる）。後でデータセット読み込みや学習で FileNotFoundError になります。完走するか、録り済み data から meta を再構築するツールを使う。'
+      },
+      {
+        question: '失敗デモはどう扱う？',
+        answer: '残す＋失敗ラベル。「何をすべきでないか」の負信号をモデルに与える。比率は 30% 以内に。完全に削除すると、失敗状態への事前知識をモデルが持てなくなる。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'LeRobot データ収集チュートリアル動画',
+        url: 'https://www.youtube.com/playlist?list=PL3vV3-eqf-bp9DvB7-EkS8DGHE9pXVKlS',
+        note: 'HuggingFace 公式による遠隔操作＋録画の実演フロー。'
+      },
+      {
+        title: 'DROID データセット',
+        url: 'https://droid-dataset.github.io/',
+        note: '大規模・高多様性のデータセットの実例。産業レベルで「多様性」をどう作るか分かる。'
+      }
+    ],
+
+    summary: `まず \`teleoperate\` で手応えを確認し、次に \`record\` で本番録画。**質 > 量、質 = 多様性**：物体の位置/向き/光/速さを意図的に変え、50 件に同じものが2件と無いように。
+
+単純タスクは ~50 件；失敗デモは残して印を付ける（<30%）；録画は完走しないと meta が書かれない。
+
+次章では録ったデータセットを開き、ディスク上でどんな姿をしているか見る。`
   },
   {
     id: 6,
@@ -847,7 +985,125 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         solution: 'データセットディレクトリの完整性を確認します。欠損している場合は再収集が必要です。',
         command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so101-task/meta/'
       }
-    ]
+    ],
+
+    introduction: `さっき 50 件のデモを録りました。それは今ディスクのどこに、どんな姿で？　この章では開いて中を見ます —— データセット構造を理解すれば、学習でエラーが出たとき素早く原因を特定できます。
+
+データセットは \`~/.cache/huggingface/lerobot/<repo-id>/\` の下にあり、3つの中核ディレクトリで構成されます：**data/**（関節角度、とても小さい）、**videos/**（カメラフレーム、とても大きい）、**meta/**（このデータセットが何かを記述）。
+
+なかでも \`meta/info.json\` はデータセット全体の「身分証」で、初心者が最も遭遇する \`FileNotFoundError: meta/info.json\` の主役 —— 理解すれば多くの時間を節約できます。`,
+
+    whyItMatters: `データ構造を理解しないと、学習エラー時に手が出せません：
+
+- info.json の役割を知らない → FileNotFoundError でどこから調べるか分からない
+- 動画が容量の95%を占めると知らない → ディスクが溢れても何を圧縮すべきか分からない
+- LeRobotDataset で検証しない → 壊れたデータで学習し、数時間後に気づく
+
+この章は短いですが、第7章で学習に問題が出たとき「データセットの問題か？」を真っ先に判断できるようになります。`,
+
+    keyTerms: ['LeRobot Dataset', 'meta', 'データセット', 'HuggingFace Hub'],
+
+    diagrams: [
+      {
+        title: 'データセットのディレクトリ構造',
+        source: `flowchart TD
+    Root["📁 so100-pick-cup/"] --> Data["📁 data/ 関節角度"]
+    Root --> Meta["📁 meta/ メタ情報"]
+    Root --> Videos["📁 videos/ カメラフレーム"]
+    Data --> P["📄 episode_000.parquet ..."]
+    Meta --> Info["📄 info.json / episodes.jsonl / stats.json"]
+    Videos --> M["🎥 episode_000.mp4 ..."]
+    style Data fill:#dbeafe,stroke:#3b82f6
+    style Meta fill:#fef3c7,stroke:#f59e0b
+    style Videos fill:#fce7f3,stroke:#ec4899`,
+        caption: 'data は関節（KB 級）、videos はカメラフレーム（MB 級、容量の 95%+ を占める）、meta はデータセット自身を記述。'
+      }
+    ],
+
+    walkthrough: [
+      {
+        title: 'ディレクトリ構造をざっと見る',
+        body: `\`tree\` でデータセットのディレクトリを眺め、全体像をつかみます：parquet は data/chunk-000/ の下、動画はカメラごとのフォルダで videos/ の下、meta/ にはいくつかの json が全体情報を記述します。`,
+        command: {
+          description: '構造を確認',
+          code: 'tree ~/.cache/huggingface/lerobot/your-name/so101-pick-cup'
+        },
+        expectedOutput: 'so100-pick-cup/\n├── data/\n│   └── chunk-000/  episode_000.parquet ...\n├── meta/\n│   ├── info.json  episodes.jsonl  stats.json\n└── videos/\n    └── observation.images.cam_top/  episode_000.mp4 ...'
+      },
+      {
+        title: 'info.json を開く —— データセットの身分証',
+        body: `\`info.json\` は episodes 総数、総フレーム数、fps、状態/行動の次元、カメラ構成、schema バージョンを記録します。学習時に LeRobot が**まず最初に読む**もので、読めなければ即クラッシュします。
+
+\`cat\` して論理を照合：total_episodes × 平均フレーム数 ≈ total_frames。データセットが完整かの確認に役立ちます。`,
+        command: {
+          description: 'メタデータを確認',
+          code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-pick-cup/meta/info.json'
+        },
+        expectedOutput: '{\n  "robot_type": "so100",\n  "total_episodes": 50,\n  "total_frames": 7423,\n  "fps": 30,\n  "features": {\n    "observation.state": {"dtype": "float32", "shape": [6]},\n    "action": {"dtype": "float32", "shape": [6]}\n  }\n}',
+        tip: 'total_episodes=50、total_frames≈7500 → 1件平均 150 フレーム = 5 秒×30fps。論理的に整合。'
+      },
+      {
+        title: 'コードで読み込めるか検証',
+        body: `ファイルを見るだけでは不十分。LeRobotDataset で実際に一度読み込み、成功して初めてデータセット構造に問題が無く、学習に使えると分かります。`,
+        command: {
+          description: '読み込み検証',
+          code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so101-pick-cup\'); print(len(ds))"'
+        },
+        expectedOutput: '7423   # フレーム数を出力 = 読み込み成功',
+        warning: 'このステップでエラー（特に FileNotFoundError: meta/info.json）が出たらデータセットが不完整です。学習を急がず、録り直すか meta を再構築してください。'
+      }
+    ],
+
+    pitfalls: [
+      {
+        symptom: '学習を開始すると即 `FileNotFoundError: meta/info.json`。',
+        cause: '前回の record を途中で Ctrl+C 強制終了した —— data/ に一部 parquet はあるが、meta/ が未生成（全件録了後にまとめて書かれる）。',
+        fix: '完整に録り直すか、LeRobot のツールスクリプトで data/ から meta を再構築する。確認：`ls -la .../meta/` が空でないか。'
+      },
+      {
+        symptom: 'ディスクがすぐにデータセットで埋まる。',
+        cause: '動画フレームがデータセットの 95%+ を占め、関節データはごくわずか。',
+        fix: '容量を節約したいならカメラ解像度を下げる / H.265 で符号化 / カメラ台数を減らす。data/ を消しても無意味 —— もともと小さい。'
+      }
+    ],
+
+    exercises: [
+      {
+        title: '関節データの容量を計算する',
+        instructions: 'info.json に fps=30、state と action が共に 6 次元 float32 とある。7 秒のデモ1件の純関節データはおよそ何 KB？',
+        hint: 'フレーム数 × (6+6) × 4 バイト。',
+        expectedResult: '30×7=210 フレーム；1フレーム 12 個の float32 × 4 バイト = 48 バイト；210×48 ≈ **10 KB**。50 件でも ~500 KB —— だから「容量を食うのは動画で関節データではない」。'
+      }
+    ],
+
+    selfCheck: [
+      {
+        question: 'なぜ info.json はそんなに重要なのか？',
+        answer: 'データセットの「身分証」だからです：episodes 数、フレーム数、fps、次元、カメラ構成を記録。LeRobot は学習前にまずこれを読み、欠損や破損があると即 FileNotFoundError で学習できません。'
+      },
+      {
+        question: '3つのディレクトリでどれが最も容量を食う？',
+        answer: 'videos/（カメラフレーム）で 95%+。data/（関節）は毎秒数 KB、meta/ は小さな json がいくつか。'
+      },
+      {
+        question: 'データセットが学習に使えるかどう確認する？',
+        answer: '`LeRobotDataset(\'repo-id\')` で一度読み込み、長さを返せれば構造は完整。エラーが出たらデータセットを直してから学習する。'
+      }
+    ],
+
+    furtherReading: [
+      {
+        title: 'HuggingFace LeRobot モデル/データセットライブラリ',
+        url: 'https://huggingface.co/lerobot',
+        note: '公開されたデータセット構造を見て、data/meta/videos のレイアウトを対照して理解する。'
+      }
+    ],
+
+    summary: `データセットは \`~/.cache/huggingface/lerobot/<repo-id>/\` にあり、3大ディレクトリ：**data**（関節、小）、**videos**（カメラ、容量の 95%）、**meta**（情報）。
+
+\`meta/info.json\` は身分証で、欠けると FileNotFoundError —— 多くは record の途中強制終了が原因。学習前に LeRobotDataset で一度読み込み、完整性を検証する。
+
+次章は本題：ニューラルネットワークに本当に学習を始めさせる。`
   },
   {
     id: 7,

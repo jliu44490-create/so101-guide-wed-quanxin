@@ -2,10 +2,43 @@
 
 import { ChevronDown, Lightbulb, Sparkles, Target, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Prose } from '@/components/prose'
 import { CodeBlock } from '@/components/code-block'
 import { cn } from '@/lib/utils'
 import type { Exercise, Pitfall, QuizItem, WalkthroughStep } from '@/lib/types'
+
+/** Locale-aware labels for the callout chrome (zh default, ja mirror). */
+function useCalloutT() {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
+  return isJa
+    ? {
+        expected: '出力例',
+        tip: 'ヒント',
+        warning: '注意',
+        cause: '根本的な原因',
+        fix: '正しい理解',
+        showHint: 'ヒントを見る',
+        hideHint: 'ヒントを隠す',
+        showAnswer: '答えを確認',
+        hideAnswer: '答えを隠す',
+        hint: 'ヒント',
+        expectedResult: '期待される結果'
+      }
+    : {
+        expected: '你应该看到',
+        tip: '小提示',
+        warning: '注意',
+        cause: '根本原因',
+        fix: '正确认识',
+        showHint: '看一下提示',
+        hideHint: '隐藏提示',
+        showAnswer: '对一下答案',
+        hideAnswer: '隐藏答案',
+        hint: '提示',
+        expectedResult: '预期结果'
+      }
+}
 
 /**
  * Small visual primitives used by the new chapter sections.
@@ -58,6 +91,7 @@ function Callout({ tone, label, children }: CalloutProps) {
 /* ────────────────────────────────────────────────────────────────────── */
 
 export function WalkthroughBlock({ steps }: { steps: WalkthroughStep[] }) {
+  const t = useCalloutT()
   return (
     <div className="space-y-7">
       {steps.map((step, i) => (
@@ -85,19 +119,19 @@ export function WalkthroughBlock({ steps }: { steps: WalkthroughStep[] }) {
               </div>
             )}
             {step.expectedOutput && (
-              <Callout tone="expected" label="你应该看到">
+              <Callout tone="expected" label={t.expected}>
                 <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs leading-relaxed">
                   {step.expectedOutput}
                 </pre>
               </Callout>
             )}
             {step.tip && (
-              <Callout tone="tip" label="小提示">
+              <Callout tone="tip" label={t.tip}>
                 <Prose content={step.tip} size="sm" />
               </Callout>
             )}
             {step.warning && (
-              <Callout tone="warning" label="注意">
+              <Callout tone="warning" label={t.warning}>
                 <Prose content={step.warning} size="sm" />
               </Callout>
             )}
@@ -113,6 +147,7 @@ export function WalkthroughBlock({ steps }: { steps: WalkthroughStep[] }) {
 /* ────────────────────────────────────────────────────────────────────── */
 
 export function PitfallList({ items }: { items: Pitfall[] }) {
+  const t = useCalloutT()
   return (
     <div className="space-y-3">
       {items.map((p, i) => (
@@ -124,7 +159,7 @@ export function PitfallList({ items }: { items: Pitfall[] }) {
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-rose-500">
-                根本原因
+                {t.cause}
               </p>
               <div className="mt-1 text-sm text-muted-foreground">
                 <Prose content={p.cause} size="sm" />
@@ -132,7 +167,7 @@ export function PitfallList({ items }: { items: Pitfall[] }) {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-emerald-500">
-                正确认识
+                {t.fix}
               </p>
               <div className="mt-1 text-sm">
                 <Prose content={p.fix} size="sm" />
@@ -150,6 +185,7 @@ export function PitfallList({ items }: { items: Pitfall[] }) {
 /* ────────────────────────────────────────────────────────────────────── */
 
 function ExerciseCard({ exercise }: { exercise: Exercise }) {
+  const t = useCalloutT()
   const [showHint, setShowHint] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
   return (
@@ -169,7 +205,7 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
             className="inline-flex items-center gap-1 rounded-full border border-yellow-500/40 bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-700 transition-colors hover:bg-yellow-500/15 dark:text-yellow-300"
           >
             <Lightbulb className="h-3 w-3" />
-            {showHint ? '隐藏提示' : '看一下提示'}
+            {showHint ? t.hideHint : t.showHint}
           </button>
         )}
         {exercise.expectedResult && (
@@ -184,17 +220,17 @@ function ExerciseCard({ exercise }: { exercise: Exercise }) {
                 showAnswer && 'rotate-180'
               )}
             />
-            {showAnswer ? '隐藏答案' : '对一下答案'}
+            {showAnswer ? t.hideAnswer : t.showAnswer}
           </button>
         )}
       </div>
       {showHint && exercise.hint && (
-        <Callout tone="tip" label="提示">
+        <Callout tone="tip" label={t.hint}>
           <Prose content={exercise.hint} size="sm" />
         </Callout>
       )}
       {showAnswer && exercise.expectedResult && (
-        <Callout tone="expected" label="预期结果">
+        <Callout tone="expected" label={t.expectedResult}>
           <Prose content={exercise.expectedResult} size="sm" />
         </Callout>
       )}

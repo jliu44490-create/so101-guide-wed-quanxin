@@ -828,6 +828,565 @@ export const lessonsJa: Record<number, Lesson> = {
         nextChapterId: 6
       }
     ]
+  },
+
+  6: {
+    chapterId: 6,
+    title: 'データセットの中身を見る',
+    estimatedMinutes: 7,
+    cards: [
+      {
+        id: 'c6-01-intro',
+        type: 'intro',
+        emoji: '🗂️',
+        title: '50 件のデモを録ったばかり',
+        body: 'データは今どこに？　どんな姿？\n\nこの課で開けて見ます。',
+        cta: '中を見る →'
+      },
+      {
+        id: 'c6-02-where',
+        type: 'reveal',
+        prompt: 'あなたのデモデータが保存されているのは ——',
+        revealCta: 'パスを見る',
+        reveal:
+          '## パス\n\n```\n~/.cache/huggingface/lerobot/<repo-id>/\n```\n\n例えば `--dataset.repo_id` に `your-name/so101-pick-cup` と書いたなら、パスは：\n\n```\n~/.cache/huggingface/lerobot/your-name/so101-pick-cup/\n```\n\nこのフォルダを開くと —— 下のような構造が見えます ↓',
+        followCta: 'ディレクトリツリーを見る →'
+      },
+      {
+        id: 'c6-03-tree',
+        type: 'viz',
+        title: 'データセットのディレクトリ構造',
+        mermaid: `flowchart TD
+    Root["📁 so100-pick-cup/"] --> Data["📁 data/<br/>(行動 + 状態)"]
+    Root --> Meta["📁 meta/<br/>(メタ情報)"]
+    Root --> Videos["📁 videos/<br/>(カメラフレーム)"]
+    Data --> Chunk["📁 chunk-000/<br/>📄 episode_000.parquet<br/>📄 episode_001.parquet<br/>..."]
+    Meta --> Info["📄 info.json<br/>📄 episodes.jsonl<br/>📄 stats.json"]
+    Videos --> CamFolders["📁 observation.images.cam_top/<br/>📁 observation.images.cam_side/"]
+    CamFolders --> Mp4["🎥 episode_000.mp4<br/>🎥 episode_001.mp4"]
+    style Data fill:#dbeafe,stroke:#3b82f6
+    style Meta fill:#fef3c7,stroke:#f59e0b
+    style Videos fill:#fce7f3,stroke:#ec4899`,
+        caption: '3 つの中核ディレクトリ。data は関節角度（小）、videos はカメラフレーム（大）、meta はデータセットが何かを記述。'
+      },
+      {
+        id: 'c6-04-biggest',
+        type: 'mcq',
+        question: '上の 3 つのディレクトリで、**ディスク容量を最も食う**のは？',
+        options: [
+          { id: 'data', label: 'data/ — 50 件のデモの関節データ' },
+          { id: 'meta', label: 'meta/ — メタ情報ファイル' },
+          { id: 'videos', label: 'videos/ — カメラ録画' }
+        ],
+        correctOptionId: 'videos',
+        explanation:
+          '## videos が 95%+\n\nざっくり：\n\n- **data/** 5 秒のデモ 1 件の関節データ ≈ **6 KB**\n- **meta/** いくつかの json 合計 ≈ **数 KB**\n- **videos/** 5 秒 480p 30fps の動画 1 本 ≈ **2〜5 MB**（× カメラ 2 台 × 50 件 = 数百 MB）\n\nつまりデータセットのディスク使用量はほぼ動画の使用量。帯域が足りなければ動画解像度を下げる / H.265 で符号化。'
+      },
+      {
+        id: 'c6-05-info-json',
+        type: 'reveal',
+        prompt: '`meta/info.json` はデータセット**最重要のファイル**。',
+        revealCta: 'なぜそんなに重要',
+        reveal:
+          '## info.json = データセットの「身分証」\n\n記録されているもの：\n\n- **episodes 総数**\n- **各 episode のフレーム数**\n- **状態/行動の次元**\n- **カメラ台数、解像度、フレームレート**\n- **データセット schema バージョン**\n\n学習時、LeRobot はまずこのファイルを読む —— **存在しない、または壊れていると、学習は即エラー**。\n\n```\nFileNotFoundError: meta/info.json\n```\n\nは初学者に最も多いエラーの一つ。',
+        followCta: '実物を見る →'
+      },
+      {
+        id: 'c6-06-cat-info',
+        type: 'command',
+        title: 'info.json を開いて見る',
+        description: 'そのまま cat：',
+        code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-pick-cup/meta/info.json',
+        expectedOutput:
+          '{\n  "codebase_version": "v2.0",\n  "robot_type": "so100",\n  "total_episodes": 50,\n  "total_frames": 7423,\n  "fps": 30,\n  "features": {\n    "observation.state": {"dtype": "float32", "shape": [6]},\n    "action": {"dtype": "float32", "shape": [6]},\n    ...\n  }\n}',
+        tip: '`total_episodes` が 50 + `total_frames` が ~7500 = 1 件平均 150 フレーム = 5 秒 30fps。**論理が閉じている**。'
+      },
+      {
+        id: 'c6-07-missing-info',
+        type: 'mcq',
+        question:
+          '学習を起動しようとすると、エラー：\n\n```\nFileNotFoundError: meta/info.json\n```\n\n最も可能性の高い原因は？',
+        options: [
+          { id: 'corrupt', label: 'info.json が破損していて修復が必要' },
+          { id: 'permission', label: '権限の問題、sudo を付ける' },
+          { id: 'incomplete', label: '前回の record を途中で Ctrl+C 強制終了し、meta が生成されていない' },
+          { id: 'wrong-version', label: 'LeRobot のバージョンが違う' }
+        ],
+        correctOptionId: 'incomplete',
+        explanation:
+          '## record は**完全終了**して初めて meta を書く\n\nLeRobot の record の流れ：\n\n1. データを録りながら → episode parquet を書く\n2. 全 episodes を録り終えてから → **まとめて meta/info.json を計算・書き込み**\n\n手順 1 の途中で Ctrl+C すると、data/ に一部 parquet はあるが、meta/ は**まったく生成されない**。学習時に info.json が見つからず崩れる。\n\n**修正**：完全に録り直すか、LeRobot のツールスクリプトで data/ から meta を再構築する。'
+      },
+      {
+        id: 'c6-08-frames-kb',
+        type: 'numeric',
+        question:
+          '上の info.json は fps=30、state/action の次元が共に 6、dtype が float32。\n\n7 秒のデモ 1 件、**純関節データ**（state + action）はおよそ何 KB？',
+        answer: 10,
+        tolerance: 2,
+        unit: 'KB',
+        hint: 'フレーム数 × (state 次元 + action 次元) × 4 バイト（float32）',
+        explanation:
+          '## ✅ 約 10 KB\n\n```\n30 fps × 7 秒 = 210 フレーム\n1 フレーム = 6 + 6 = 12 個の float32\n1 float32 = 4 バイト\n\n210 × 12 × 4 = 10,080 バイト ≈ 10 KB\n```\n\nこのデモ 50 件 = **~500 KB の関節データ**。\n\n同じ 50 件の動画フレーム ≈ **数百 MB** と比べると、「本当に容量を食うのは動画」が分かる。'
+      },
+      {
+        id: 'c6-09-recap',
+        type: 'recap',
+        title: '🧠 分かったこと：',
+        bullets: [
+          '📁 データは `~/.cache/huggingface/lerobot/<repo-id>/` にある',
+          '🗂️ 3 大ディレクトリ：**data**（関節）、**meta**（メタ情報）、**videos**（カメラ）',
+          '📄 **info.json** はデータセットの身分証 —— 完全であること必須',
+          '💾 動画が 95%+ の容量、関節データは毎秒数 KB のみ',
+          '⚠️ record 途中の Ctrl+C は meta 欠落の原因 —— **最後まで録る**'
+        ]
+      },
+      {
+        id: 'c6-10-completion',
+        type: 'completion',
+        title: '🎉 第 6 課クリア',
+        body: 'データが揃い、構造も明確に。\n\n次の課は**本題** —— ニューラルネットワークに本当に学習させます。',
+        nextChapterId: 7
+      }
+    ]
+  },
+
+  7: {
+    chapterId: 7,
+    title: 'ACT モデルを学習する',
+    estimatedMinutes: 12,
+    cards: [
+      {
+        id: 'c7-01-intro',
+        type: 'intro',
+        emoji: '🧠',
+        title: 'いよいよ AI の部分',
+        body: 'データは 50 件・7500 フレーム揃った。\n\nニューラルネットワークの出番です。',
+        cta: 'はじめる →'
+      },
+      {
+        id: 'c7-02-act-pieces',
+        type: 'reveal',
+        prompt: 'ACT (Action Chunking Transformer) は**1 つのもの**ではありません。',
+        revealCta: '結局なに',
+        reveal:
+          '## ACT = 3 つの構成要素の組み合わせ\n\n1. **Transformer Encoder** —— 今の画像 + 関節状態を見て、「今どんな状況か」の特徴を抽出\n2. **CVAE (条件付き変分オートエンコーダ)** —— 「同じ状況で人が複数の妥当な動作を取りうる」多峰性を扱う\n3. **Transformer Decoder** —— **未来 100 ステップ**の行動を一度に出力（これが「Action Chunking」）\n\n3 つ目が肝心。BC は一度に 1 ステップ → 複合誤差が累積。\n\nACT は一度に 100 ステップ → **段内で自己完結**、複合誤差が抑えられる。',
+        followCta: 'アーキテクチャ図を見る →'
+      },
+      {
+        id: 'c7-03-arch-viz',
+        type: 'viz',
+        title: 'ACT アーキテクチャ図',
+        mermaid: `flowchart LR
+    Img["📷 今のカメラフレーム"] --> Enc["Transformer<br/>Encoder"]
+    State["📐 今の関節状態"] --> Enc
+    Enc --> CVAE["CVAE<br/>(latent z)"]
+    CVAE --> Dec["Transformer<br/>Decoder"]
+    Dec --> Out["📦 未来 100 ステップ<br/>の行動系列"]
+    style Enc fill:#7c5cff,stroke:#7c5cff,color:#fff
+    style CVAE fill:#f59e0b,stroke:#f59e0b,color:#fff
+    style Dec fill:#22c55e,stroke:#22c55e,color:#fff
+    style Out fill:#0ea5e9,stroke:#0ea5e9,color:#fff`,
+        caption: '画像 + 関節状態 → Encoder が特徴抽出 → CVAE が多峰性を注入 → Decoder が一気に 100 ステップの行動を出力。'
+      },
+      {
+        id: 'c7-04-which-component',
+        type: 'choice',
+        question: '上の 3 つの構成要素で、**ACT を BC より強くしている**のは？',
+        options: [
+          {
+            id: 'cvae',
+            label: 'A. CVAE —— 「同じ状況で複数の妥当な動作」を扱える',
+            feedback:
+              '半分正解。CVAE が解くのは**多峰分布**の問題（人が同じ状況に 3 通りの妥当な操作を持ちうる）—— でもこれは BC の主問題ではありません。\n\nC を見て →'
+          },
+          {
+            id: 'chunking',
+            label: 'B. Action Chunking —— 一度に一段の行動を予測し複合誤差を治す',
+            feedback:
+              '半分正解。これは確かに核心の革新で、BC の雪だるま累積を治します。\n\nでも論文の実測では **CVAE も 20〜30% 効果に寄与**。C を見て →'
+          },
+          {
+            id: 'both',
+            label: 'C. 両方重要 —— Chunking が複合誤差、CVAE が多峰性',
+            feedback:
+              '✨ **完全な答え**。\n\nACT 論文のアブレーション：\n- Chunking だけ外す → 性能 50%+ 低下（最重要）\n- CVAE だけ外す → 性能 20〜30% 低下\n\n両方の組み合わせで ACT の高性能。Transformer 自体は backbone であって革新点ではない。',
+            correct: true
+          }
+        ]
+      },
+      {
+        id: 'c7-05-start-training',
+        type: 'command',
+        title: '学習を起動',
+        description: '1 コマンドで完了（前提：第 5 課のデータセットを録り終えていること）：',
+        code:
+          'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --output_dir=outputs/train/act_so101',
+        expectedOutput:
+          '[INFO] Loading dataset...\n[INFO] Building ACT model (params: 84.5M)...\n[INFO] Starting training...\nstep 0    loss 1.247    lr 1e-4\nstep 100  loss 0.456    lr 1e-4\nstep 500  loss 0.182    lr 1e-4\n...',
+        tip: '既定で 200,000 ステップ。RTX 3060 で約 6〜8 時間、CPU で 1〜2 日。\n\n**途中で Ctrl+C 可** —— checkpoint が自動保存され、次回 `resume=true` で続行できる。'
+      },
+      {
+        id: 'c7-06-batch-size',
+        type: 'mcq',
+        question:
+          '既定の batch_size は 8。あなたの GPU は VRAM 12 GB —— **大きくすべき？**',
+        options: [
+          { id: 'no', label: '変えない、既定が最良' },
+          { id: 'try-bigger', label: '16 や 32 を試す、VRAM が足りれば使い、学習を速める' },
+          { id: 'max', label: '256 に一気に上げる' },
+          { id: 'smaller', label: '4 に下げる、より安定' }
+        ],
+        correctOptionId: 'try-bigger',
+        explanation:
+          '## batch_size は（VRAM の範囲で）大きいほど良い\n\n- batch が大きい → 1 ステップでより多くのサンプルで勾配計算 → **勾配推定が正確** → 収束が速い\n- ただし batch が大きい → VRAM を食う → OOM しやすい\n\n**戦略**：16 から試し、VRAM 使用率（`nvidia-smi`）を見る。余裕があれば 32 へ。OOM なら戻す。\n\n12 GB なら ACT で batch_size=32〜64 が一般的に入る。'
+      },
+      {
+        id: 'c7-07-loss-curve',
+        type: 'reveal',
+        prompt: '学習中、loss はどう変わるべき？',
+        revealCta: '健康な曲線とは',
+        reveal:
+          '## 健康な loss 曲線 📉\n\n```\nstep 0     loss 1.5\nstep 1k    loss 0.4    ← 最初の 1000 ステップで急降下\nstep 10k   loss 0.15\nstep 50k   loss 0.08   ← だんだん緩やか\nstep 100k  loss 0.06\nstep 200k  loss 0.055  ← 収束\n```\n\n**重要なサイン**：\n\n- 最初の 1k で loss が急降下 → ✅ 学び始めた\n- 中盤で着実に低下 → ✅ 正常\n- 後半で変化 < 5% → ✅ 収束、止めてよい\n\n**不健康なサイン**：\n- loss が突然 NaN → 勾配爆発\n- loss が反転上昇 → 学習率が大きすぎ\n- loss が初期値で止まる → データに問題',
+        followCta: 'NaN はどう救う？ →'
+      },
+      {
+        id: 'c7-08-nan-loss',
+        type: 'choice',
+        question: 'loss が NaN になった。どう救う？',
+        options: [
+          {
+            id: 'restart',
+            label: 'A. Python プロセスを再起動',
+            feedback: '無意味 —— NaN はモデルの数値計算から来る。再起動しても同じ穴に落ちるだけ。\n\nC を見て →'
+          },
+          {
+            id: 'more-epochs',
+            label: 'B. もっと epoch を回して自然回復を待つ',
+            feedback: 'NaN は**不可逆** —— 一度勾配が NaN になると全ネットワークの重みが汚染され、以降は悪化するだけ。\n\nC を見て →'
+          },
+          {
+            id: 'lower-lr-clip',
+            label: 'C. 学習率を一桁下げる + 勾配クリッピングを有効化',
+            feedback:
+              '✨ **正解**。\n\nNaN はほぼ常に「勾配爆発」の結果 —— 学習率が大きすぎて重みが一気に跳ね、次の計算でオーバーフロー。\n\n応急の二手：\n```\n--optimizer.lr=1e-5  (1e-4 から 1e-5 へ)\n--optimizer.grad_clip_norm=10  (勾配クリッピング)\n```\n\n9 割はこの 2 つで足りる。',
+            correct: true
+          }
+        ]
+      },
+      {
+        id: 'c7-09-wandb',
+        type: 'command',
+        title: '監視を追加：wandb',
+        intro: 'loss はターミナルだけで見ない。**wandb** は機械学習の定番監視ダッシュボードで、loss 曲線を描き、ハイパラを記録し、複数実験を比較できる。',
+        description: '導入後、2 つの引数を足すだけ：',
+        code:
+          'wandb login   # 初回だけログイン\n\nlerobot-train \\\n  --dataset.repo_id=... --policy.type=act \\\n  dataset.repo_id=your-name/so101-pick-cup \\\n  wandb.enable=true \\\n  wandb.project=so101-experiments',
+        tip: '学習開始後、wandb が URL を出力。ブラウザで開けば loss 曲線をリアルタイムで見られる。\n\n無料版で個人利用には十分。'
+      },
+      {
+        id: 'c7-10-steps-per-epoch',
+        type: 'numeric',
+        question:
+          '50 件のデモ、各平均 150 フレーム = **7500 サンプル**。\n\nbatch_size = 8、**1 epoch はおよそ何 step**？',
+        answer: 938,
+        tolerance: 10,
+        unit: 'step',
+        hint: '総サンプル数 ÷ batch_size = 1 epoch の step 数（切り上げ）',
+        explanation:
+          '## ✅ 約 938 step\n\n```\n7500 ÷ 8 = 937.5 → 938 step\n```\n\n200k step の学習 ≈ **213 epoch**。各サンプルをモデルが 213 回見る —— 十分。\n\nこれが、単純タスクは 50 件で足りる理由：1 件のデモが**何度も再利用される**。'
+      },
+      {
+        id: 'c7-11-recap',
+        type: 'recap',
+        title: '🧠 この関門で習得したこと：',
+        bullets: [
+          '🧠 **ACT** = Transformer Encoder + CVAE + Decoder（100 ステップ出力）',
+          '🎯 ACT を強くする核心：**Action Chunking** + **CVAE**',
+          '🚀 `--dataset.repo_id=... --policy.type=act` で学習起動',
+          '📉 健康な loss = 最初の 1k で急降下 → 後半 < 5% 変化で収束',
+          '⚠️ **NaN loss** ➜ 学習率 ÷ 10 + 勾配クリッピング',
+          '📊 **wandb** で監視、ターミナルより効率的'
+        ]
+      },
+      {
+        id: 'c7-12-completion',
+        type: 'completion',
+        title: '🎉 第 7 課クリア',
+        body: 'ACT モデルを学習できるようになりました。\n\n次の課：**学習したモデルで、実際にロボットを動かす**。',
+        nextChapterId: 8
+      }
+    ]
+  },
+
+  8: {
+    chapterId: 8,
+    title: '推論 + 実機デプロイ',
+    estimatedMinutes: 10,
+    cards: [
+      {
+        id: 'c8-01-intro',
+        type: 'intro',
+        emoji: '🦾',
+        title: '学習が完了した',
+        body: 'ディスクに数百 MB の checkpoint ファイルが眠っている。\n\nさて —— **どうやって実際にロボットを動かす？**',
+        cta: 'はじめる →'
+      },
+      {
+        id: 'c8-02-inference-cmd',
+        type: 'command',
+        title: '学習済みモデルを稼働させる',
+        intro: '推論コマンドはこんな形：',
+        description: '同じく `lerobot-record` を使うが、今回は `--policy.path` を付ける：',
+        code:
+          'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/train/act_so101/checkpoints/last/pretrained_model \\\n  --display_data=true',
+        expectedOutput:
+          '[INFO] Loading policy from checkpoints/last/...\n[INFO] Robot ready. Press Enter to start inference episode 1/5.',
+        tip: '`--policy.path` は**学習出力ディレクトリ内の last/pretrained_model** を指す。`last` は最新の checkpoint。特定ステップを使うなら `step_50000/` などに替える。\n\nEnter を押すと Follower アームが**自分で動き始める**。Leader は止まったまま —— 引退済み。'
+      },
+      {
+        id: 'c8-03-first-run',
+        type: 'mcq',
+        question: '初回の推論で、ロボットが完璧にタスクをこなす確率は？',
+        options: [
+          { id: 'high', label: '90%+ —— 学習 loss も収束したし' },
+          { id: 'low', label: '5〜30% —— シミュレーションから現実への sim2real ギャップは常にある' },
+          { id: 'zero', label: '0% —— あと 100 万 step 再学習が必要' }
+        ],
+        correctOptionId: 'low',
+        explanation:
+          '## 初回成功率はしばしば低い\n\n学習 loss が低い ≠ 実機で高い。理由：\n\n1. **学習データが有限**：50 件では全ての実状況をカバーできない\n2. **環境の揺らぎ**：光、カメラノイズ、モータの微振動\n3. **複合誤差が残る**：ACT が一部治しても、長タスクではずれる\n\n**初回 10〜30% の成功率は正常**。まず数パラメータを調整してから。次のカードで。'
+      },
+      {
+        id: 'c8-04-compounding-back',
+        type: 'reveal',
+        prompt: '第 1 課で話した**複合誤差**を覚えてる？',
+        revealCta: '振り返る',
+        reveal:
+          '## 複合誤差がまた来た 🌨️\n\nACT は Action Chunking で大きく軽減したが、**完全には消していない**。\n\n観察される現象：\n\n- **最初の 2〜3 秒**：動作が滑らか、ほぼ学習デモ通り\n- **中盤**：少しずつずれ始める\n- **後半**：完全に誤った姿勢までずれる\n\nこれは**短い段内では ACT が自己完結**するが、**段と段の間**で依然累積するため。\n\n下の 2 ツールでさらに抑えられる：**EMA 平滑化** + **Temporal Ensembling**。',
+        followCta: '解決策を見る →'
+      },
+      {
+        id: 'c8-05-pipeline-viz',
+        type: 'viz',
+        title: '推論時のデータフロー',
+        mermaid: `flowchart LR
+    Cam["📷 カメラ"] --> Pre["前処理<br/>正規化"]
+    State["📐 関節状態"] --> Pre
+    Pre --> Policy["🧠 ACT 方策"]
+    Policy --> Chunk["📦 100 ステップの行動"]
+    Chunk --> Smooth["✨ EMA / TE<br/>平滑化"]
+    Smooth --> Motor["🦾 Follower<br/>モータ指令"]
+    Motor -.->|"30 fps ループ"| Cam
+    style Policy fill:#22c55e,stroke:#22c55e,color:#fff
+    style Smooth fill:#f59e0b,stroke:#f59e0b,color:#fff`,
+        caption: 'カメラ+状態 → 前処理 → ACT が 100 ステップ出力 → 平滑化 → モータ実行 → 次フレーム。30 fps で回り続ける。EMA / Temporal Ensembling が鍵の「最後の保険」。'
+      },
+      {
+        id: 'c8-06-fps-control',
+        type: 'command',
+        title: '推論 fps を固定する',
+        intro: 'LeRobot は既定で全力で回すが、**不安定な fps がガタつきの元凶**。30 に固定：',
+        description: '`--dataset.fps 30` を付ける：',
+        code:
+          'lerobot-record \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --dataset.repo_id=your-name/so101-eval \\\n  --dataset.num_episodes=5 --dataset.fps=30 \\\n  --policy.path=outputs/.../pretrained_model \\\n  --display_data=true',
+        tip: 'なぜ 30 固定？　**学習データが 30 fps で録られている**から。推論 fps を学習 fps に合わせると、モデルの「感覚」が一致する。ずれすぎ → モデルが混乱。',
+        warning: 'GPU が非力だと、**実際には 30 fps 出ない**（1 フレームの推論 > 33ms）。LeRobot はフレームを落とし、依然不安定。その場合はより速い GPU にするか、学習も低い fps で行う。'
+      },
+      {
+        id: 'c8-07-ema-define',
+        type: 'reveal',
+        prompt: 'EMA 平滑化を聞いたことは？',
+        revealCta: '定義を見る',
+        reveal:
+          '## EMA = Exponential Moving Average\n\n「指数移動平均」。1 行の式：\n\n```\nsmoothed_action = α × current_action + (1 - α) × previous_action\n```\n\n`α` は一般に **0.3** —— 「新しい行動が 30%、古い行動が 70%」の意味。\n\n**効果**：突然のガタつきが古い行動に「引っ張られ」、即座にはモータに反映されない。アームの動きが明らかに**滑らか**になる。\n\n代償：応答が少し遅い（高速タスクでは精度に影響しうる）が、ほとんどのタスクで許容範囲。',
+        followCta: 'コードを見る →'
+      },
+      {
+        id: 'c8-08-ema-code',
+        type: 'command',
+        title: 'EMA 平滑化のコード片',
+        intro: '実は 1 行：',
+        description: '推論ループの中で：',
+        code:
+          'prev_action = None\nalpha = 0.3   # 平滑係数、0=完全に古い行動, 1=完全に新しい行動\n\nfor obs in robot_loop():\n    action = policy(obs)\n    if prev_action is not None:\n        action = alpha * action + (1 - alpha) * prev_action\n    robot.send_action(action)\n    prev_action = action',
+        language: 'python',
+        tip: '`α` はつまみ：\n- α = 0.5 → 中程度の平滑\n- α = 0.3 → 強い平滑（既定の推奨）\n- α = 0.1 → 極強の平滑（応答が遅く、高速タスクに追従しきれないことも）'
+      },
+      {
+        id: 'c8-09-still-shaky',
+        type: 'mcq',
+        question: 'EMA を入れてもまだガタつく。他にどうする？',
+        options: [
+          { id: 'higher-alpha', label: 'α を 0.05 に（さらに強い平滑）' },
+          { id: 'tempo-ensemble', label: 'Temporal Ensembling を使う（複数 chunk の予測を加重平均）' },
+          { id: 'lower-fps', label: 'fps を 15 に下げる' },
+          { id: 'all-of-above', label: '上の 3 つを組み合わせて試す' }
+        ],
+        correctOptionId: 'all-of-above',
+        explanation:
+          '## ガタつき調整のコンビネーション\n\nこれは**調整問題**で、銀の弾丸は無い。一般的な順序：\n\n1. **fps を安定させる**（最重要、まず系統的なガタつきを解決）\n2. **EMA α を小さく**（0.3 → 0.2 → 0.1）\n3. **Temporal Ensembling**（ACT 論文推奨の上級手法。各フレームを過去数 chunk の予測の加重平均に）\n4. **USB 配線を確認**（信号不安定もガタつきとして現れる）\n5. **学習データを増やす**（極端な場合の根本原因）\n\n9 割は手順 3 までで解決。'
+      },
+      {
+        id: 'c8-10-recap',
+        type: 'recap',
+        title: '🧠 この関門で習得したこと：',
+        bullets: [
+          '🦾 `--policy.path` で checkpoint をロードして稼働',
+          '⚠️ **初回成功率 10〜30% は正常**、落ち込まない',
+          '🌨️ **複合誤差**は残るが、BC よりはるかに良い',
+          '🔒 `--dataset.fps 30` で fps 固定 = ガタつき調整の第一歩',
+          '✨ **EMA 平滑化**：α=0.3、1 行で大半のガタつきを解消',
+          '🎯 まだガタつく ➜ Temporal Ensembling / データ増強'
+        ]
+      },
+      {
+        id: 'c8-11-completion',
+        type: 'completion',
+        title: '🎉 第 8 課クリア',
+        body:
+          'データ → モデル → 実機、**全工程を走り切りました**。\n\n最後の課：**あらゆる予期せぬ事態への対処法** —— 予期せぬ事態は必ず起きるから。',
+        nextChapterId: 9
+      }
+    ]
+  },
+
+  9: {
+    chapterId: 9,
+    title: 'エラーが出ても慌てない',
+    estimatedMinutes: 7,
+    cards: [
+      {
+        id: 'c9-01-intro',
+        type: 'intro',
+        emoji: '🐛',
+        title: '必ずエラーに出会う',
+        body: '慌てない。誰もがそう。\n\nこの課では**あらゆるエラーを体系的に解決する方法**を教えます —— エンジニアの本当に価値ある能力。',
+        cta: 'はじめる →'
+      },
+      {
+        id: 'c9-02-four-steps',
+        type: 'reveal',
+        prompt: 'エラーの 9 割は同じ 4 ステップ法で解ける ——',
+        revealCta: '4 ステップを見る',
+        reveal:
+          '## 汎用 4 ステップ切り分け法\n\n1. **最後の行のエラーをちゃんと読む** —— 一番上にスクロールせず、最後の一文を見る\n2. **エラーの種類を判断** —— 環境？　ハードウェア？　データ？　学習？　推論？\n3. **サイト内「トラブル診断」でキーワード検索** —— 収録済みの数十件が一般的なエラーの 8 割をカバー\n4. **エラー文を正確に Google** —— 引用符で：`"具体的なエラーキーワード"`\n\n9 割は手順 3 で解決。残り 10% も Google の 1 ページ目で必ず見つかる。',
+        followCta: '決定木を見る →'
+      },
+      {
+        id: 'c9-03-flow-viz',
+        type: 'viz',
+        title: '切り分けの決定木',
+        mermaid: `flowchart TD
+    Err["💥 エラー!"] --> Read["1. 最後の行を読む"]
+    Read --> Type{"2. 種類を判断"}
+    Type -->|"env / install"| Q1["pip install / conda activate?"]
+    Type -->|"hardware / port"| Q2["dialout グループ? ttyUSB 存在?"]
+    Type -->|"data / file"| Q3["meta/info.json ある?"]
+    Type -->|"training"| Q4["batch_size? lr? NaN?"]
+    Q1 --> KB["3. サイト内診断ライブラリ"]
+    Q2 --> KB
+    Q3 --> KB
+    Q4 --> KB
+    KB --> Found{"見つかった?"}
+    Found -->|"はい"| Fix["✅ 修復"]
+    Found -->|"いいえ"| Google["4. エラーを正確に Google"]
+    Google --> Fix
+    style Err fill:#dc2626,color:#fff
+    style Fix fill:#16a34a,color:#fff`,
+        caption: '決定木。各分岐が典型的なエラーの一類に対応。'
+      },
+      {
+        id: 'c9-04-which-line',
+        type: 'choice',
+        question: 'ターミナルに長い traceback（エラースタック）が 30 行。**まずどの行を見る？**',
+        options: [
+          {
+            id: 'first',
+            label: 'A. 1 行目 —— 一番元のエラー',
+            feedback: '実は**最後の行**が「何が起きたか」を直接告げる要約。\n\nB を見て →'
+          },
+          {
+            id: 'last',
+            label: 'B. 最後の行 —— 直接のエラー要約',
+            feedback:
+              '✨ **正解**。\n\nPython traceback の構造：\n- 前の N 行は「呼び出し連鎖」（最上位からエラー箇所まで下る）\n- **最後の行**がエラークラス名 + エラー情報 → ここを見るべき\n\n2 番目に重要なのは**最後の行に最も近い「自分のコードのパスが書かれた」行** —— そこが直接直せる所。',
+            correct: true
+          },
+          {
+            id: 'middle',
+            label: 'C. 中間 —— 最も関連する部分',
+            feedback: '中間は普通ライブラリ内部の呼び出しで、デバッグにはあまり役立たない。\n\nB を見て →'
+          }
+        ]
+      },
+      {
+        id: 'c9-05-error-types',
+        type: 'match',
+        prompt: '3 つの一般的なエラーに「典型的な原因」を結ぶ：',
+        pairs: [
+          { left: 'ImportError', right: 'パッケージ不足 / 環境未有効化' },
+          { left: 'RuntimeError (CUDA OOM)', right: 'VRAM 不足、batch が大きすぎ' },
+          { left: 'FileNotFoundError', right: 'パス誤り / データセット未完走' }
+        ]
+      },
+      {
+        id: 'c9-06-save-error',
+        type: 'command',
+        title: 'エラーを完全に保存',
+        intro: 'エラー時はまず**出力全体を保存**、後で見失わないように。このコマンドは全出力（エラー含む）を `error.log` に保存：',
+        description: '学習/推論コマンドの後ろに付ける：',
+        code: 'lerobot-train --dataset.repo_id=your-name/so101-pick-cup --policy.type=act ... 2>&1 | tee error.log',
+        expectedOutput: '(画面に表示 + error.log に書き込み)',
+        tip: '`2>&1` はエラー出力も通常出力に統合。\n`| tee` は画面**と**ファイルに同時出力。\n\n人に相談するとき、error.log を添えるとスクショより 10 倍明確。'
+      },
+      {
+        id: 'c9-07-good-question',
+        type: 'mcq',
+        question: 'あるエラーで詰まり、AI アシスタント / Discord コミュニティに聞くことにした。**どう聞くのが最も有効？**',
+        options: [
+          { id: 'help', label: '「助けて、ACT 学習でエラーが出た！」' },
+          {
+            id: 'verbose',
+            label:
+              '完全なエラースタック + 実行コマンド + データセット info.json + 試した方策を添える'
+          },
+          { id: 'screenshot', label: 'ターミナルのスクショを 1 枚送る' },
+          { id: 'rephrase', label: 'エラー内容を自分の言葉で言い換える' }
+        ],
+        correctOptionId: 'verbose',
+        explanation:
+          '## 情報量が回答の質を決める\n\n良い質問テンプレ：\n\n```\nX をしています (LeRobot ACT で SO100 を学習)、\nエラー: <完全なエラースタック>\nコマンド: <実行したコマンド>\n設定: <yaml ファイル / info.json の要点>\n試したこと: <何を試し、結果はどうだったか>\n```\n\nDiscord/forum の良質な回答の 9 割は、質問が明確だから得られる。\n\n**スクショ** ✗ 相手がエラーキーワードをコピーして検索できない。\n**「助けて」** ✗ 情報量ゼロ。\n**言い換え** ✗ キーワードが失われるかも。'
+      },
+      {
+        id: 'c9-08-ask-ai-here',
+        type: 'reveal',
+        prompt: '本サイトには AI アシスタントが内蔵されています。何が特別？',
+        revealCta: '教えて',
+        reveal:
+          '## 本サイトの LVJIN AI 🤖\n\n- **本物の大規模モデル**：コマンドを書き、概念を説明し、切り分けを手伝う —— キーワード検索ではない\n- **サイト内文脈を理解**：回答しながら本サイトの 9 章 + エラーライブラリ + 用語を検索（RAG）。汎用 ChatGPT より SO-101 + LeRobot に合う\n- **マルチターン対話 + 履歴**：ChatGPT のように新規対話・履歴の見返し\n- **Plus 専用の電子学習パートナー**：サイト全体で付き添い、間違えたら横で解説\n\n使い方は簡単：[AI アシスタントへ](/ja/assistant)。\n\nDiscord の返信より速く、Google より文脈に合う。',
+        followCta: '次へ →'
+      },
+      {
+        id: 'c9-09-recap',
+        type: 'recap',
+        title: '🧠 切り分けの心得を習得：',
+        bullets: [
+          '🔍 **4 ステップ法**：最後の行を読む → 種類を判断 → サイト内ライブラリ → Google',
+          '👀 traceback は**最後の行を見る**、1 行目ではない',
+          '📋 3 大エラー：**ImportError / RuntimeError / FileNotFoundError**',
+          '💾 `2>&1 | tee error.log` でエラーを完全保存',
+          '🙋 質問には **エラースタック + コマンド + 試したこと**を添える、スクショだけにしない',
+          '🤖 本サイトの [AI アシスタント](/ja/assistant) が相談の第一候補'
+        ]
+      },
+      {
+        id: 'c9-10-completion',
+        type: 'completion',
+        title: '🎉 全 9 課クリア！',
+        body:
+          'SO101 模倣学習の**全主線**を走り切りました ——\n\n「模倣学習とは何か」からハードウェア、環境、データ、学習、推論、切り分けまで。\n\n今あなたが持つのは、2025 年のロボット学修士新入生の入門レベルです。\n\n**次はどう進む？**\n\n- 実際に SO101 を買ってこの流れを一通り回す\n- 自分だけの小タスクに挑戦（タオル畳み？　水つぎ？　箱開け？）\n- ACT 原論文を読み、各ハイパラの背後の数学を理解\n- LeRobot Discord に参加し、世界中の実践者と交流\n\nここまでやり遂げてくれてありがとう。 🚀'
+      }
+    ]
   }
 }
 

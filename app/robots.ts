@@ -7,7 +7,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/_next/']
+        // Private / login-gated pages — keep them out of the index.
+        disallow: ['/api/', '/_next/', '/settings', '/u/']
       }
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,

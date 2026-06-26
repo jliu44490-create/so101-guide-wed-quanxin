@@ -160,11 +160,15 @@ export default function DarkVeil({
     loop()
 
     return () => {
+      // NOTE: do NOT call loseContext() here. React StrictMode (dev) mounts →
+      // unmounts → remounts; losing the shared canvas's GL context on the first
+      // unmount leaves the remounted instance with a permanently-lost context
+      // (blank veil = grey wash in dev). Prod has no double-mount so it never
+      // showed, but dropping the call keeps dev faithful to prod too.
       disposed = true
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVisibility)
-      gl.getExtension('WEBGL_lose_context')?.loseContext()
     }
   }, [hueShift, noiseIntensity, scanlineIntensity, speed, scanlineFrequency, warpAmount, resolutionScale])
 

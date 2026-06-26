@@ -235,7 +235,14 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return
-      if (e.key === 'ArrowLeft') prev()
+      if (e.key === 'ArrowLeft') {
+        prev()
+      } else if (e.key === 'ArrowRight' || e.key === 'Enter') {
+        // Advance by clicking the visible "next" button. Answer cards only render
+        // it after they're answered, so this can't skip an unanswered question.
+        const nextBtn = document.querySelector<HTMLButtonElement>('[data-lesson-next]')
+        if (nextBtn && !nextBtn.disabled) nextBtn.click()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -432,6 +439,7 @@ function NextButton({
       onClick={onClick}
       size={size}
       variant={variant}
+      data-lesson-next
       className={cn(
         'group h-12 px-8 text-base sm:h-14 sm:px-12 sm:text-lg',
         variant === 'default' && 'glow-primary'

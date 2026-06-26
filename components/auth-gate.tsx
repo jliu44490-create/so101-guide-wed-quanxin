@@ -6,7 +6,25 @@ import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/use-auth'
 
 // Auth-flow routes that must stay reachable without logging in.
-const PUBLIC_PREFIXES = ['/login', '/signup', '/forgot-password', '/reset-password']
+// Auth-flow pages, plus the public marketing/content pages that should be
+// crawlable for SEO. Paid chapter *content* stays gated by the paywall
+// (use-entitlement), and account/AI-chat pages stay behind login below.
+const PUBLIC_PREFIXES = [
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/', // home only (exact match — see isPublicPath)
+  '/learn',
+  '/ai',
+  '/diagnose',
+  '/glossary',
+  '/resources',
+  '/about',
+  '/unlock',
+  '/community',
+  '/ja'
+]
 
 const isPublicPath = (p: string) =>
   PUBLIC_PREFIXES.some((prefix) => p === prefix || p.startsWith(prefix + '/'))

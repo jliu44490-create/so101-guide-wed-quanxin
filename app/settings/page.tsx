@@ -333,7 +333,14 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base">修改密码</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault()
+                changePassword()
+              }}
+            >
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="pw">新密码</Label>
@@ -358,10 +365,11 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
-            <Button variant="outline" onClick={changePassword} disabled={savingPw || !pw} className="gap-1.5">
+            <Button type="submit" variant="outline" disabled={savingPw || !pw} className="gap-1.5">
               {savingPw && <Loader2 className="size-4 animate-spin" />}
               更新密码
             </Button>
+            </form>
           </CardContent>
         </Card>
         </Reveal>

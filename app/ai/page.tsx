@@ -330,7 +330,61 @@ export default function AiPage() {
       </div>
     )
   }
-  if (!isLoggedIn) return null // AuthGate redirects
+  if (!isLoggedIn) {
+    // Public landing for logged-out / crawler visits (page is now SEO-crawlable).
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <main className="relative flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.16] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,black,transparent)]">
+            <BinaryField />
+          </div>
+          <div className="relative w-full max-w-2xl">
+            <div className="flex justify-center">
+              <Orb size="lg" live />
+            </div>
+            <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                LVJIN AI
+              </span>{' '}
+              · SO-101 模仿学习助教
+            </h1>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+              环境搭建、校准、数据采集、ACT 训练、推理部署、报错排查——随时问。
+              答案基于站内课程与错误库,不用再去英文文档里大海捞针。
+            </p>
+
+            <div className="mt-7 grid gap-3 text-left sm:grid-cols-2">
+              {INTRO_GROUPS.map((g) => (
+                <div
+                  key={g.label}
+                  className="rounded-2xl border border-border/50 bg-card/40 p-3 backdrop-blur-sm"
+                >
+                  <p className="px-1 pb-2 text-xs font-semibold text-muted-foreground">{g.label}</p>
+                  <ul className="space-y-1.5">
+                    {g.items.map((s) => (
+                      <li key={s} className="rounded-lg bg-background/40 px-2.5 py-2 text-[13px]">
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button asChild size="lg" className="glow-primary">
+                <Link href="/login?next=%2Fai">登录后开始对话</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/signup">没有账号?免费注册</Link>
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   const name = profile?.username ?? user?.email?.split('@')[0] ?? '同学'
 

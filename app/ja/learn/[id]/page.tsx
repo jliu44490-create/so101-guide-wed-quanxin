@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Clock,
   ExternalLink,
+  Gamepad2,
   GraduationCap,
   HelpCircle,
   Lightbulb,
@@ -42,6 +43,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { chaptersJa } from '@/lib/course-data-ja'
+import { hasLessonJa } from '@/lib/lessons-ja'
 import { siteConfigJa } from '@/lib/site-config-ja'
 
 /**
@@ -51,7 +53,7 @@ import { siteConfigJa } from '@/lib/site-config-ja'
  *
  * 暫定の差分（順次対応）:
  *  - ContentGate（ペイウォール）は未適用 — /ja/unlock がまだ無いため日本語版は全章開放。
- *  - インタラクティブ講座バナーは lessons-ja 整備後に追加。
+ *  - インタラクティブ講座バナーは lessons-ja に該当章がある場合のみ表示（順次拡充）。
  */
 
 interface ChapterPageProps {
@@ -141,6 +143,39 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
           <ChevronRight className="h-3.5 w-3.5" />
           <span className="text-foreground">第 {chapter.id} 章</span>
         </nav>
+
+        {hasLessonJa(chapter.id) && (
+          <div className="mb-8 overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 via-primary/5 to-background">
+            <div className="flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-center sm:p-6">
+              <div className="flex items-start gap-3 sm:items-center">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-primary/20 ring-1 ring-accent/30">
+                  <Gamepad2 className="h-6 w-6 text-accent" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-accent">
+                    この章にはインタラクティブ講座があります
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed sm:text-base">
+                    <strong>文章を読むのが大変？</strong>7 分のインタラクティブ版を試そう —— カードをめくりながら学べて、読むより身につきます。
+                  </p>
+                </div>
+              </div>
+              <Button
+                asChild
+                size="lg"
+                className="glow-primary h-12 w-full px-6 sm:w-auto sm:shrink-0"
+              >
+                <Link href={`/ja/learn/${chapter.id}/play`}>
+                  🎮 インタラクティブ講座を始める
+                  <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            <div className="border-t border-accent/20 bg-background/30 px-5 py-2 text-[11px] text-muted-foreground sm:px-6">
+              いま読んでいるのは <strong className="text-foreground">完全なドキュメント版</strong> —— 復習や深掘りに最適。インタラクティブ講座は初学習に向いています。
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-10 lg:grid-cols-[1fr_240px]">
           <article className="min-w-0">

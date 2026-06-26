@@ -15,8 +15,13 @@
 
 import { useEffect, useState } from 'react'
 import { communityBackend } from './backend'
+import { cachedRequest } from './request-cache'
 import { useAuth } from './use-auth'
 import { PAYWALL_ENABLED } from './paywall'
+
+// Entitlement is stable within a session (changes only on purchase). Share one
+// lookup across every gated component instead of one request per mount.
+const ENTITLEMENT_TTL = 60_000
 
 export interface UseEntitlementResult {
   /** True if the user may access locked content. */
@@ -47,7 +52,9 @@ export function useEntitlement(): UseEntitlementResult {
 
     let alive = true
     setChecking(true)
-    communityBackend.hasEntitlement(user.id).then((has) => {
+    cachedRequest(`entitlement:${user.id}`, ENTITLEMENT_TTL, () =>
+      communityBackend.hasEntitlement(user.id)
+    ).then((has) => {
       if (!alive) return
       setHasEntitlement(has)
       setChecking(false)

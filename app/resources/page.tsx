@@ -6,6 +6,7 @@ import {
   Code,
   ExternalLink,
   FileText,
+  Globe,
   Layers,
   PlayCircle,
   Search,
@@ -45,6 +46,28 @@ const categoryStyle: Record<string, string> = {
   community: 'text-emerald-500',
   hardware: 'text-orange-500',
   code: 'text-foreground'
+}
+
+// Domains that are typically blocked or unreliably slow from mainland China,
+// so we flag them with a "需网络" hint. Conservative on purpose — only the
+// clearly-blocked hosts, to avoid false alarms on links that work fine.
+const RESTRICTED_HOSTS = [
+  'youtube.com',
+  'youtu.be',
+  'huggingface.co',
+  'discord.gg',
+  'discord.com',
+  'openai.com',
+  'google.com'
+]
+
+function mayNeedVpn(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase()
+    return RESTRICTED_HOSTS.some((h) => host === h || host.endsWith('.' + h))
+  } catch {
+    return false
+  }
 }
 
 export default function ResourcesPage() {
@@ -88,6 +111,12 @@ export default function ResourcesPage() {
               <p className="mt-3 max-w-3xl text-muted-foreground">
                 所有你之后会反复回来翻的论文、文档、代码与社区入口，集中放在这里。
               </p>
+              <Reveal delay={300}>
+                <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs text-amber-600 dark:text-amber-400">
+                  <Globe className="h-3 w-3" />
+                  标注「需网络」的资源在中国大陆可能需要科学上网才能访问
+                </p>
+              </Reveal>
             </Reveal>
           </div>
         </section>
@@ -173,7 +202,19 @@ export default function ResourcesPage() {
                           >
                             <Icon className="h-5 w-5" />
                           </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+                          <div className="flex items-center gap-2">
+                            {mayNeedVpn(res.url) && (
+                              <Badge
+                                variant="outline"
+                                className="gap-1 border-amber-500/40 bg-amber-500/10 px-1.5 text-[10px] text-amber-600 dark:text-amber-400"
+                                title="该链接在中国大陆可能需要科学上网才能访问"
+                              >
+                                <Globe className="h-2.5 w-2.5" />
+                                需网络
+                              </Badge>
+                            )}
+                            <ExternalLink className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+                          </div>
                         </div>
                         <h3 className="font-semibold leading-snug">{res.title}</h3>
                         <p className="line-clamp-3 flex-1 text-sm text-muted-foreground">

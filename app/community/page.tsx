@@ -104,6 +104,8 @@ export default async function CommunityPage() {
           </div>
         </section>
 
+        <ParticipateCTA />
+
         {!isSupabaseConfigured ? (
           <ComingSoon />
         ) : !isLive ? (
@@ -119,6 +121,65 @@ export default async function CommunityPage() {
 }
 
 /* ────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Always-visible "how to participate" banner. Posting on this site happens in
+ * the per-chapter / per-error discussion threads (see components/discussion),
+ * not as standalone posts — so the community page itself needs to point people
+ * to where they actually write. Shown in every state (coming-soon / seed / live).
+ */
+function ParticipateCTA() {
+  return (
+    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="rounded-2xl border border-primary/25 bg-card/70 p-6 backdrop-blur-md sm:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-xl">
+            <h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              想提问 / 发帖？这样参与
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              社区讨论就发生在<strong className="text-foreground">每一章</strong>和
+              <strong className="text-foreground">每个报错</strong>的讨论区。
+              登录后选一个章节，在页面底部即可发帖提问、晒成果、回答别人 —— 收到的赞会让你登上贡献者榜。
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2.5">
+            <Button asChild className="glow-primary">
+              <Link href="/learn">
+                浏览章节提问
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/diagnose">报错求助</Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-5 border-t border-border/50 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            或直接选章节发帖
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {chapters.map((c) => (
+              <Link
+                key={c.id}
+                href={`/learn/${c.id}`}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/50 px-3 py-1.5 text-xs text-foreground/80 transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-primary"
+              >
+                <span className="font-mono text-[10px] text-muted-foreground group-hover:text-primary">
+                  {String(c.id).padStart(2, '0')}
+                </span>
+                {c.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 function ComingSoon() {
   return (

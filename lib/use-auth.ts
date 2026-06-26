@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { authBackend } from './backend'
+import { cachedRequest, invalidateCache } from './request-cache'
 import type { Profile } from './supabase'
+
+// Profiles change rarely within a session; share one fetch across all the
+// components that mount useAuth() instead of one request each.
+const PROFILE_TTL = 60_000
 
 /**
  * Auth state + actions for the community layer.
@@ -41,7 +46,9 @@ export function useAuth() {
     let active = true
 
     const loadProfile = async (userId: string) => {
-      const p = await authBackend.loadProfile(userId)
+      const p = await cachedRequest(`profile:${userId}`, PROFILE_TTL, () =>
+        authBackend.loadProfile(userId)
+      )
       if (active) setProfile(p)
     }
 
@@ -117,6 +124,7 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     await authBackend.signOut()
+    invalidateCache() // user-scoped caches (profile, entitlement) are now stale
     setUser(null)
     setSession(null)
     setProfile(null)
@@ -126,7 +134,10 @@ export function useAuth() {
     async (patch: { username?: string; bio?: string; avatar_url?: string; companion_enabled?: boolean }) => {
       if (!user) return { error: 'not_logged_in' }
       const res = await authBackend.updateProfile(user.id, patch)
-      if (!res.error) setProfile((p) => (p ? { ...p, ...patch } : p))
+      if (!res.error) {
+        invalidateCache(`profile:${user.id}`) // other mounts should refetch fresh
+        setProfile((p) => (p ? { ...p, ...patch } : p))
+      }
       return res
     },
     [user]

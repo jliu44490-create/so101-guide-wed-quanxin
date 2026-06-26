@@ -372,6 +372,39 @@ export default function AiPage() {
               ))}
             </div>
 
+            <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
+              {[
+                {
+                  icon: Wrench,
+                  title: '能回答什么',
+                  body: '环境搭建 · 校准 · 数据采集 · ACT 训练 · 推理部署 · 报错排查'
+                },
+                {
+                  icon: Sparkles,
+                  title: '答案来源',
+                  body: '站内 9 章课程 + 报错诊断库 + 术语表 + 资源中心，有据可依'
+                },
+                {
+                  icon: Gauge,
+                  title: '额度与提示',
+                  body: '每日免费额度，Plus 更高额度 + 课程全解锁；关键硬件操作请以官方文档为准'
+                }
+              ].map((c) => (
+                <div
+                  key={c.title}
+                  className="rounded-2xl border border-border/50 bg-card/40 p-3 backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-1.5 px-1 pb-1.5 text-xs font-semibold text-foreground">
+                    <c.icon className="h-3.5 w-3.5 text-primary" />
+                    {c.title}
+                  </div>
+                  <p className="px-1 text-[12.5px] leading-relaxed text-muted-foreground">
+                    {c.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="glow-primary">
                 <Link href="/login?next=%2Fai">登录后开始对话</Link>

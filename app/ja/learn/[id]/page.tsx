@@ -31,6 +31,7 @@ import { ChapterProgressActions } from '@/components/chapter-progress-actions'
 import { Prose } from '@/components/prose'
 import { Mermaid } from '@/components/mermaid'
 import { Discussion } from '@/components/discussion'
+import { ContentGate } from '@/components/content-gate'
 import { CompanionExplainButton } from '@/components/companion-explain-button'
 import {
   ExerciseList,
@@ -51,9 +52,8 @@ import { siteConfigJa } from '@/lib/site-config-ja'
  * すべて描画する。**両ページは表示内容を揃えて保守すること**（片方だけ更新しない）。
  * 将来的には共有コンポーネントへの抽出を推奨（中日の乖離を構造的に防ぐため）。
  *
- * 暫定の差分（順次対応）:
- *  - ContentGate（ペイウォール）は未適用 — /ja/unlock がまだ無いため日本語版は全章開放。
- *  - インタラクティブ講座バナーは lessons-ja に該当章がある場合のみ表示（順次拡充）。
+ * ペイウォール：ContentGate 適用済み（最初の 2 章無料、以降は /ja/unlock）。
+ * インタラクティブ講座バナーは lessons-ja に該当章がある場合のみ表示（順次拡充）。
  */
 
 interface ChapterPageProps {
@@ -177,6 +177,7 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
           </div>
         )}
 
+        <ContentGate chapterId={chapter.id} what={`第 ${chapter.id} 章`}>
         <div className="grid gap-10 lg:grid-cols-[1fr_240px]">
           <article className="min-w-0">
             <header id="overview" className="mb-8 scroll-mt-24">
@@ -631,6 +632,7 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
             </div>
           </aside>
         </div>
+        </ContentGate>
       </main>
 
       <Footer />

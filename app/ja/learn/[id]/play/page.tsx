@@ -4,13 +4,14 @@ import { notFound } from 'next/navigation'
 import { ArrowRight, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { LessonPlayer } from '@/components/lesson-player'
+import { ContentGate } from '@/components/content-gate'
 import { getLessonJa, lessonsJa } from '@/lib/lessons-ja'
 import { chaptersJa } from '@/lib/course-data-ja'
 import { siteConfigJa } from '@/lib/site-config-ja'
 
 /**
  * 日本語のインタラクティブ講座（play モード）。中国語版 app/learn/[id]/play と対。
- * 暫定：ContentGate（ペイウォール）は未適用 —— /ja/unlock が未整備のため日本語版は開放。
+ * ContentGate（ペイウォール）適用：最初の 2 章は無料、それ以降は /ja/unlock でアンロック。
  */
 
 interface PlayPageProps {
@@ -51,7 +52,11 @@ export default async function PlayPageJa({ params }: PlayPageProps) {
     return <ComingSoon chapterId={chapterId} chapterTitle={chapter.title} />
   }
 
-  return <LessonPlayer lesson={lesson} />
+  return (
+    <ContentGate chapterId={chapterId} what={`第 ${chapterId} 課`}>
+      <LessonPlayer lesson={lesson} />
+    </ContentGate>
+  )
 }
 
 function ComingSoon({

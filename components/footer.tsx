@@ -51,6 +51,10 @@ const sectionsZh: { title: string; links: LinkItem[] }[] = [
 
 const sectionsJa: { title: string; links: LinkItem[] }[] = [
   {
+    title: 'コミュニティ',
+    links: [{ label: 'コミュニティ', href: '/ja/community' }]
+  },
+  {
     title: '学習',
     links: [
       { label: '学習パス', href: '/ja/learn' },

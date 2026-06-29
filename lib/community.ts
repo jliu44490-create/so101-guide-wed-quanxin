@@ -132,26 +132,44 @@ export async function getUserCommentsByUserId(userId: string, limit = 50): Promi
  *   chapter:1 → "第 1 章 · 什么是模仿学习"  with link /learn/1
  *   error:cuda out of memory → "报错: CUDA out of memory"  with link /diagnose?q=...
  */
-export function describeThread(threadKey: string, chapterTitleLookup?: (id: number) => string | undefined): {
+export interface DescribeThreadOpts {
+  /** Link prefix, e.g. '/ja'. Defaults to '' (Chinese routes). */
+  base?: string
+  /** Label for a chapter thread. Defaults to Chinese. */
+  chapterLabel?: (id: number, title?: string) => string
+  /** Label for an error thread. Defaults to Chinese. */
+  errorLabel?: (err: string) => string
+}
+
+export function describeThread(
+  threadKey: string,
+  chapterTitleLookup?: (id: number) => string | undefined,
+  opts?: DescribeThreadOpts
+): {
   label: string
   href: string
   kind: 'chapter' | 'error' | 'unknown'
 } {
+  const base = opts?.base ?? ''
+  const chapterLabel =
+    opts?.chapterLabel ?? ((id, title) => (title ? `第 ${id} 章 · ${title}` : `第 ${id} 章`))
+  const errorLabel = opts?.errorLabel ?? ((err) => `报错: ${err}`)
+
   const chapterMatch = threadKey.match(/^chapter:(\d+)$/)
   if (chapterMatch) {
     const id = Number(chapterMatch[1])
     const title = chapterTitleLookup?.(id)
     return {
-      label: title ? `第 ${id} 章 · ${title}` : `第 ${id} 章`,
-      href: `/learn/${id}`,
+      label: chapterLabel(id, title),
+      href: `${base}/learn/${id}`,
       kind: 'chapter'
     }
   }
   const errorMatch = threadKey.match(/^error:(.+)$/)
   if (errorMatch) {
     return {
-      label: `报错: ${errorMatch[1]}`,
-      href: `/diagnose?q=${encodeURIComponent(errorMatch[1])}`,
+      label: errorLabel(errorMatch[1]),
+      href: `${base}/diagnose?q=${encodeURIComponent(errorMatch[1])}`,
       kind: 'error'
     }
   }

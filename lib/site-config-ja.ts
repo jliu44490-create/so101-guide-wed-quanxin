@@ -47,6 +47,7 @@ export const siteConfigJa = {
   nav: [
     { href: '/ja', label: 'ホーム' },
     { href: '/ja/learn', label: '学習パス' },
+    { href: '/ja/community', label: 'コミュニティ' },
     { href: '/ja/diagnose', label: 'トラブル診断' },
     { href: '/ja/assistant', label: 'AI アシスタント' }
   ],

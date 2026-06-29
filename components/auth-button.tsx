@@ -54,6 +54,7 @@ const labels: Record<AuthLocale, AuthLabels> = {
  */
 export function AuthButton({ locale = 'zh' }: { locale?: AuthLocale }) {
   const t = labels[locale]
+  const base = locale === 'ja' ? '/ja' : ''
   const { enabled, ready, isLoggedIn, profile, user, signOut } = useAuth()
   const pathname = usePathname()
 
@@ -82,7 +83,7 @@ export function AuthButton({ locale = 'zh' }: { locale?: AuthLocale }) {
           <DropdownMenuLabel className="truncate">{name}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/settings">
+            <Link href={`${base}/settings`}>
               <Settings className="mr-2 h-3.5 w-3.5" />
               {t.settings}
             </Link>
@@ -102,9 +103,10 @@ export function AuthButton({ locale = 'zh' }: { locale?: AuthLocale }) {
     )
   }
 
-  const loginHref = pathname && pathname !== '/login'
-    ? `/login?next=${encodeURIComponent(pathname)}`
-    : '/login'
+  const loginPath = `${base}/login`
+  const loginHref = pathname && pathname !== loginPath
+    ? `${loginPath}?next=${encodeURIComponent(pathname)}`
+    : loginPath
 
   return (
     <Button asChild variant="outline" size="sm" className="h-9 gap-1.5">

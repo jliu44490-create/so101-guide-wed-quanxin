@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Cpu, Sparkles } from 'lucide-react'
 import { BinaryField } from '@/components/binary-field'
 import { cn } from '@/lib/utils'
@@ -42,11 +43,25 @@ const defaultSpecs: SpecItem[] = [
 export function AuthShell({
   children,
   eyebrow = 'AUTHENTICATION',
-  brandTitle = '加入 LVJIN 机械臂学习者圈子',
-  brandSubtitle = '提问、答疑、点赞 —— 与全球 SO-101 / LeKiwi 用户一起精进',
+  brandTitle,
+  brandSubtitle,
   specs = defaultSpecs,
   className
 }: AuthShellProps) {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
+  const homeHref = isJa ? '/ja' : '/'
+  const learnHref = isJa ? '/ja/learn' : '/learn'
+  const privacyHref = isJa ? '/ja/privacy' : '/privacy'
+  const resolvedTitle =
+    brandTitle ?? (isJa ? 'LVJIN ロボットアーム学習者の輪に加わろう' : '加入 LVJIN 机械臂学习者圈子')
+  const resolvedSubtitle =
+    brandSubtitle ??
+    (isJa
+      ? '質問・回答・いいね —— 世界中の SO-101 / LeKiwi ユーザーと一緒に上達。'
+      : '提问、答疑、点赞 —— 与全球 SO-101 / LeKiwi 用户一起精进')
+  const tFooter = isJa
+    ? { home: 'ホーム', learn: 'チュートリアル', privacy: 'プライバシー' }
+    : { home: '首页', learn: '教程', privacy: '隐私' }
   return (
     <div
       className={cn(
@@ -72,7 +87,7 @@ export function AuthShell({
       <div className="relative z-20 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 sm:px-10">
         {/* Header */}
         <header className="flex items-center justify-between py-6">
-          <Link href="/" className="group flex items-center gap-2.5">
+          <Link href={homeHref} className="group flex items-center gap-2.5">
             <div className="relative flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25 ring-1 ring-white/20 ring-inset transition-transform group-hover:scale-105">
               <Sparkles className="size-4 text-white drop-shadow-sm" />
             </div>
@@ -102,7 +117,7 @@ export function AuthShell({
               {eyebrow}
             </div>
             <h1 className="text-balance text-3xl font-bold leading-[1.15] tracking-tight drop-shadow-[0_2px_16px_oklch(0.08_0.02_265/0.9)] xl:text-4xl">
-              {brandTitle.split('LVJIN').map((part, i, arr) =>
+              {resolvedTitle.split('LVJIN').map((part, i, arr) =>
                 i < arr.length - 1 ? (
                   <span key={i}>
                     {part}
@@ -114,7 +129,7 @@ export function AuthShell({
               )}
             </h1>
             <p className="mx-auto max-w-md text-sm leading-relaxed text-foreground/85 drop-shadow-[0_1px_12px_oklch(0.06_0.02_265/1)] lg:mx-0">
-              {brandSubtitle}
+              {resolvedSubtitle}
             </p>
 
             <div className="space-y-4 pt-2">
@@ -151,15 +166,15 @@ export function AuthShell({
         <footer className="flex flex-wrap items-center justify-between gap-3 py-5 text-[11px] text-muted-foreground">
           <span>© {new Date().getFullYear()} LVJIN · lvjin.online</span>
           <div className="flex items-center gap-4">
-            <Link href="/" className="transition-colors hover:text-foreground">
-              首页
+            <Link href={homeHref} className="transition-colors hover:text-foreground">
+              {tFooter.home}
             </Link>
-            <Link href="/learn" className="transition-colors hover:text-foreground">
-              教程
+            <Link href={learnHref} className="transition-colors hover:text-foreground">
+              {tFooter.learn}
             </Link>
-            <a href="#" className="transition-colors hover:text-foreground">
-              隐私
-            </a>
+            <Link href={privacyHref} className="transition-colors hover:text-foreground">
+              {tFooter.privacy}
+            </Link>
           </div>
         </footer>
       </div>

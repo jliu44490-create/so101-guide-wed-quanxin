@@ -44,10 +44,12 @@ export async function POST(req: Request) {
   // 2. Which product?
   let product = 'all-access'
   let currency = 'cny'
+  let localePrefix = '' // '/ja' → return the buyer to the Japanese page after Stripe
   try {
     const body = await req.json()
     if (body?.product === 'ai_credits') product = 'ai_credits'
     if (body?.currency === 'jpy') currency = 'jpy'
+    if (body?.locale === 'ja') localePrefix = '/ja'
   } catch {
     // no body → defaults
   }
@@ -77,8 +79,8 @@ export async function POST(req: Request) {
     }
     priceId = currency === 'jpy' ? process.env.STRIPE_PRICE_JPY : process.env.STRIPE_PRICE_CNY
     if (!priceId) return NextResponse.json({ error: '该币种暂不可用' }, { status: 400 })
-    successUrl = `${origin}/unlock?status=success`
-    cancelUrl = `${origin}/unlock?status=cancelled`
+    successUrl = `${origin}${localePrefix}/unlock?status=success`
+    cancelUrl = `${origin}${localePrefix}/unlock?status=cancelled`
   }
 
   const stripe = new Stripe(secret)

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import {
   ArrowRight,
   Check,
@@ -30,10 +30,125 @@ import { cn } from '@/lib/utils'
 function SignupContent() {
   const router = useRouter()
   const search = useSearchParams()
+  const pathname = usePathname()
+  const isJa = pathname?.startsWith('/ja') ?? false
   const { enabled, ready, isLoggedIn, confirmationMethod, signUp, verifyOtp, resendOtp } =
     useAuth()
 
-  const next = search.get('next') ?? '/'
+  const t = isJa
+    ? {
+        brandTitle: 'LVJIN アカウントを作成',
+        invalidEmail: '有効なメールアドレスを入力してください',
+        pwShort: 'パスワードは 6 文字以上',
+        mismatch: 'パスワードが一致しません',
+        mustAgree: '先に利用規約とプライバシーポリシーに同意してください',
+        alreadyReg: 'このメールアドレスは登録済みです。ログインしてください',
+        registered: '登録しました',
+        otpIncomplete: '6 桁の確認コードを入力してください',
+        otpUnsupported: '現在のバックエンドは確認コードに非対応です',
+        otpWrong: '確認コードが違うか期限切れです',
+        otpResent: '確認コードを再送信しました',
+        commClosed: 'コミュニティは準備中',
+        backendOff: 'アカウント登録はまだ接続されていません（',
+        backendOff2: ' が未設定）。チュートリアルは通常どおり閲覧できます。',
+        backHome: 'ホームへ戻る',
+        otpTitle: '確認コードを入力',
+        otpSentPre: '',
+        otpSentPost: ' に 6 桁の確認コードを送信しました。入力すると登録が完了します。',
+        verifying: '確認中…',
+        verifyLogin: '確認してログイン',
+        resendIn: (n: number) => `${n} 秒後に再送信できます`,
+        notReceived: '届かない？ 迷惑メールを確認するか再送信',
+        resend: '再送信',
+        changeEmail: '← 別のメールで試す',
+        verifyTitle: 'メールアドレスを確認',
+        verifySentPre: '確認リンクを ',
+        verifySentPost: ' に送信しました。メール内のリンクをクリックするとアカウントが有効化されログインします。',
+        notReceived2Pre: '届かない？ 迷惑メールフォルダを確認するか、',
+        notReceived2Btn: '別のメールで試す',
+        notReceived2Post: '。',
+        goLogin: 'ログインへ',
+        createTitle: 'アカウント作成',
+        haveAccount: 'すでにアカウントをお持ちの方は',
+        login: 'ログイン',
+        orEmail: 'またはメールで登録',
+        email: 'メールアドレス',
+        didYouMeanPre: 'もしかして ',
+        didYouMeanPost: ' ?',
+        password: 'パスワード',
+        pwPlaceholder: '6 文字以上',
+        hidePw: 'パスワードを隠す',
+        showPw: 'パスワードを表示',
+        confirmPw: 'パスワード（確認）',
+        confirmPlaceholder: 'もう一度入力',
+        agreePre: '',
+        terms: '利用規約',
+        and: 'と',
+        privacy: 'プライバシーポリシー',
+        agreePost: 'に同意します',
+        creating: '作成中…',
+        createBtn: 'アカウント作成'
+      }
+    : {
+        brandTitle: '创建你的 LVJIN 账号',
+        invalidEmail: '请输入有效邮箱',
+        pwShort: '密码至少 6 位',
+        mismatch: '两次输入的密码不一致',
+        mustAgree: '请先同意服务条款与隐私政策',
+        alreadyReg: '该邮箱已注册,请直接登录',
+        registered: '注册成功',
+        otpIncomplete: '请输入完整的 6 位验证码',
+        otpUnsupported: '当前后端不支持验证码',
+        otpWrong: '验证码不正确或已过期',
+        otpResent: '验证码已重新发送',
+        commClosed: '社区暂未开放',
+        backendOff: '注册服务还没接通(',
+        backendOff2: ' 未配置)。教程内容仍可正常访问。',
+        backHome: '返回首页',
+        otpTitle: '输入验证码',
+        otpSentPre: '我们向 ',
+        otpSentPost: ' 发送了一封 6 位验证码邮件,输入它即可完成注册。',
+        verifying: '验证中…',
+        verifyLogin: '验证并登录',
+        resendIn: (n: number) => `${n} 秒后可重发`,
+        notReceived: '没收到?检查垃圾邮件或重新发送',
+        resend: '重新发送',
+        changeEmail: '← 换个邮箱重试',
+        verifyTitle: '验证你的邮箱',
+        verifySentPre: '确认链接已发往 ',
+        verifySentPost: '。点击邮件中的链接即可激活账号并登录。',
+        notReceived2Pre: '没收到?检查垃圾邮件文件夹,或 ',
+        notReceived2Btn: '换个邮箱重试',
+        notReceived2Post: '。',
+        goLogin: '去登录',
+        createTitle: '创建账号',
+        haveAccount: '已有账号?',
+        login: '去登录',
+        orEmail: '或使用邮箱注册',
+        email: '邮箱',
+        didYouMeanPre: '是不是想输入 ',
+        didYouMeanPost: '?',
+        password: '密码',
+        pwPlaceholder: '至少 6 位',
+        hidePw: '隐藏密码',
+        showPw: '显示密码',
+        confirmPw: '确认密码',
+        confirmPlaceholder: '再次输入密码',
+        agreePre: '我已阅读并同意',
+        terms: '服务条款',
+        and: '与',
+        privacy: '隐私政策',
+        agreePost: '',
+        creating: '创建中…',
+        createBtn: '创建账号'
+      }
+
+  const homeHref = isJa ? '/ja' : '/'
+  const next = search.get('next') ?? homeHref
+  const loginBase = isJa ? '/ja/login' : '/login'
+  const loginHref = `${loginBase}${next !== homeHref ? `?next=${encodeURIComponent(next)}` : ''}`
+  const termsHref = isJa ? '/ja/terms' : '/terms'
+  const privacyHref = isJa ? '/ja/privacy' : '/privacy'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,7 +158,6 @@ function SignupContent() {
   const [touched, setTouched] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
-  // OTP confirmation (CloudBase / CN region).
   const [otpCode, setOtpCode] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [resendIn, setResendIn] = useState(0)
@@ -73,10 +187,10 @@ function SignupContent() {
 
   const handleSignup = async () => {
     setTouched(true)
-    if (!validEmail) return toast.error('请输入有效邮箱')
-    if (!validPassword) return toast.error('密码至少 6 位')
-    if (!matches) return toast.error('两次输入的密码不一致')
-    if (!agree) return toast.error('请先同意服务条款与隐私政策')
+    if (!validEmail) return toast.error(t.invalidEmail)
+    if (!validPassword) return toast.error(t.pwShort)
+    if (!matches) return toast.error(t.mismatch)
+    if (!agree) return toast.error(t.mustAgree)
 
     setSubmitting(true)
     const { error, needsConfirmation } = await signUp(trimmed, password)
@@ -84,7 +198,7 @@ function SignupContent() {
     if (error) {
       toast.error(
         error.includes('already registered') || error.includes('already been registered')
-          ? '该邮箱已注册,请直接登录'
+          ? t.alreadyReg
           : error
       )
       return
@@ -93,24 +207,24 @@ function SignupContent() {
       setSentTo(trimmed)
       if (confirmationMethod === 'otp') setResendIn(45)
     } else {
-      toast.success('注册成功')
+      toast.success(t.registered)
       router.replace(next)
     }
   }
 
   const handleVerifyOtp = async () => {
     if (!sentTo || otpCode.length < 6) {
-      toast.error('请输入完整的 6 位验证码')
+      toast.error(t.otpIncomplete)
       return
     }
     setVerifying(true)
     const { error } = await verifyOtp(sentTo, otpCode)
     setVerifying(false)
     if (error) {
-      toast.error(error === 'not_supported' ? '当前后端不支持验证码' : '验证码不正确或已过期')
+      toast.error(error === 'not_supported' ? t.otpUnsupported : t.otpWrong)
       return
     }
-    toast.success('注册成功')
+    toast.success(t.registered)
     router.replace(next)
   }
 
@@ -121,7 +235,7 @@ function SignupContent() {
       toast.error(error)
       return
     }
-    toast.success('验证码已重新发送')
+    toast.success(t.otpResent)
     setResendIn(45)
   }
 
@@ -133,23 +247,22 @@ function SignupContent() {
     setResendIn(0)
   }
 
-  const loginHref = `/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`
-
   // Backend not configured → friendly placeholder.
   if (!enabled) {
     return (
-      <AuthShell eyebrow="CREATE ACCOUNT" brandTitle="创建你的 LVJIN 账号">
+      <AuthShell eyebrow="CREATE ACCOUNT" brandTitle={t.brandTitle}>
         <div className="space-y-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
           <div className="flex items-center gap-3">
             <ShieldAlert className="size-5 text-amber-400" />
-            <h2 className="text-lg font-semibold">社区暂未开放</h2>
+            <h2 className="text-lg font-semibold">{t.commClosed}</h2>
           </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            注册服务还没接通(<code className="font-mono text-xs">NEXT_PUBLIC_SUPABASE_*</code>{' '}
-            未配置)。教程内容仍可正常访问。
+            {t.backendOff}
+            <code className="font-mono text-xs">NEXT_PUBLIC_SUPABASE_*</code>
+            {t.backendOff2}
           </p>
           <Button asChild size="sm" variant="outline">
-            <Link href="/">返回首页</Link>
+            <Link href={homeHref}>{t.backHome}</Link>
           </Button>
         </div>
       </AuthShell>
@@ -161,16 +274,17 @@ function SignupContent() {
     // CloudBase (CN) confirms with a one-time code.
     if (confirmationMethod === 'otp') {
       return (
-        <AuthShell eyebrow="CREATE ACCOUNT" brandTitle="创建你的 LVJIN 账号">
+        <AuthShell eyebrow="CREATE ACCOUNT" brandTitle={t.brandTitle}>
           <div className="space-y-6">
             <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 ring-1 ring-primary/30">
               <KeyRound className="size-7 text-primary" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">输入验证码</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t.otpTitle}</h2>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                我们向 <strong className="break-all text-foreground">{sentTo}</strong> 发送了一封
-                6 位验证码邮件,输入它即可完成注册。
+                {t.otpSentPre}
+                <strong className="break-all text-foreground">{sentTo}</strong>
+                {t.otpSentPost}
               </p>
             </div>
 
@@ -198,11 +312,11 @@ function SignupContent() {
               {verifying ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  验证中…
+                  {t.verifying}
                 </>
               ) : (
                 <>
-                  验证并登录
+                  {t.verifyLogin}
                   <ArrowRight className="size-4" />
                 </>
               )}
@@ -210,7 +324,7 @@ function SignupContent() {
 
             <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-4 py-3 text-xs">
               <span className="text-muted-foreground">
-                {resendIn > 0 ? `${resendIn} 秒后可重发` : '没收到?检查垃圾邮件或重新发送'}
+                {resendIn > 0 ? t.resendIn(resendIn) : t.notReceived}
               </span>
               <button
                 type="button"
@@ -218,7 +332,7 @@ function SignupContent() {
                 disabled={resendIn > 0}
                 className="shrink-0 font-medium text-foreground underline underline-offset-4 hover:text-primary disabled:opacity-50 disabled:no-underline"
               >
-                重新发送
+                {t.resend}
               </button>
             </div>
 
@@ -227,7 +341,7 @@ function SignupContent() {
               onClick={backToForm}
               className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
-              ← 换个邮箱重试
+              {t.changeEmail}
             </button>
           </div>
         </AuthShell>
@@ -236,31 +350,32 @@ function SignupContent() {
 
     // Supabase (global) confirms with a clickable email link.
     return (
-      <AuthShell eyebrow="CREATE ACCOUNT" brandTitle="创建你的 LVJIN 账号">
+      <AuthShell eyebrow="CREATE ACCOUNT" brandTitle={t.brandTitle}>
         <div className="space-y-6">
           <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/15 ring-1 ring-emerald-500/30">
             <MailCheck className="size-7 text-emerald-400" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">验证你的邮箱</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t.verifyTitle}</h2>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              确认链接已发往 <strong className="break-all text-foreground">{sentTo}</strong>
-              。点击邮件中的链接即可激活账号并登录。
+              {t.verifySentPre}
+              <strong className="break-all text-foreground">{sentTo}</strong>
+              {t.verifySentPost}
             </p>
           </div>
           <div className="rounded-lg border border-border/60 bg-muted/30 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-            没收到?检查垃圾邮件文件夹,或{' '}
+            {t.notReceived2Pre}
             <button
               type="button"
               onClick={backToForm}
               className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
             >
-              换个邮箱重试
+              {t.notReceived2Btn}
             </button>
-            。
+            {t.notReceived2Post}
           </div>
           <Button asChild variant="outline" className="w-full">
-            <Link href={loginHref}>去登录</Link>
+            <Link href={loginHref}>{t.goLogin}</Link>
           </Button>
         </div>
       </AuthShell>
@@ -268,17 +383,17 @@ function SignupContent() {
   }
 
   return (
-    <AuthShell eyebrow="CREATE ACCOUNT" brandTitle="创建你的 LVJIN 账号">
+    <AuthShell eyebrow="CREATE ACCOUNT" brandTitle={t.brandTitle}>
       <div className="space-y-7">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">创建账号</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t.createTitle}</h2>
           <p className="text-sm text-muted-foreground">
-            已有账号?{' '}
+            {t.haveAccount}{' '}
             <Link
               href={loginHref}
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
-              去登录
+              {t.login}
             </Link>
           </p>
         </div>
@@ -290,7 +405,7 @@ function SignupContent() {
             <div className="relative flex items-center gap-3">
               <div className="h-px flex-1 bg-border/60" />
               <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                或使用邮箱注册
+                {t.orEmail}
               </span>
               <div className="h-px flex-1 bg-border/60" />
             </div>
@@ -307,7 +422,7 @@ function SignupContent() {
           {/* Email */}
           <div className="space-y-1.5">
             <Label htmlFor="email" className="text-xs font-medium text-muted-foreground">
-              邮箱
+              {t.email}
             </Label>
             <div className="relative">
               <Mail
@@ -330,7 +445,7 @@ function SignupContent() {
             </div>
             {suggestion && (
               <p className="text-xs text-muted-foreground">
-                是不是想输入{' '}
+                {t.didYouMeanPre}
                 <button
                   type="button"
                   onClick={() => setEmail(suggestion)}
@@ -338,7 +453,7 @@ function SignupContent() {
                 >
                   {suggestion}
                 </button>
-                ?
+                {t.didYouMeanPost}
               </p>
             )}
           </div>
@@ -346,7 +461,7 @@ function SignupContent() {
           {/* Password + strength meter */}
           <div className="space-y-1.5">
             <Label htmlFor="password" className="text-xs font-medium text-muted-foreground">
-              密码
+              {t.password}
             </Label>
             <div className="relative">
               <Lock
@@ -357,7 +472,7 @@ function SignupContent() {
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                placeholder="至少 6 位"
+                placeholder={t.pwPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => setTouched(true)}
@@ -367,7 +482,7 @@ function SignupContent() {
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                aria-label={showPassword ? t.hidePw : t.showPw}
                 className="absolute right-2 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
@@ -396,7 +511,7 @@ function SignupContent() {
           {/* Confirm password */}
           <div className="space-y-1.5">
             <Label htmlFor="confirm" className="text-xs font-medium text-muted-foreground">
-              确认密码
+              {t.confirmPw}
             </Label>
             <div className="relative">
               <Lock
@@ -407,7 +522,7 @@ function SignupContent() {
                 id="confirm"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
-                placeholder="再次输入密码"
+                placeholder={t.confirmPlaceholder}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 onBlur={() => setTouched(true)}
@@ -418,7 +533,7 @@ function SignupContent() {
                 <Check className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-emerald-400" />
               )}
             </div>
-            {confirmError && <p className="text-xs text-destructive">两次输入的密码不一致</p>}
+            {confirmError && <p className="text-xs text-destructive">{t.mismatch}</p>}
           </div>
 
           {/* Agree to terms */}
@@ -430,26 +545,27 @@ function SignupContent() {
               className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-border bg-transparent accent-primary"
             />
             <span className="text-[11px] leading-relaxed text-muted-foreground">
-              我已阅读并同意
+              {t.agreePre}
               <Link
-                href="/terms"
+                href={termsHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="mx-1 underline underline-offset-2 hover:text-foreground"
               >
-                服务条款
+                {t.terms}
               </Link>
-              与
+              {t.and}
               <Link
-                href="/privacy"
+                href={privacyHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 className="mx-1 underline underline-offset-2 hover:text-foreground"
               >
-                隐私政策
+                {t.privacy}
               </Link>
+              {t.agreePost}
             </span>
           </label>
 
@@ -461,11 +577,11 @@ function SignupContent() {
             {submitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                创建中…
+                {t.creating}
               </>
             ) : (
               <>
-                创建账号
+                {t.createBtn}
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </>
             )}

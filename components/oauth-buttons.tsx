@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/use-auth'
 import { oauthProviders as regionProviders, type OAuthProvider } from '@/lib/region'
@@ -52,6 +53,8 @@ export function OAuthButtons({
 }) {
   const { signInWithGitHub, signInWithGoogle } = useAuth()
   const [busy, setBusy] = useState<'github' | 'google' | null>(null)
+  const isJa = usePathname()?.startsWith('/ja') ?? false
+  const cont = (p: string) => (isJa ? `${p} で続行` : `使用 ${p} 继续`)
 
   if (providers.length === 0) return null
 
@@ -81,7 +84,7 @@ export function OAuthButtons({
           ) : (
             <GitHubMark className="size-4" />
           )}
-          <span>使用 GitHub 继续</span>
+          <span>{cont('GitHub')}</span>
           <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
         </button>
       )}
@@ -98,7 +101,7 @@ export function OAuthButtons({
           ) : (
             <GoogleMark className="size-4" />
           )}
-          <span>使用 Google 继续</span>
+          <span>{cont('Google')}</span>
           <ArrowRight className="size-3.5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
         </button>
       )}

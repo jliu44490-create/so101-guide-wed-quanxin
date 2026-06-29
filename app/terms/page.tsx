@@ -5,7 +5,10 @@ export const metadata: Metadata = {
   title: '服务条款',
   description:
     'lvjin.online（绿晋科技 LVJIN ROBOTICS）SO101 模仿学习平台的服务条款：账号、付费内容、AI 助手、社区规范、知识产权与免责声明。',
-  alternates: { canonical: '/terms' },
+  alternates: {
+    canonical: '/terms',
+    languages: { 'zh-CN': '/terms', 'ja-JP': '/ja/terms' }
+  },
   openGraph: {
     title: '服务条款 · LVJIN ROBOTICS',
     description: 'SO101 模仿学习平台的使用条款与规则。',

@@ -92,8 +92,8 @@ export function Footer() {
   const switchLabel = isJa ? '中文' : '日本語'
   const legalLinks: LinkItem[] = isJa
     ? [
-        { label: '利用規約', href: '/terms' },
-        { label: 'プライバシー', href: '/privacy' }
+        { label: '利用規約', href: '/ja/terms' },
+        { label: 'プライバシー', href: '/ja/privacy' }
       ]
     : [
         { label: '服务条款', href: '/terms' },

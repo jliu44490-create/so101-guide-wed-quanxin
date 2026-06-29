@@ -5,7 +5,10 @@ export const metadata: Metadata = {
   title: '隐私政策',
   description:
     'lvjin.online（绿晋科技 LVJIN ROBOTICS）隐私政策：我们收集哪些数据、如何使用、第三方处理者（Supabase / Stripe / DeepSeek / Resend / Vercel）、AI 对话存储说明，以及如何删除你的账号与数据。',
-  alternates: { canonical: '/privacy' },
+  alternates: {
+    canonical: '/privacy',
+    languages: { 'zh-CN': '/privacy', 'ja-JP': '/ja/privacy' }
+  },
   openGraph: {
     title: '隐私政策 · LVJIN ROBOTICS',
     description: '我们如何收集、使用与保护你的数据，以及你的权利。',

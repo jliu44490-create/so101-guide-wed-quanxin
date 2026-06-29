@@ -43,6 +43,20 @@ function renderBlock(block: LegalBlock, key: number) {
   )
 }
 
+interface LegalChrome {
+  updatedLabel: string
+  contactTitle: string
+  contactBtn: string
+  seeAlso: string
+}
+
+const DEFAULT_CHROME: LegalChrome = {
+  updatedLabel: '最后更新',
+  contactTitle: '联系我们',
+  contactBtn: '邮件联系',
+  seeAlso: '另见：'
+}
+
 export function LegalPage({
   badge,
   title,
@@ -50,7 +64,8 @@ export function LegalPage({
   intro,
   sections,
   contactNote,
-  related
+  related,
+  t = DEFAULT_CHROME
 }: {
   badge: string
   title: string
@@ -59,6 +74,8 @@ export function LegalPage({
   sections: LegalSection[]
   contactNote: string
   related: { href: string; label: string }
+  /** Locale chrome labels. Defaults to Chinese. */
+  t?: LegalChrome
 }) {
   return (
     <div className="min-h-screen">
@@ -80,7 +97,7 @@ export function LegalPage({
               </h1>
             </Reveal>
             <Reveal delay={200}>
-              <p className="mt-4 text-sm text-muted-foreground">最后更新：{updated}</p>
+              <p className="mt-4 text-sm text-muted-foreground">{t.updatedLabel}：{updated}</p>
             </Reveal>
             {intro ? (
               <Reveal delay={280}>
@@ -107,18 +124,18 @@ export function LegalPage({
           </div>
 
           <div className="mt-14 rounded-2xl border border-border/60 bg-card/60 p-6 backdrop-blur-md sm:p-8">
-            <h2 className="text-lg font-semibold">联系我们</h2>
+            <h2 className="text-lg font-semibold">{t.contactTitle}</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{contactNote}</p>
             <Button asChild className="mt-4">
               <a href={siteConfig.links.inquiry}>
                 <Mail className="mr-1.5 h-4 w-4" />
-                邮件联系
+                {t.contactBtn}
               </a>
             </Button>
           </div>
 
           <p className="mt-8 text-sm text-muted-foreground">
-            另见：
+            {t.seeAlso}
             <Link
               href={related.href}
               className="ml-1 underline underline-offset-2 hover:text-foreground"

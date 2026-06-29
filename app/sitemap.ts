@@ -27,7 +27,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/ja/assistant`, lastModified, changeFrequency: 'monthly', priority: 0.65 },
     { url: `${base}/ja/glossary`, lastModified, changeFrequency: 'monthly', priority: 0.55 },
     { url: `${base}/ja/resources`, lastModified, changeFrequency: 'monthly', priority: 0.55 },
-    { url: `${base}/ja/about`, lastModified, changeFrequency: 'yearly', priority: 0.45 }
+    { url: `${base}/ja/about`, lastModified, changeFrequency: 'yearly', priority: 0.45 },
+    { url: `${base}/ja/terms`, lastModified, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${base}/ja/privacy`, lastModified, changeFrequency: 'yearly', priority: 0.3 }
   ]
 
   const chapterRoutes: MetadataRoute.Sitemap = chapters.flatMap((chapter) => [

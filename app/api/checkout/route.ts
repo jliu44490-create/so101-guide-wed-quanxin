@@ -65,8 +65,8 @@ export async function POST(req: Request) {
     // Repeatable — no "already owned" check.
     priceId = process.env.STRIPE_PRICE_AI_CREDITS
     if (!priceId) return NextResponse.json({ error: '额外配额暂不可购买' }, { status: 400 })
-    successUrl = `${origin}/ai?topup=success`
-    cancelUrl = `${origin}/ai?topup=cancelled`
+    successUrl = `${origin}${localePrefix}/ai?topup=success`
+    cancelUrl = `${origin}${localePrefix}/ai?topup=cancelled`
   } else {
     // All-access: don't let an already-entitled user pay twice.
     const { data: existing } = await admin

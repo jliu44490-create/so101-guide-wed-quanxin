@@ -23,10 +23,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const jaStatic: MetadataRoute.Sitemap = [
     { url: `${base}/ja`, lastModified, changeFrequency: 'weekly', priority: 0.95 },
     { url: `${base}/ja/learn`, lastModified, changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${base}/ja/ai`, lastModified, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/ja/community`, lastModified, changeFrequency: 'daily', priority: 0.8 },
     { url: `${base}/ja/unlock`, lastModified, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/ja/diagnose`, lastModified, changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${base}/ja/assistant`, lastModified, changeFrequency: 'monthly', priority: 0.65 },
     { url: `${base}/ja/glossary`, lastModified, changeFrequency: 'monthly', priority: 0.55 },
     { url: `${base}/ja/resources`, lastModified, changeFrequency: 'monthly', priority: 0.55 },
     { url: `${base}/ja/about`, lastModified, changeFrequency: 'yearly', priority: 0.45 },

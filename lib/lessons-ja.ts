@@ -1376,7 +1376,7 @@ export const lessonsJa: Record<number, Lesson> = {
           '📋 3 大エラー：**ImportError / RuntimeError / FileNotFoundError**',
           '💾 `2>&1 | tee error.log` でエラーを完全保存',
           '🙋 質問には **エラースタック + コマンド + 試したこと**を添える、スクショだけにしない',
-          '🤖 本サイトの [AI アシスタント](/ja/assistant) が相談の第一候補'
+          '🤖 本サイトの [LVJIN AI](/ja/ai) が相談の第一候補'
         ]
       },
       {

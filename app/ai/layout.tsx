@@ -7,7 +7,13 @@ export const metadata: Metadata = {
   title: 'LVJIN AI · 模仿学习助教',
   description:
     'LVJIN AI —— SO-101 / LeRobot 模仿学习的中文 AI 助教。环境搭建、校准、数据采集、ACT 训练、推理部署、报错排查随时问,答案基于站内课程与错误库(RAG)。',
-  alternates: { canonical: '/ai' },
+  alternates: {
+    canonical: '/ai',
+    languages: {
+      'zh-CN': '/ai',
+      'ja-JP': '/ja/ai'
+    }
+  },
   openGraph: {
     type: 'website',
     url: '/ai',

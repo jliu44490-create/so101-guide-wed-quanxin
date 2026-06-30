@@ -12,11 +12,14 @@
  */
 
 import { errorDatabase } from '@/lib/course-data'
+import { errorDatabaseJa } from '@/lib/course-data-ja'
 import type { DiagnosticResult } from '@/lib/types'
 
 export type OS = 'windows' | 'macos' | 'linux'
 export type GPU = 'nvidia' | 'apple' | 'none'
 export type Installer = 'conda' | 'venv'
+/** Which language the generated step text / diagnosis should be in. */
+export type ScaffoldLocale = 'zh' | 'ja'
 
 export interface SetupParams {
   os: OS
@@ -43,113 +46,168 @@ export interface SetupPlan {
 }
 
 const OS_LABEL: Record<OS, string> = { windows: 'Windows', macos: 'macOS', linux: 'Linux' }
-const GPU_LABEL: Record<GPU, string> = { nvidia: 'NVIDIA 显卡', apple: 'Apple 芯片', none: '无独立显卡' }
+const GPU_LABEL: Record<ScaffoldLocale, Record<GPU, string>> = {
+  zh: { nvidia: 'NVIDIA 显卡', apple: 'Apple 芯片', none: '无独立显卡' },
+  ja: { nvidia: 'NVIDIA GPU', apple: 'Apple シリコン', none: '独立 GPU 無し' }
+}
 
 /** ffmpeg install line per OS (needed for video encode/decode during recording). */
-function ffmpegStep(os: OS, installer: Installer): SetupStep {
+function ffmpegStep(os: OS, installer: Installer, loc: ScaffoldLocale): SetupStep {
+  const ja = loc === 'ja'
   if (installer === 'conda') {
     return {
-      label: '安装 ffmpeg（视频编解码）',
+      label: ja ? 'ffmpeg をインストール（動画コーデック）' : '安装 ffmpeg（视频编解码）',
       command: 'conda install -y ffmpeg -c conda-forge',
-      note: '采集时录视频需要 ffmpeg。用 conda 装最省事，跨系统一致。'
+      note: ja
+        ? '収録時の動画記録に ffmpeg が必要です。conda が最も簡単で、OS をまたいで一貫します。'
+        : '采集时录视频需要 ffmpeg。用 conda 装最省事，跨系统一致。'
     }
   }
   if (os === 'linux') {
-    return { label: '安装 ffmpeg', command: 'sudo apt update && sudo apt install -y ffmpeg', note: 'Debian/Ubuntu 用 apt；其他发行版用对应包管理器。' }
+    return {
+      label: ja ? 'ffmpeg をインストール' : '安装 ffmpeg',
+      command: 'sudo apt update && sudo apt install -y ffmpeg',
+      note: ja
+        ? 'Debian/Ubuntu は apt。他のディストリは対応するパッケージマネージャを使ってください。'
+        : 'Debian/Ubuntu 用 apt；其他发行版用对应包管理器。'
+    }
   }
   if (os === 'macos') {
-    return { label: '安装 ffmpeg', command: 'brew install ffmpeg', note: '需要先装 Homebrew（brew.sh）。' }
+    return {
+      label: ja ? 'ffmpeg をインストール' : '安装 ffmpeg',
+      command: 'brew install ffmpeg',
+      note: ja ? '先に Homebrew（brew.sh）が必要です。' : '需要先装 Homebrew（brew.sh）。'
+    }
   }
-  return { label: '安装 ffmpeg', command: 'winget install Gyan.FFmpeg', note: 'Windows 也可去 ffmpeg.org 下载并加进 PATH。' }
+  return {
+    label: ja ? 'ffmpeg をインストール' : '安装 ffmpeg',
+    command: 'winget install Gyan.FFmpeg',
+    note: ja
+      ? 'Windows は ffmpeg.org からダウンロードして PATH に追加してもOK。'
+      : 'Windows 也可去 ffmpeg.org 下载并加进 PATH。'
+  }
 }
 
 /** Activation command differs by installer + OS. */
-function activateStep(os: OS, installer: Installer): SetupStep {
+function activateStep(os: OS, installer: Installer, loc: ScaffoldLocale): SetupStep {
+  const ja = loc === 'ja'
   if (installer === 'conda') {
     return {
-      label: '激活环境（每开新终端都要做）',
+      label: ja ? '環境を有効化（新しいターミナルごとに必要）' : '激活环境（每开新终端都要做）',
       command: 'conda activate lerobot',
-      note: '忘记激活是 ModuleNotFoundError 的头号原因。提示符出现 (lerobot) 才算成功。'
+      note: ja
+        ? '有効化忘れは ModuleNotFoundError の最多原因です。プロンプトに (lerobot) が出れば成功。'
+        : '忘记激活是 ModuleNotFoundError 的头号原因。提示符出现 (lerobot) 才算成功。'
     }
   }
   return {
-    label: '激活环境（每开新终端都要做）',
+    label: ja ? '環境を有効化（新しいターミナルごとに必要）' : '激活环境（每开新终端都要做）',
     command: os === 'windows' ? 'lerobot-env\\Scripts\\activate' : 'source lerobot-env/bin/activate',
-    note: '提示符出现 (lerobot-env) 才算成功。'
+    note: ja ? 'プロンプトに (lerobot-env) が出れば成功。' : '提示符出现 (lerobot-env) 才算成功。'
   }
 }
 
-function createEnvStep(installer: Installer): SetupStep {
+function createEnvStep(installer: Installer, loc: ScaffoldLocale): SetupStep {
+  const ja = loc === 'ja'
   if (installer === 'conda') {
     return {
-      label: '创建独立环境（Python 3.10）',
+      label: ja ? '独立環境を作成（Python 3.10）' : '创建独立环境（Python 3.10）',
       command: 'conda create -n lerobot python=3.10 -y',
-      note: '没装 conda 先装 Miniconda（不要 Anaconda，太重）：docs.conda.io。-y 表示不再追问、直接装。'
+      note: ja
+        ? 'conda が無ければ先に Miniconda を（Anaconda は重いので不要）：docs.conda.io。-y は確認せずインストールする意味です。'
+        : '没装 conda 先装 Miniconda（不要 Anaconda，太重）：docs.conda.io。-y 表示不再追问、直接装。'
     }
   }
   return {
-    label: '创建独立环境（Python 3.10）',
+    label: ja ? '独立環境を作成（Python 3.10）' : '创建独立环境（Python 3.10）',
     command: 'python3.10 -m venv lerobot-env',
-    note: '需要本机已有 Python 3.10。推荐用 conda，能顺带隔离 Python 版本本身。'
+    note: ja
+      ? 'ローカルに Python 3.10 が必要です。conda 推奨（Python のバージョン自体も隔離できます）。'
+      : '需要本机已有 Python 3.10。推荐用 conda，能顺带隔离 Python 版本本身。'
   }
 }
 
 /** GPU-specific caveats + an optional extra step. */
-function gpuAdvice(gpu: GPU): { notes: string[]; extra?: SetupStep } {
+function gpuAdvice(gpu: GPU, loc: ScaffoldLocale): { notes: string[]; extra?: SetupStep } {
+  const ja = loc === 'ja'
   if (gpu === 'nvidia') {
     return {
-      notes: [
-        '装完跑验证那步，如果 cuda 显示 False：说明装到了 CPU 版 PyTorch。按你的 CUDA 版本重装，例如 `pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu121`（cu121 换成你的版本）。',
-        '用 `nvidia-smi` 看右上角 CUDA Version 决定用 cu118 / cu121 / cu124。'
-      ]
+      notes: ja
+        ? [
+            'インストール後の検証で cuda が False の場合：CPU 版 PyTorch が入っています。CUDA バージョンに合わせて再インストールしてください。例：`pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu121`（cu121 は自分のバージョンに置換）。',
+            '`nvidia-smi` 右上の CUDA Version を見て cu118 / cu121 / cu124 を選びます。'
+          ]
+        : [
+            '装完跑验证那步，如果 cuda 显示 False：说明装到了 CPU 版 PyTorch。按你的 CUDA 版本重装，例如 `pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu121`（cu121 换成你的版本）。',
+            '用 `nvidia-smi` 看右上角 CUDA Version 决定用 cu118 / cu121 / cu124。'
+          ]
     }
   }
   if (gpu === 'apple') {
     return {
-      notes: [
-        'Apple 芯片用 MPS 后端，能跑推理与小规模训练；大数据集训练仍偏慢。',
-        '验证那步 cuda 会是 False，这是正常的（Mac 没有 CUDA），用 MPS 即可。'
-      ]
+      notes: ja
+        ? [
+            'Apple シリコンは MPS バックエンドを使用。推論や小規模な学習は可能ですが、大規模データの学習は遅めです。',
+            '検証で cuda は False になりますが正常です（Mac に CUDA は無い）。MPS を使えばOK。'
+          ]
+        : [
+            'Apple 芯片用 MPS 后端，能跑推理与小规模训练；大数据集训练仍偏慢。',
+            '验证那步 cuda 会是 False，这是正常的（Mac 没有 CUDA），用 MPS 即可。'
+          ]
     }
   }
   return {
-    notes: [
-      '无独立显卡:概念学习、环境搭建、数据采集、实机推理都能做。',
-      '只有 ACT「模型训练」很吃 GPU——没显卡可先用云 GPU（如 Colab / AutoDL）只跑训练那一步,采集和部署仍在本地。'
-    ]
+    notes: ja
+      ? [
+          '独立 GPU 無し：概念学習・環境構築・データ収集・実機推論はすべて可能。',
+          'ACT の「モデル学習」だけは GPU を多用します。GPU が無ければクラウド GPU（Colab / AutoDL 等）で学習ステップだけ回し、収集と推論はローカルでOK。'
+        ]
+      : [
+          '无独立显卡:概念学习、环境搭建、数据采集、实机推理都能做。',
+          '只有 ACT「模型训练」很吃 GPU——没显卡可先用云 GPU（如 Colab / AutoDL）只跑训练那一步,采集和部署仍在本地。'
+        ]
   }
 }
 
 /**
  * Build a tailored LeRobot environment setup plan, grounded in chapter 3.
  */
-export function buildSetupScript(p: SetupParams): SetupPlan {
+export function buildSetupScript(p: SetupParams, loc: ScaffoldLocale = 'zh'): SetupPlan {
+  const ja = loc === 'ja'
   const installer: Installer = p.installer ?? 'conda'
   const steps: SetupStep[] = [
-    createEnvStep(installer),
-    activateStep(p.os, installer),
-    ffmpegStep(p.os, installer),
+    createEnvStep(installer, loc),
+    activateStep(p.os, installer, loc),
+    ffmpegStep(p.os, installer, loc),
     {
-      label: '获取 LeRobot 源码',
+      label: ja ? 'LeRobot のソースを取得' : '获取 LeRobot 源码',
       command: 'git clone https://github.com/huggingface/lerobot.git',
-      note: '需要先装 git。克隆到你想放代码的目录下。'
+      note: ja
+        ? '先に git が必要です。コードを置きたいディレクトリにクローンします。'
+        : '需要先装 git。克隆到你想放代码的目录下。'
     },
     {
-      label: '安装 LeRobot',
+      label: ja ? 'LeRobot をインストール' : '安装 LeRobot',
       command: 'cd lerobot && pip install -e .',
-      note: '从源码可编辑安装(站内第 3 章一致)。装好后 lerobot-record / lerobot-train 等命令即可用。'
+      note: ja
+        ? 'ソースから編集可能インストール（サイト第 3 章と同じ）。完了後 lerobot-record / lerobot-train などが使えます。'
+        : '从源码可编辑安装(站内第 3 章一致)。装好后 lerobot-record / lerobot-train 等命令即可用。'
     },
     {
-      label: '验证安装',
+      label: ja ? 'インストールを検証' : '验证安装',
       command: `python -c "import lerobot, torch; print('lerobot OK; cuda:', torch.cuda.is_available())"`,
-      note: '看到 “lerobot OK” 就装好了。cuda 是否为 True 见下方显卡说明。'
+      note: ja
+        ? '「lerobot OK」が出れば成功。cuda が True かは下の GPU 説明を参照。'
+        : '看到 “lerobot OK” 就装好了。cuda 是否为 True 见下方显卡说明。'
     }
   ]
 
-  const { notes, extra } = gpuAdvice(p.gpu)
+  const { notes, extra } = gpuAdvice(p.gpu, loc)
   if (extra) steps.splice(5, 0, extra)
 
-  const header = `# LeRobot 环境一键脚本 — ${OS_LABEL[p.os]} · ${GPU_LABEL[p.gpu]} · ${installer}\n# 由 LVJIN AI 按站内第 3 章生成。逐行复制到终端运行;遇到 sudo 会让你输密码。`
+  const header = ja
+    ? `# LeRobot 環境セットアップスクリプト — ${OS_LABEL[p.os]} · ${GPU_LABEL.ja[p.gpu]} · ${installer}\n# LVJIN AI がサイト第 3 章に基づき生成。1 行ずつターミナルに貼って実行。sudo はパスワードを求められます。`
+    : `# LeRobot 环境一键脚本 — ${OS_LABEL[p.os]} · ${GPU_LABEL.zh[p.gpu]} · ${installer}\n# 由 LVJIN AI 按站内第 3 章生成。逐行复制到终端运行;遇到 sudo 会让你输密码。`
   const script = [header, '', ...steps.map((s) => `# ${s.label}\n${s.command}`)].join('\n')
 
   return { steps, script, notes }
@@ -239,14 +297,15 @@ export interface DiagnoseHit {
 }
 
 const errorEntries = Object.entries(errorDatabase).map(([key, result]) => ({ key, result }))
+const errorEntriesJa = Object.entries(errorDatabaseJa).map(([key, result]) => ({ key, result }))
 
 /** Keyword-match a raw error message against the site error database. */
-export function diagnoseError(text: string, limit = 3): DiagnoseHit[] {
+export function diagnoseError(text: string, limit = 3, loc: ScaffoldLocale = 'zh'): DiagnoseHit[] {
   const q = text.toLowerCase().trim()
   if (!q) return []
   const terms = q.split(/[\s,:;]+/).filter((t) => t.length >= 3)
   const hits: DiagnoseHit[] = []
-  for (const { key, result } of errorEntries) {
+  for (const { key, result } of loc === 'ja' ? errorEntriesJa : errorEntries) {
     const hay = `${key} ${result.error} ${result.cause} ${result.solution}`.toLowerCase()
     let score = 0
     if (hay.includes(q)) score += 10 // whole-string hit

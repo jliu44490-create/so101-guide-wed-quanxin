@@ -617,9 +617,9 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="w-full justify-start">
-                    <Link href="/ja/assistant">
+                    <Link href="/ja/ai">
                       <ChevronRight className="mr-2 h-3.5 w-3.5" />
-                      AI アシスタントに質問
+                      LVJIN AI に質問
                     </Link>
                   </Button>
                   <CompanionExplainButton

@@ -214,8 +214,8 @@ function DiagnoseContent() {
                       <p className="mt-3 font-medium">該当するエラーがありません</p>
                       <p className="mt-1 text-sm text-muted-foreground">
                         キーワードを変えるか、{' '}
-                        <Link href="/ja/assistant" className="text-primary hover:underline">
-                          AI アシスタントに質問
+                        <Link href="/ja/ai" className="text-primary hover:underline">
+                          LVJIN AI に質問
                         </Link>
                       </p>
                     </CardContent>
@@ -283,11 +283,11 @@ function DiagnoseContent() {
                   <div className="min-w-0 flex-1 text-sm">
                     <p className="font-medium">該当が無い場合は AI に相談</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      完整なエラースタックや実行コマンドを添えて AI アシスタントに送ると精度が上がります。
+                      完全なエラースタックや実行コマンドを添えて LVJIN AI に送ると精度が上がります。
                     </p>
                   </div>
                   <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
-                    <Link href={query ? `/ja/assistant?q=${encodeURIComponent(query)}` : '/ja/assistant'}>
+                    <Link href={query ? `/ja/ai?q=${encodeURIComponent(query)}` : '/ja/ai'}>
                       質問する
                       <ArrowRight className="ml-1 h-3.5 w-3.5" />
                     </Link>

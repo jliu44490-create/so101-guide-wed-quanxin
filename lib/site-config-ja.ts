@@ -49,7 +49,7 @@ export const siteConfigJa = {
     { href: '/ja/learn', label: '学習パス' },
     { href: '/ja/community', label: 'コミュニティ' },
     { href: '/ja/diagnose', label: 'トラブル診断' },
-    { href: '/ja/assistant', label: 'AI アシスタント' }
+    { href: '/ja/ai', label: 'LVJIN AI' }
   ],
   navExtra: [
     { href: '/ja/glossary', label: '用語集' },

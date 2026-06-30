@@ -228,9 +228,9 @@ export default function HomePageJa() {
                   </Magnetic>
                   <Magnetic strength={0.5} range={140}>
                     <Button asChild variant="outline" size="lg" className="h-12">
-                      <Link href="/ja/assistant">
+                      <Link href="/ja/ai">
                         <Bot className="mr-1.5 h-4 w-4" />
-                        AI アシスタントに質問
+                        LVJIN AI に質問
                       </Link>
                     </Button>
                   </Magnetic>

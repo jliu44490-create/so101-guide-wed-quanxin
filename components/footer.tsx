@@ -66,7 +66,7 @@ const sectionsJa: { title: string; links: LinkItem[] }[] = [
     title: 'ツール',
     links: [
       { label: 'トラブル診断', href: '/ja/diagnose' },
-      { label: 'AI アシスタント', href: '/ja/assistant' }
+      { label: 'LVJIN AI', href: '/ja/ai' }
     ]
   },
   {

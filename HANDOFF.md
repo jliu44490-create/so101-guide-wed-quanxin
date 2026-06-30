@@ -1,13 +1,29 @@
-# HANDOFF —— 接手须知(中国版工作)
+# HANDOFF —— 接手须知
 
 > 给新会话:读这份就能接上,不用让用户重讲。回复用**简体中文**;**推送 main / 触发上线前先问用户**。
-> 最后更新:2026-06-15。
+> 最后更新:2026-06-30。
 
 ---
 
-## 0. 一句话现状
+## 0. 一句话现状(两条并行线)
 
-国际版 `lvjin.online`(Vercel)一直好好的、零影响。**中国版从零搭通了一整套认证并部署上线 `cn.lvjin.online`(香港服务器),但撞上一个核心坎:大陆直连太慢、不可用。** 社区评论功能代码写完了但没部署。当前**暂停**,等用户定"怎么解决慢"的方向。
+1. **国际版 `lvjin.online`(Vercel)= 主线,持续在做、状态健康。** 截至 2026-06-30 已完成「日文全站平价化 + 社区对所有人开放」并全部推 `origin/main` 上线(见 §0.5)。
+2. **中国版(大陆可直连版)= 支线,暂停中。** 认证已搭通并上线 `cn.lvjin.online`(香港),但撞上核心坎:大陆直连太慢、不可用;社区云函数代码写完未部署。等用户定"怎么解决慢"的方向(见 §3–5)。
+
+---
+
+## 0.5 国际版近期交付(2026-06-30,已全部上线 origin/main)
+
+本批工作让日文版 `/ja` 与中文版**功能平价**,并把社区改为开放。全部已构建/lint 通过、推送上线:
+
+- **日文全站覆盖**:9 章富内容 + 互动课(`/ja/learn/[id]` + `/play`)、社区页 `/ja/community`、法律页 `/ja/terms` `/ja/privacy`、解锁页 `/ja/unlock`、账号/认证页(login/signup/forgot/reset/settings + `/ja/u/[username]`)、现代 AI 页 `/ja/ai`(`/ja/assistant` 已永久重定向过去,旧关键词引擎已删)。
+- **日文付费墙**:与中文一致(前 2 章免费、其余买断),`ContentGate`/`PaywallGate` 已 locale-aware。
+- **共用组件本地化**:header/footer、discussion、learning-companion、command-palette、setup-wizard(+`lib/scaffold` 加 `loc` 参数)、content-gate 等全部按 `usePathname` 的 `isJa` 分支。
+- **`/ja/learn` 对齐中文**:补 LearnHud(等级/XP/徽章)+ 🗺️ 学習マップ(LearnPath);`useChapters()` 按路径选 `chaptersJa`/中文数据。
+- **社区对所有登录用户开放(不再需 Plus/解锁)**:`discussion.tsx` 去掉发帖的 entitlement 门(只留登录要求);章节页把 `<Discussion>` 移到 `ContentGate` 外,被锁章节也能讨论;DB RLS 本就只校验登录。相关「社区=Plus 权益」的文案已从 `UNLOCK_BENEFITS`/paywall-gate/unlock 页/账号设置/PAYMENTS.md 移除。
+- 翻译均为 AI 生成,**建议后续找懂日文的人校一遍**(尤其法律/付费文案)。
+
+> 模式:逐批 build+lint+预览验证 → 本地 commit → **推送前问用户**。详细历程见 `git log` 与记忆 `project_ja_parity.md`。
 
 ---
 

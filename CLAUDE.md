@@ -40,6 +40,8 @@ SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router)
 
 站点上线(lvjin.online + SSL)、社区(Supabase + Resend 邮件,不限流)、9 章文档 + 中文互动课、**付费墙已上线正式收款**(Stripe live,前 2 章免费、其余买断)、整站登录墙(`components/auth-gate.tsx`)、账号设置页、移除 GitHub 入口、命令现代化、性能/SEO/无障碍修复、章节状态修复。最新提交见 `git log`。
 
+**日文全站平价 + 社区开放(2026-06-30 上线)**:`/ja` 已与中文功能平价 —— 9 章富内容 + 互动课、社区/法律/解锁/账号认证页、现代 `/ja/ai`(`/ja/assistant` 重定向过去)、日文付费墙、`/ja/learn` 游戏化对齐;共用组件按 `usePathname` 的 `isJa` 本地化。**社区已对所有登录用户开放**(发帖不再需 Plus/解锁;`discussion.tsx` 去权益门 + 章节页 `<Discussion>` 移到 `ContentGate` 外)。翻译为 AI 生成,建议后续人工校对。详见 `HANDOFF.md` §0.5 与记忆 `project_ja_parity.md`。
+
 **LVJIN AI v2(2026-06-19 上线)**:站内 AI 助手 `/ai` —— 多会话历史、打开即自我介绍 + 互动选项芯片、科幻界面、左栏「今日额度」配额条 + 手机端药丸。**仅 Plus** 的电子学习伴侣(全站浮动小球:互动课答对祝贺/答错「讲讲」、文档页「让 LVJIN 讲讲」;设置里可开关,首次弹说明窗)。两档都用 **DeepSeek**(`deepseek-chat`),Plus = 课程全解锁 + 更高每日配额(Free 50k / Plus 300k token/日),超额按 ¥9.9 / 100 万 token 买(`STRIPE_PRICE_AI_CREDITS`)。旧关键词搜索 `/assistant` 已永久重定向到 `/ai`(旧引擎已删)。**Supabase 迁移 §11–14 已跑**。详见 `AI.md`。
 
 ## 🚧 当前进行中：中国版（大陆可直连版）
@@ -51,8 +53,8 @@ SO101 / LVJIN 机械臂**模仿学习 + 社区**网站。Next.js 16 (App Router)
 ## 待办 / 已搁置（需要时再做）
 
 - **Geist 字体**:目前是系统字体,用户可能想换回 Geist
-- **Batch B 业务页**:联系/询价表单、特定商取引法表示、隐私政策、案例展示
-- **日文版**:`/ja` 目前只有文档(互动课与社区仅中文)
+- **Batch B 业务页**:联系/询价表单、特定商取引法表示、案例展示
+- **日文翻译人工校对**:`/ja` 全站文案均为 AI 生成,建议找懂日文的人校一遍(尤其法律/付费)
 - **企业邮箱** `hello@lvjin.online`(Zoho/腾讯)
 - **public/ 清理**:~18MB 冗余,见 `public/CLEANUP.md`
 

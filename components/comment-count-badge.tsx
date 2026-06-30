@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { getThreadCounts } from '@/lib/community'
 import { isSupabaseConfigured } from '@/lib/supabase'
@@ -32,6 +33,7 @@ interface CommentCountBadgeProps {
 const cache = new Map<string, number>()
 
 export function CommentCountBadge({ threadKey, className, alwaysShow = false }: CommentCountBadgeProps) {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
   const [count, setCount] = useState<number | null>(() => cache.get(threadKey) ?? null)
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function CommentCountBadge({ threadKey, className, alwaysShow = false }: 
         'inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2 py-0.5 text-[10px] font-medium text-muted-foreground',
         className
       )}
-      title={`${count} 条讨论`}
+      title={isJa ? `${count} 件のコメント` : `${count} 条讨论`}
     >
       <MessageCircle className="h-2.5 w-2.5" />
       {count}

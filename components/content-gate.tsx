@@ -12,6 +12,7 @@
  */
 
 import type { ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import { chapterRequiresAccess } from '@/lib/paywall'
 import { useEntitlement } from '@/lib/use-entitlement'
@@ -26,6 +27,7 @@ interface ContentGateProps {
 export function ContentGate({ chapterId, what, children }: ContentGateProps) {
   const requires = chapterRequiresAccess(chapterId)
   const { hasAccess, loading } = useEntitlement()
+  const isJa = usePathname()?.startsWith('/ja') ?? false
 
   if (!requires) return <>{children}</>
 
@@ -33,7 +35,7 @@ export function ContentGate({ chapterId, what, children }: ContentGateProps) {
     return (
       <div className="flex items-center justify-center py-24 text-muted-foreground">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        正在检查访问权限…
+        {isJa ? 'アクセス権を確認中…' : '正在检查访问权限…'}
       </div>
     )
   }

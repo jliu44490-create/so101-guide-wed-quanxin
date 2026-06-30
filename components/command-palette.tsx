@@ -99,7 +99,6 @@ export function CommandPalette() {
     '/learn': LayoutGrid,
     '/diagnose': Zap,
     '/ai': Bot,
-    '/assistant': Bot, // JA mirror still uses /ja/assistant (normalizes to /assistant)
     '/glossary': Library,
     '/resources': Layers,
     '/about': Info
@@ -188,7 +187,7 @@ export function CommandPalette() {
         <CommandGroup heading={t.actions}>
           <CommandItem
             value="action-ai-assistant"
-            onSelect={() => go(isJa ? '/ja/assistant' : '/ai')}
+            onSelect={() => go(isJa ? '/ja/ai' : '/ai')}
           >
             <Sparkles className="mr-2 h-4 w-4 text-primary" />
             <span>{t.askAssistant}</span>

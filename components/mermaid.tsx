@@ -83,7 +83,7 @@ export function Mermaid({ source, caption, className }: MermaidProps) {
     return () => {
       cancelled = true
     }
-  }, [source, resolvedTheme])
+  }, [source, resolvedTheme, isJa])
 
   return (
     <figure

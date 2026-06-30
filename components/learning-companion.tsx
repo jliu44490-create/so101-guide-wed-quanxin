@@ -14,7 +14,7 @@
  * the user's daily AI quota (same /api/ai/chat route + metering as /ai).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowUpRight, Send, Sparkles, X } from 'lucide-react'
@@ -41,12 +41,20 @@ interface Bubble {
   cta?: { label: string; prompt: string; display: string }
 }
 
-const CELEBRATE = [
+const CELEBRATE_ZH = [
   '漂亮！这题拿下 🎉',
   '稳！就是这个思路 ✨',
   '太棒了，继续保持 🔥',
   'Nice～手感来了 💪',
   '完美，记住这一点 🌟'
+]
+
+const CELEBRATE_JA = [
+  'お見事！正解です 🎉',
+  'いいね！その調子 ✨',
+  '素晴らしい、その調子で 🔥',
+  'Nice〜乗ってきたね 💪',
+  '完璧、この点を覚えておこう 🌟'
 ]
 
 const uid = () => Math.random().toString(36).slice(2)
@@ -59,6 +67,73 @@ export function LearningCompanion() {
 
   const isPlus = ready && isLoggedIn && hasAccess
   const enabled = isPlus && !!profile?.companion_enabled
+
+  const isJa = pathname?.startsWith('/ja') ?? false
+  // Strip the /ja prefix so route checks (intro-blocked, hide-on-AI) work in both locales.
+  const normalizedPath = isJa ? pathname.replace(/^\/ja/, '') || '/' : pathname
+  const aiHref = isJa ? '/ja/ai' : '/ai'
+  const L = useMemo(
+    () =>
+      isJa
+        ? {
+        celebrate: CELEBRATE_JA,
+        panelTitle: '学習パートナー',
+        panelSub: 'SO-101 を一緒に練習',
+        openFull: 'フル対話を開く',
+        collapse: '閉じる',
+        close: '閉じる',
+        orbLabel: '学習パートナー',
+        emptyL1: '回答時にそっと手伝います。',
+        emptyL2: 'ここで直接聞いてもOK。',
+        inputPlaceholder: 'パートナーに質問…',
+        quotaOut: '今日の AI 利用枠を使い切りました〜フル対話ページでチャージして続けられます。',
+        glitch: 'ちょっと問題が発生しました。あとでもう一度お試しください。',
+        netErr: 'ネットワークが切れたようです。あとでまた聞いてください。',
+        wrongBubble: '大丈夫、間違えるほど身につきます〜解説しましょうか？',
+        wrongCtaLabel: 'なぜか解説',
+        wrongCtaDisplay: 'この問題を解説して',
+        wrongPrompt: (q: string, chapterId?: number, answer?: string) =>
+          `SO-101 のインタラクティブレッスン${chapterId ? `第 ${chapterId} 課` : ''}で問題を間違えました。問題は「${q}」。${
+            answer ? `私の解答は「${answer}」。` : ''
+          }3 文以内で、優しく励ましながら正しい考え方を説明し、必要なら重要なコマンドを 1 つ挙げてください。`,
+        wrongFallbackPrompt:
+          'インタラクティブレッスンで問題を間違えました。一言で励まし、どう考えればよいかヒントをください。',
+        explainPrompt: (topic: string, context?: string) =>
+          `この講座内容を、いきいきと分かりやすく簡潔に、必要なら例えを使って説明してください：「${topic}」${
+            context ? `。補足: ${context}` : ''
+          }`,
+        explainDisplay: (topic: string) => `解説して：${topic}`
+      }
+    : {
+        celebrate: CELEBRATE_ZH,
+        panelTitle: '学习伴侣',
+        panelSub: '陪你一起练 SO-101',
+        openFull: '打开完整对话',
+        collapse: '收起',
+        close: '关闭',
+        orbLabel: '学习伴侣',
+        emptyL1: '答题时我会冒出来帮你，',
+        emptyL2: '也可以直接在这儿问我一句。',
+        inputPlaceholder: '问伴侣一句…',
+        quotaOut: '今日 AI 配额用完啦～到完整对话页可以充值继续。',
+        glitch: '出了点小问题，稍后再试试。',
+        netErr: '网络好像断了，待会儿再问我。',
+        wrongBubble: '没关系，错了才学得牢～要我讲讲吗？',
+        wrongCtaLabel: '讲讲为什么',
+        wrongCtaDisplay: '帮我讲讲这题',
+        wrongPrompt: (q: string, chapterId?: number, answer?: string) =>
+          `我在 SO-101 互动课${chapterId ? `第 ${chapterId} 课` : ''}答错了一题。题目是：「${q}」。${
+            answer ? `我选/填的是：「${answer}」。` : ''
+          }请用最多 3 句话、亲切鼓励地讲清楚正确思路，必要时给一句关键命令。`,
+        wrongFallbackPrompt: '我刚在互动课答错了一题，请用一句话鼓励我，并提示我可以怎么想。',
+        explainPrompt: (topic: string, context?: string) =>
+          `请用生动、通俗、简短的话讲解这段课程内容，必要时打个比方：「${topic}」${
+            context ? `。补充上下文：${context}` : ''
+          }`,
+        explainDisplay: (topic: string) => `帮我讲讲：${topic}`
+      },
+    [isJa]
+  )
 
   const [open, setOpen] = useState(false)
   const [mood, setMood] = useState<Mood>('idle')
@@ -105,14 +180,12 @@ export function LearningCompanion() {
         })
         if (res.status === 429) {
           setTurns((t) =>
-            t.map((m) =>
-              m.id === a.id ? { ...m, content: '今日 AI 配额用完啦～到完整对话页可以充值继续。' } : m
-            )
+            t.map((m) => (m.id === a.id ? { ...m, content: L.quotaOut } : m))
           )
           return
         }
         if (!res.ok || !res.body) {
-          setTurns((t) => t.map((m) => (m.id === a.id ? { ...m, content: '出了点小问题，稍后再试试。' } : m)))
+          setTurns((t) => t.map((m) => (m.id === a.id ? { ...m, content: L.glitch } : m)))
           return
         }
         setMood('talking')
@@ -126,13 +199,13 @@ export function LearningCompanion() {
           setTurns((t) => t.map((m) => (m.id === a.id ? { ...m, content: acc } : m)))
         }
       } catch {
-        setTurns((t) => t.map((m) => (m.id === a.id ? { ...m, content: '网络好像断了，待会儿再问我。' } : m)))
+        setTurns((t) => t.map((m) => (m.id === a.id ? { ...m, content: L.netErr } : m)))
       } finally {
         setBusy(false)
         flashMood('idle', 0)
       }
     },
-    [session, busy, flashMood]
+    [session, busy, flashMood, L]
   )
 
   // Subscribe to site-wide companion events.
@@ -140,7 +213,7 @@ export function LearningCompanion() {
     if (!enabled) return
     return onCompanion((e: CompanionEvent) => {
       if (e.type === 'lesson-correct') {
-        setBubble({ text: pick(CELEBRATE) })
+        setBubble({ text: pick(L.celebrate) })
         flashMood('happy', 5000)
         if (bubbleTimer.current) clearTimeout(bubbleTimer.current)
         bubbleTimer.current = setTimeout(() => {
@@ -150,36 +223,29 @@ export function LearningCompanion() {
       } else if (e.type === 'lesson-wrong') {
         const q = e.question?.trim()
         const prompt = q
-          ? `我在 SO-101 互动课${e.chapterId ? `第 ${e.chapterId} 课` : ''}答错了一题。题目是：「${q}」。${
-              e.answer ? `我选/填的是：「${e.answer}」。` : ''
-            }请用最多 3 句话、亲切鼓励地讲清楚正确思路，必要时给一句关键命令。`
-          : '我刚在互动课答错了一题，请用一句话鼓励我，并提示我可以怎么想。'
+          ? L.wrongPrompt(q, e.chapterId, e.answer)
+          : L.wrongFallbackPrompt
         setBubble({
-          text: '没关系，错了才学得牢～要我讲讲吗？',
-          cta: { label: '讲讲为什么', prompt, display: '帮我讲讲这题' }
+          text: L.wrongBubble,
+          cta: { label: L.wrongCtaLabel, prompt, display: L.wrongCtaDisplay }
         })
         setMood('idle')
       } else if (e.type === 'explain') {
-        ask(
-          `请用生动、通俗、简短的话讲解这段课程内容，必要时打个比方：「${e.topic}」${
-            e.context ? `。补充上下文：${e.context}` : ''
-          }`,
-          `帮我讲讲：${e.topic}`
-        )
+        ask(L.explainPrompt(e.topic, e.context), L.explainDisplay(e.topic))
       } else if (e.type === 'open') {
         setOpen(true)
       }
     })
-  }, [enabled, ask, flashMood])
+  }, [enabled, ask, flashMood, L])
 
   // Auto-offer the feature once to eligible-but-undecided Plus users.
   useEffect(() => {
     if (!isPlus || !profile || profile.companion_enabled) return
-    if (INTRO_BLOCKED.some((p) => pathname.startsWith(p))) return
+    if (INTRO_BLOCKED.some((p) => normalizedPath.startsWith(p))) return
     if (typeof window !== 'undefined' && localStorage.getItem(INTRODUCED_KEY)) return
     const t = setTimeout(() => setIntroOpen(true), 2500)
     return () => clearTimeout(t)
-  }, [isPlus, profile, pathname])
+  }, [isPlus, profile, pathname, normalizedPath])
 
   const markIntroduced = () => {
     try {
@@ -205,7 +271,7 @@ export function LearningCompanion() {
 
   if (!isPlus) return null
 
-  const showOrb = enabled && pathname !== '/ai'
+  const showOrb = enabled && normalizedPath !== '/ai'
 
   const eyeBase = 'block bg-white transition-all duration-200'
   const eye =
@@ -233,20 +299,20 @@ export function LearningCompanion() {
             <div className="flex items-center gap-2 border-b border-border/50 px-3 py-2.5">
               <CompanionOrb mood={mood} eyeBase={eyeBase} eye={eye} size="xs" />
               <div className="flex-1 leading-tight">
-                <p className="text-sm font-semibold">学习伴侣</p>
-                <p className="text-[10px] text-muted-foreground">陪你一起练 SO-101</p>
+                <p className="text-sm font-semibold">{L.panelTitle}</p>
+                <p className="text-[10px] text-muted-foreground">{L.panelSub}</p>
               </div>
               <Link
-                href="/ai"
+                href={aiHref}
                 className="rounded-md p-1 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-                aria-label="打开完整对话"
+                aria-label={L.openFull}
               >
                 <ArrowUpRight className="size-4" />
               </Link>
               <button
                 onClick={() => setOpen(false)}
                 className="rounded-md p-1 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-                aria-label="收起"
+                aria-label={L.collapse}
               >
                 <X className="size-4" />
               </button>
@@ -255,9 +321,9 @@ export function LearningCompanion() {
             <div ref={bodyRef} className="flex-1 space-y-3 overflow-y-auto p-3">
               {turns.length === 0 ? (
                 <p className="px-1 py-8 text-center text-xs text-muted-foreground">
-                  答题时我会冒出来帮你，
+                  {L.emptyL1}
                   <br />
-                  也可以直接在这儿问我一句。
+                  {L.emptyL2}
                 </p>
               ) : (
                 turns.map((m) => (
@@ -300,7 +366,7 @@ export function LearningCompanion() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="问伴侣一句…"
+                placeholder={L.inputPlaceholder}
                 className="h-9 flex-1 rounded-lg border border-border/60 bg-background/60 px-3 text-[13px] outline-none focus:border-primary/50"
               />
               <Button type="submit" size="icon" disabled={busy || !input.trim()} className="size-9 rounded-lg">
@@ -316,7 +382,7 @@ export function LearningCompanion() {
             <button
               onClick={() => setBubble(null)}
               className="absolute -right-1.5 -top-1.5 rounded-full border border-border/60 bg-background p-0.5 text-muted-foreground hover:text-foreground"
-              aria-label="关闭"
+              aria-label={L.close}
             >
               <X className="size-3" />
             </button>
@@ -339,7 +405,7 @@ export function LearningCompanion() {
             setOpen((o) => !o)
             setBubble(null)
           }}
-          aria-label="学习伴侣"
+          aria-label={L.orbLabel}
           className="pointer-events-auto"
           style={{ animation: 'companion-bob 4.5s ease-in-out infinite' }}
         >

@@ -16,7 +16,7 @@
    → 用户被解锁，前端 useEntitlement 读到记录 → 内容打开
 ```
 
-前两课永久免费，其余 7 课 + 完整文档 + 社区发帖需解锁。
+前两课永久免费，其余 7 课 + 完整文档需解锁。社区对所有登录用户开放（不需解锁/Plus）。
 
 ---
 
@@ -69,7 +69,7 @@ Supabase → Settings → **API Keys** → **Secret keys** → 复制那个 `sb_
 
 1. Stripe 右上角切到 **Test mode**，用测试 key（`sk_test_` / 测试 `price_` / 测试 webhook secret）
 2. 测试卡号：`4242 4242 4242 4242`，任意未来日期 + 任意 CVC
-3. 流程：登录 → /unlock → 购买 → 测试卡付款 → 跳回 → 第 3-9 课解锁、社区可发帖
+3. 流程：登录 → /unlock → 购买 → 测试卡付款 → 跳回 → 第 3-9 课解锁（社区登录即可发帖，与购买无关）
 4. 验证 Supabase `entitlements` 表里多了你的一行
 5. 一切 OK 后切回 **Live mode**，把 Vercel 的 key 换成 live key，重新部署
 

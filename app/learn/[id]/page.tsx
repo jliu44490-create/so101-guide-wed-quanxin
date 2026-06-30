@@ -590,7 +590,6 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
               )}
             </div>
 
-            <Discussion threadKey={`chapter:${chapter.id}`} title="本章讨论区" />
           </article>
 
           <aside className="hidden lg:block">
@@ -624,6 +623,10 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
           </aside>
         </div>
         </ContentGate>
+
+        {/* Discussion lives outside the paywall so the community is open to everyone
+            (any logged-in user), even on locked chapters. */}
+        <Discussion threadKey={`chapter:${chapter.id}`} title="本章讨论区" />
       </main>
 
       <Footer />

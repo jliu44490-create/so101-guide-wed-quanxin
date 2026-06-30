@@ -598,7 +598,6 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
               )}
             </div>
 
-            <Discussion threadKey={`chapter:${chapter.id}`} title="この章のディスカッション" />
           </article>
 
           <aside className="hidden lg:block">
@@ -633,6 +632,10 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
           </aside>
         </div>
         </ContentGate>
+
+        {/* ディスカッションはペイウォールの外に置き、ロックされた章でも
+            ログイン済みなら誰でも参加できるようにする。 */}
+        <Discussion threadKey={`chapter:${chapter.id}`} title="この章のディスカッション" />
       </main>
 
       <Footer />

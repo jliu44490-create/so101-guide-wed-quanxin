@@ -22,7 +22,6 @@ interface PaywallGateProps {
 const BENEFITS_JA = [
   '全 9 課のインタラクティブ講座をアンロック',
   '全 9 章の完全なドキュメント版をアンロック',
-  'コミュニティでの投稿・質問・回答・いいね',
   '一度の買い切りで永久有効、新章も無料で同期',
   'エラー診断ライブラリ + AI アシスタントの全機能'
 ]
@@ -32,7 +31,7 @@ export function PaywallGate({ what, unlockHref }: PaywallGateProps) {
   const t = isJa
     ? {
         title: `${what ?? 'このセクション'}はロックされています`,
-        sub: '最初の 2 章は無料で体験できます。アンロックすると全 9 課の学習、完全なドキュメントの閲覧、コミュニティ参加が可能になります。',
+        sub: '最初の 2 章は無料で体験できます。アンロックすると全 9 課の学習と、完全なドキュメントの閲覧が可能になります。',
         oneTime: '一度の買い切りで永久有効',
         benefits: BENEFITS_JA as readonly string[],
         unlock: 'すべてアンロック',
@@ -42,7 +41,7 @@ export function PaywallGate({ what, unlockHref }: PaywallGateProps) {
       }
     : {
         title: `${what ?? '本节内容'}已锁定`,
-        sub: '前两章永久免费，可随时体验。解锁后即可学习全部 9 节课、查看完整文档，并参与社区讨论。',
+        sub: '前两章永久免费，可随时体验。解锁后即可学习全部 9 节课、查看完整文档。',
         oneTime: '一次性解锁，永久有效',
         benefits: UNLOCK_BENEFITS as readonly string[],
         unlock: '解锁全部内容',

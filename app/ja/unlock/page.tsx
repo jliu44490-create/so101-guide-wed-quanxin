@@ -20,7 +20,6 @@ import { PAYWALL_ENABLED, PRICING, type PriceCurrency } from '@/lib/paywall'
 const BENEFITS_JA = [
   '全 9 課のインタラクティブ講座をアンロック（ステップ解説・ハンズオン・理解度チェック付き）',
   '全 9 章の完全なドキュメント版をアンロック',
-  'コミュニティでの投稿・質問・回答・いいねの権限',
   '一度の買い切りで永久有効、今後追加される章も無料で同期',
   'エラー診断ライブラリ + AI アシスタントの全機能'
 ]
@@ -92,7 +91,7 @@ function UnlockContent() {
       <main className="mx-auto max-w-xl px-4 py-24 text-center">
         <PartyPopper className="mx-auto h-12 w-12 text-primary" />
         <h1 className="mt-4 text-3xl font-bold">すべてのコンテンツをアンロック済み 🎉</h1>
-        <p className="mt-3 text-muted-foreground">ご支援ありがとうございます！全講座とコミュニティ機能が利用可能です。</p>
+        <p className="mt-3 text-muted-foreground">ご支援ありがとうございます！全講座が利用可能です。</p>
         <Button asChild size="lg" className="glow-primary mt-8 h-12 px-8">
           <Link href="/ja/learn">学習へ</Link>
         </Button>
@@ -117,7 +116,7 @@ function UnlockContent() {
           </Reveal>
           <Reveal delay={200}>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground sm:text-lg">
-              最初の 2 章は無料体験。アンロックすると、全 9 課のインタラクティブ講座、完全なドキュメント、コミュニティ投稿権限が、一度の支払いで永久に —— 今後追加される章も含めて。
+              最初の 2 章は無料体験。アンロックすると、全 9 課のインタラクティブ講座と完全なドキュメントが、一度の支払いで永久に —— 今後追加される章も含めて。
             </p>
           </Reveal>
         </div>

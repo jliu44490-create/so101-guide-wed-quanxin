@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Prose } from '@/components/prose'
 import { communityBackend, type UIComment } from '@/lib/backend'
 import { useAuth } from '@/lib/use-auth'
-import { useEntitlement } from '@/lib/use-entitlement'
 import { cn } from '@/lib/utils'
 
 interface DiscussionProps {
@@ -26,7 +25,6 @@ interface DiscussionProps {
 
 export function Discussion({ threadKey, title, className }: DiscussionProps) {
   const { isLoggedIn, user } = useAuth()
-  const { locked: postingLocked } = useEntitlement()
   const isJa = usePathname()?.startsWith('/ja') ?? false
   const [comments, setComments] = useState<UIComment[]>([])
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set())
@@ -48,10 +46,6 @@ export function Discussion({ threadKey, title, className }: DiscussionProps) {
         loginPromptPre: 'ログインすると参加できます —— 右上の ',
         loginWord: 'ログイン',
         loginPromptPost: ' ボタンから',
-        lockedPre: '投稿・質問・回答は',
-        lockedWord: 'アンロック後',
-        lockedPost: 'の権限です',
-        unlockAll: 'すべてアンロック',
         placeholder: '質問したり、経験を共有しよう… **Markdown** 対応',
         rules: '友好的に · 連投なし · 広告なし',
         posting: '投稿中',
@@ -76,10 +70,6 @@ export function Discussion({ threadKey, title, className }: DiscussionProps) {
         loginPromptPre: '登录后即可参与讨论 —— 点击右上角的 ',
         loginWord: '登录',
         loginPromptPost: ' 按钮',
-        lockedPre: '发帖、提问、回答是',
-        lockedWord: '解锁后',
-        lockedPost: '的权限',
-        unlockAll: '解锁全部内容',
         placeholder: '提个问题，或分享你的经验… 支持 **Markdown**',
         rules: '友善交流 · 不灌水 · 不发广告',
         posting: '发布中',
@@ -94,7 +84,6 @@ export function Discussion({ threadKey, title, className }: DiscussionProps) {
 
   const heading = title ?? t.heading
   const dateLocale = isJa ? ja : zhCN
-  const unlockHref = isJa ? '/ja/unlock' : '/unlock'
   const userHref = (name: string) => (isJa ? `/ja/u/${name}` : `/u/${name}`)
 
   const load = useCallback(async () => {
@@ -202,17 +191,6 @@ export function Discussion({ threadKey, title, className }: DiscussionProps) {
               <strong className="text-foreground">{t.loginWord}</strong>
               {t.loginPromptPost}
             </p>
-          </div>
-        ) : postingLocked ? (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-5 text-center">
-            <p className="text-sm">
-              {t.lockedPre}
-              <strong className="text-foreground">{t.lockedWord}</strong>
-              {t.lockedPost}
-            </p>
-            <Button asChild size="sm" className="glow-primary mt-3">
-              <Link href={unlockHref}>{t.unlockAll}</Link>
-            </Button>
           </div>
         ) : (
           <div className="space-y-2">

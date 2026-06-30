@@ -83,7 +83,7 @@ function UnlockContent() {
       <main className="mx-auto max-w-xl px-4 py-24 text-center">
         <PartyPopper className="mx-auto h-12 w-12 text-primary" />
         <h1 className="mt-4 text-3xl font-bold">你已解锁全部内容 🎉</h1>
-        <p className="mt-3 text-muted-foreground">感谢支持！全部课程与社区功能已对你开放。</p>
+        <p className="mt-3 text-muted-foreground">感谢支持！全部课程已对你开放。</p>
         <Button asChild size="lg" className="glow-primary mt-8 h-12 px-8">
           <Link href="/learn">去学习</Link>
         </Button>
@@ -108,7 +108,7 @@ function UnlockContent() {
           </Reveal>
           <Reveal delay={200}>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground sm:text-lg">
-              前两章永久免费体验。解锁后,全部 9 节互动课、完整文档、社区发帖权限,
+              前两章永久免费体验。解锁后,全部 9 节互动课、完整文档,
               一次付费,永久有效 —— 包括以后新增的章节。
             </p>
           </Reveal>

@@ -38,7 +38,6 @@ export type PriceCurrency = keyof typeof PRICING
 export const UNLOCK_BENEFITS = [
   '解锁全部 9 节互动课程（含逐课讲解、动手练习、自测）',
   '解锁全部 9 章完整文档版',
-  '社区发帖、提问、回答、点赞权限',
   '一次性买断，永久有效，后续新增章节免费同步',
   '错误诊断库 + AI 助手全功能'
 ] as const

@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { chapters as baseChapters } from './course-data'
+import { chaptersJa } from './course-data-ja'
 import type { Chapter } from './types'
 
 /**
@@ -146,9 +148,11 @@ export function useProgress() {
  */
 export function useChapters() {
   const { map, hydrated } = useProgress()
+  const isJa = usePathname()?.startsWith('/ja') ?? false
+  const source = isJa ? chaptersJa : baseChapters
   const chapters = useMemo(
-    () => baseChapters.map((c) => applyUserProgress(c, map)),
-    [map]
+    () => source.map((c) => applyUserProgress(c, map)),
+    [map, source]
   )
   return { chapters, hydrated }
 }

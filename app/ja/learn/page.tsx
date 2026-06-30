@@ -3,7 +3,8 @@ import { GraduationCap } from 'lucide-react'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { ChapterFilter } from '@/components/chapter-filter'
-import { LearnStats } from '@/components/learn-stats'
+import { LearnHud } from '@/components/learn-hud'
+import { LearnPath } from '@/components/learn-path'
 import {
   Reveal,
   ShimmerText
@@ -62,11 +63,24 @@ export default function LearnPageJa() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <LearnStats />
+          <LearnHud />
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-5xl px-4 pb-4 sm:px-6 lg:px-8">
           <Reveal>
+            <h2 className="mb-6 flex items-center gap-2 text-xl font-bold sm:text-2xl">
+              🗺️ 学習マップ
+              <span className="text-sm font-normal text-muted-foreground">
+                9 章をステージ形式で攻略
+              </span>
+            </h2>
+          </Reveal>
+          <LearnPath />
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
+          <Reveal>
+            <h2 className="mb-6 text-xl font-bold sm:text-2xl">📚 全章</h2>
             <ChapterFilter chapters={chaptersJa} />
           </Reveal>
         </section>

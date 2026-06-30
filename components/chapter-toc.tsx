@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 interface TocItem {
@@ -13,6 +14,7 @@ interface ChapterTocProps {
 }
 
 export function ChapterToc({ items }: ChapterTocProps) {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? '')
 
   useEffect(() => {
@@ -41,9 +43,9 @@ export function ChapterToc({ items }: ChapterTocProps) {
   if (items.length === 0) return null
 
   return (
-    <nav aria-label="目录" className="space-y-1.5">
+    <nav aria-label={isJa ? '目次' : '目录'} className="space-y-1.5">
       <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        本章目录
+        {isJa ? 'この章の目次' : '本章目录'}
       </p>
       <ul className="space-y-1 border-l border-border/60">
         {items.map((item) => {

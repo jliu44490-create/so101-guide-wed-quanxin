@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useId, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 
@@ -31,6 +32,7 @@ export function Mermaid({ source, caption, className }: MermaidProps) {
   const reactId = useId()
   const idRef = useRef(`mmd-${reactId.replace(/:/g, '')}`)
   const { resolvedTheme } = useTheme()
+  const isJa = usePathname()?.startsWith('/ja') ?? false
   const [error, setError] = useState<string | null>(null)
   const [rendered, setRendered] = useState(false)
 
@@ -70,7 +72,9 @@ export function Mermaid({ source, caption, className }: MermaidProps) {
           setError(
             e instanceof Error
               ? e.message.split('\n')[0]
-              : 'Mermaid 渲染失败。请检查图源语法。'
+              : isJa
+                ? 'Mermaid のレンダリングに失敗しました。図の構文を確認してください。'
+                : 'Mermaid 渲染失败。请检查图源语法。'
           )
         }
       }

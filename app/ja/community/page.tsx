@@ -50,7 +50,7 @@ const starterTopics = [
   },
   {
     title: 'データ収集は 50 件で足りる？',
-    body: 'タスク難度、物体配置の変化、失敗サンプルを残すかなど、収集戦略の議論に向きます。',
+    body: 'タスクの難易度、物体配置の変化、失敗サンプルを残すかなど、収集戦略の議論に向きます。',
     href: '/ja/learn/5'
   },
   {
@@ -91,8 +91,8 @@ export default async function CommunityPageJa() {
             </Reveal>
             <Reveal delay={200}>
               <p className="mt-3 max-w-2xl text-muted-foreground sm:text-lg">
-                LeRobot + SO101 + 具現化 AI（Embodied AI）を学ぶ人が集まる場所。
-                質問・回答・成果のシェア・経験の共有 —— もう英語の Discord で苦労しなくていい。
+                LeRobot + SO101 + 身体性 AI（Embodied AI）を学ぶ人が集まる場所。
+                質問・回答・成果の共有・経験の共有 —— もう英語の Discord で苦労しなくていい。
               </p>
             </Reveal>
             {!isSupabaseConfigured && (
@@ -132,12 +132,12 @@ function ParticipateCTA() {
           <div className="max-w-xl">
             <h2 className="flex items-center gap-2 text-lg font-bold sm:text-xl">
               <MessageCircle className="h-5 w-5 text-primary" />
-              質問・投稿はこうやって参加
+              質問・投稿はこちらから
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               ディスカッションは<strong className="text-foreground">各章</strong>と
-              <strong className="text-foreground">各エラー</strong>の討論エリアで行います。
-              ログインして章を選び、ページ下部から質問・成果シェア・回答ができます —— もらった「いいね」で貢献者ランキングに載れます。
+              <strong className="text-foreground">各エラー</strong>のディスカッション欄で行います。
+              ログインして章を選び、ページ下部から質問・成果の共有・回答ができます —— もらった「いいね」で貢献者ランキングに載れます。
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2.5">
@@ -193,7 +193,7 @@ function ComingSoon() {
 
       <div className="mt-10 grid gap-4 sm:grid-cols-3">
         {[
-          { icon: MessageCircle, title: '各章 / 各エラー', body: 'それぞれに討論エリア' },
+          { icon: MessageCircle, title: '各章 / 各エラー', body: 'それぞれにディスカッション欄' },
           { icon: TrendingUp, title: '人気ディスカッション', body: 'みんなが詰まる所が一目で分かる' },
           { icon: Users, title: '貢献者プロフィール', body: '人を助けた人が見える' }
         ].map((f, i) => (
@@ -228,7 +228,7 @@ function SeedState() {
             </p>
             <Button asChild size="lg" className="glow-primary">
               <Link href="/ja/learn/1">
-                第 1 課の討論エリアへ
+                第 1 章のディスカッション欄へ
                 <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>

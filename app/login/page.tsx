@@ -36,7 +36,7 @@ function LoginContent() {
         orEmail: 'またはメールで',
         email: 'メールアドレス',
         password: 'パスワード',
-        forgot: 'パスワードをお忘れ？',
+        forgot: 'パスワードをお忘れですか？',
         pwPlaceholder: '6 文字以上',
         hidePw: 'パスワードを隠す',
         showPw: 'パスワードを表示',

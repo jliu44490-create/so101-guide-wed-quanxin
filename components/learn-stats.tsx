@@ -9,7 +9,7 @@ import { useChapterStats } from '@/lib/use-progress'
 
 const i18n = {
   zh: { totalChapters: '总课程数', completed: '已完成', duration: '预计时长', minutes: '分钟', overallProgress: '总体进度', inProgressNote: '个学习中', lockedNote: '个未开始' },
-  ja: { totalChapters: '総章数', completed: '完了', duration: '予想所要時間', minutes: '分', overallProgress: '全体の進捗', inProgressNote: ' 進行中', lockedNote: ' 未開始' }
+  ja: { totalChapters: '章数', completed: '完了', duration: '予想所要時間', minutes: '分', overallProgress: '全体の進捗', inProgressNote: ' 進行中', lockedNote: ' 未開始' }
 }
 
 export function LearnStats() {
@@ -78,7 +78,9 @@ export function LearnStats() {
               </div>
               <Progress value={totalProgress} className="h-2" />
               <p className="mt-2 text-xs text-muted-foreground">
-                {inProgress}{t.inProgressNote} · {locked}{t.lockedNote}
+                {locale === 'ja'
+                  ? `進行中 ${inProgress} · 未開始 ${locked}`
+                  : `${inProgress}${t.inProgressNote} · ${locked}${t.lockedNote}`}
               </p>
             </CardContent>
           </Card>

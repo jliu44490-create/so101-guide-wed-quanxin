@@ -137,7 +137,7 @@ export const lessonsJa: Record<number, Lesson> = {
         unit: '組',
         hint: 'フレームレート × 秒数 = 総フレーム数。1 フレームが 1 つの (s, a) 対。',
         explanation:
-          '## ✅ 30 × 10 = **300 組**\n\nついでに：\n\n- 1 組の合計次元 = 6 + 6 = **12 次元**\n- 全体を float32 で保存 = 300 × 12 × 4 = **14.4 KB**\n\n**信じられないほど小さい。** だから LeRobot は数千件のデモでも数百 MB で済む —— 本当に容量を食うのは**カメラの動画フレーム**です。'
+          '## ✅ 30 × 10 = **300 組**\n\nついでに：\n\n- 1 組の合計次元 = 6 + 6 = **12 次元**\n- 全体を float32 で保存 = 300 × 12 × 4 = **14.4 KB**\n\n**信じられないほど小さい。** だから LeRobot は数千件のデモでも数百 MB で済む —— 本当に容量を多く使うのは**カメラの動画フレーム**です。'
       },
       {
         id: 'c1-10-bc-vs-act',
@@ -171,9 +171,9 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c1-12-completion',
         type: 'completion',
-        title: '🎉 第 1 課クリア',
+        title: '🎉 第 1 章クリア',
         body:
-          '模倣学習とは何か、なぜ失敗するのか、なぜ ACT が必要かを理解しました。\n\n次の課では **SO101 のハードウェア** を開け、Leader アームと Follower アームがどうやって「デモデータ」を生むのかを見ます。\n\n続けますか？',
+          '模倣学習とは何か、なぜ失敗するのか、なぜ ACT が必要かを理解しました。\n\n次の章では **SO101 のハードウェア** を開け、Leader アームと Follower アームがどうやって「デモデータ」を生むのかを見ます。\n\n続けますか？',
         nextChapterId: 2
       }
     ]
@@ -236,7 +236,7 @@ export const lessonsJa: Record<number, Lesson> = {
         prompt: '2 本のアームの役割の名前 ——',
         revealCta: '記憶する',
         reveal:
-          '## 主腕 vs 従腕\n\n- **Leader（主腕）**：あなたが握り、**人が手動操作**する。あなたの関節の意図を感じ取る。\n- **Follower（従腕）**：Leader の関節角度を複製し、**リアルタイムで追従**する。「機械が何をしているか」を見せる。\n\nLeader を持って「コップを取る」動作を実演 → PC が同時に Leader の関節角を記録（これが `action` a）+ Follower に追従させる（結果が正しいか見せる）。\n\n**これがデータ収集のすべての秘密。**',
+          '## Leader アーム vs Follower アーム\n\n- **Leader アーム**：あなたが握り、**人が手動操作**する。あなたの関節の意図を感じ取る。\n- **Follower アーム**：Leader の関節角度を複製し、**リアルタイムで追従**する。「機械が何をしているか」を見せる。\n\nLeader を持って「コップを取る」動作を実演 → PC が同時に Leader の関節角を記録（これが `action` a）+ Follower に追従させる（結果が正しいか見せる）。\n\n**これがデータ収集のすべての秘密。**',
         followCta: '図で流れを刻もう →'
       },
       {
@@ -244,9 +244,9 @@ export const lessonsJa: Record<number, Lesson> = {
         type: 'viz',
         title: 'Leader-Follower はどう繋がっているか',
         mermaid: `flowchart LR
-    H["👋 あなたの手"] -->|"関節を動かす"| L["🦾 Leader (主腕)"]
+    H["👋 あなたの手"] -->|"関節を動かす"| L["🦾 Leader アーム"]
     L -->|"USB"| PC["💻 PC"]
-    PC -->|"USB"| F["🦾 Follower (従腕)"]
+    PC -->|"USB"| F["🦾 Follower アーム"]
     PC -->|"データ録画"| D["📦 データセット"]
     style L fill:#7c5cff,stroke:#7c5cff,color:#fff
     style F fill:#0ea5e9,stroke:#0ea5e9,color:#fff
@@ -265,7 +265,7 @@ export const lessonsJa: Record<number, Lesson> = {
         ],
         correctOptionId: 'cable',
         explanation:
-          '## 役割は「ソフト設定」で決まる\n\nSO101 は出荷時、2 本のアームが**まったく同じ**。どちらが Leader でどちらが Follower かは**設定ファイルで指定する** —— どちらをどの USB ポートに挿すか + 設定でどのポートを leader / follower と書くか。\n\n実際には、まず両方を PC に挿し、ツールでどの ttyUSB がどちらか調べ、yaml に明記します。次の課でこれをやります。'
+          '## 役割は「ソフト設定」で決まる\n\nSO101 は出荷時、2 本のアームが**まったく同じ**。どちらが Leader でどちらが Follower かは**設定ファイルで指定する** —— どちらをどの USB ポートに挿すか + 設定でどのポートを leader / follower と書くか。\n\n実際には、まず両方を PC に挿し、ツールでどの ttyUSB がどちらか調べ、yaml に明記します。次の章でこれをやります。'
       },
       {
         id: 'c2-07-list-ports',
@@ -315,7 +315,7 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c2-11-vocab',
         type: 'match',
-        prompt: 'この課の 3 つの核心語を刻む：',
+        prompt: 'この章の 3 つの核心語を刻む：',
         pairs: [
           { left: 'Leader', right: 'あなたが手動操作するアーム' },
           { left: 'Follower', right: 'Leader の関節角を複製するアーム' },
@@ -325,7 +325,7 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c2-12-recap',
         type: 'recap',
-        title: '🧠 この課で分かったこと：',
+        title: '🧠 この章で分かったこと：',
         bullets: [
           '🦾 **SO101 は同じアームが 2 本** —— 役割はどの USB に挿すかで決まる',
           '👋 **Leader** は手動操作；**Follower** は Leader の関節角をリアルタイム複製',
@@ -337,9 +337,9 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c2-13-completion',
         type: 'completion',
-        title: '🎉 第 2 課クリア',
+        title: '🎉 第 2 章クリア',
         body:
-          'ハードウェアを知り、Leader-Follower の仕組みが分かりました。\n\n次の課からは**実際にソフトを入れていきます** —— 物理ハードが無くても完了できます。',
+          'ハードウェアを知り、Leader-Follower の仕組みが分かりました。\n\n次の章からは**実際にソフトを入れていきます** —— 物理ハードが無くても完了できます。',
         nextChapterId: 3
       }
     ]
@@ -356,7 +356,7 @@ export const lessonsJa: Record<number, Lesson> = {
         emoji: '💻',
         title: 'ハードウェアは一旦置いておく',
         body:
-          'この課は**実機がまったく不要**。\n\nソフト環境を整えます —— 初学者の 8 割が詰まる所。一歩ずつ進めて、詰まらせません。',
+          'この章は**実機がまったく不要**。\n\nソフト環境を整えます —— 初学者の 8 割が詰まる所。一歩ずつ進めて、詰まらせません。',
         cta: 'はじめる →'
       },
       {
@@ -400,7 +400,7 @@ export const lessonsJa: Record<number, Lesson> = {
     Conda --> Env2["🟡 conda env: other<br/>Python 3.11 + 別のパッケージ"]
     style SysPy fill:#7f1d1d,stroke:#7f1d1d,color:#fff
     style Env1 fill:#15803d,stroke:#15803d,color:#fff`,
-        caption: 'システム Python（赤）は**触らない**。conda が独立環境（緑）を作る —— 好きに入れて、壊れたら削除して作り直す。'
+        caption: 'システム Python（赤）には触らない。conda が独立環境（緑）を作る —— 好きに入れて、壊れたら削除して作り直す。'
       },
       {
         id: 'c3-04-create-env',
@@ -502,9 +502,9 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c3-11-completion',
         type: 'completion',
-        title: '🎉 第 3 課クリア',
+        title: '🎉 第 3 章クリア',
         body:
-          '環境が整いました。この関門が 8 割を脱落させます —— あなたは突破した。\n\n次の課では PC に実機の 2 本の USB シリアルを**本当に認識させ**、重要な「キャリブレーション」を行います。',
+          '環境が整いました。この関門が 8 割を脱落させます —— あなたは突破した。\n\n次の章では PC に実機の 2 本の USB シリアルを**本当に認識させ**、重要な「キャリブレーション」を行います。',
         nextChapterId: 4
       }
     ]
@@ -526,7 +526,7 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c4-02-pull-one',
         type: 'command',
-        title: '原始な手：1 本抜く',
+        title: '最も簡単な方法：1 本抜く',
         description: '最も簡単な見分け方 —— どのファイルが消えるか見る：',
         code: 'ls /dev/tty*\n# (次に Leader の USB を抜く)\nls /dev/tty*',
         expectedOutput:
@@ -551,7 +551,7 @@ export const lessonsJa: Record<number, Lesson> = {
         id: 'c4-04-config',
         type: 'command',
         title: '結果をコマンド引数に書く',
-        intro: 'どの ttyUSB がどの役割か分かったら、新版 LeRobot CLI 引数に書く：',
+        intro: 'どの ttyUSB がどの役割か分かったら、対象バージョンの LeRobot CLI 引数に書く：',
         description: '以降のコマンドにこの 2 つのポートを付ける：',
         code:
           '--robot.port=/dev/ttyACM0\n--teleop.port=/dev/ttyACM1',
@@ -565,7 +565,7 @@ export const lessonsJa: Record<number, Lesson> = {
           '2 本のアームが PC に認識された。\n\n**このまま学習を始められる？**\n\n答え：あと一歩。その一歩の名前は ——',
         revealCta: '明かす',
         reveal:
-          '## キャリブレーション (Calibration) 🎯\n\nロボットアームは出荷時、**各モータの零点位置**に出荷誤差（機械的な組立公差）があります。\n\nつまり：「関節 1 を 30 度へ」と言っても、**実際**には 31 度や 28 度に行くことがある。\n\nキャリブレーション = PC に**「本当の 0 度」**が各モータの読み値でいくつかを教えること。\n\nキャリブレーションしないと ——\n- Follower が Leader を追従するとき**ずれる**\n- 録ったデモデータが**全部誤り**（Leader 読み値 ≠ Follower 実姿勢）\n- 学習したモデルは必ず崩れる\n\nだからこの一歩は**飛ばせません**。',
+          '## キャリブレーション (Calibration) 🎯\n\nロボットアームは出荷時、**各モータのゼロ点位置**に出荷誤差（機械的な組立公差）があります。\n\nつまり：「関節 1 を 30 度へ」と言っても、**実際**には 31 度や 28 度に行くことがある。\n\nキャリブレーション = PC に**「本当の 0 度」**が各モータの読み値でいくつかを教えること。\n\nキャリブレーションしないと ——\n- Follower が Leader を追従するとき**ずれる**\n- 録ったデモデータが**全部誤り**（Leader 読み値 ≠ Follower 実姿勢）\n- 学習したモデルは必ず崩れる\n\nだからこの一歩は**飛ばせません**。',
         followCta: 'キャリブレーション前後の差を見る →'
       },
       {
@@ -592,7 +592,7 @@ export const lessonsJa: Record<number, Lesson> = {
           'lerobot-calibrate \\\n  --robot.type=so101_follower \\\n  --robot.port=/dev/ttyACM0 \\\n  --robot.id=so101_follower',
         expectedOutput:
           'Calibrating leader_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration to ~/.cache/.../calibration.json\nDone!',
-        tip: '一歩ずつ案内されます：アームを**手で指定姿勢**（完全伸展、零位など）に動かし、姿勢ごとに Enter。全体で 1〜2 分。',
+        tip: '一歩ずつ案内されます：アームを**手で指定姿勢**（各関節を可動域の中央・全可動域の端・ゼロ位置へ、など）に動かし、姿勢ごとに Enter。全体で 1〜2 分。',
         warning: '姿勢を作るときは**手でやさしく**。SO101 のモータはダンパが無く、無理に動かすとギアを傷める恐れ。'
       },
       {
@@ -628,7 +628,7 @@ export const lessonsJa: Record<number, Lesson> = {
             id: 'never',
             label: 'A. 二度と不要 —— 一度で一生',
             feedback:
-              '違います。アームを落とす、モータを一度分解組立、輸送の振動 —— どれも零点をずらし得ます。\n\nB を見て →'
+              '違います。アームを落とす、モータを一度分解組立、輸送の振動 —— どれもゼロ点をずらし得ます。\n\nB を見て →'
           },
           {
             id: 'each-power-on',
@@ -653,15 +653,15 @@ export const lessonsJa: Record<number, Lesson> = {
           '🔍 **ls /dev/tty\\*** でシリアルを見る',
           '⚙️ LeRobot 付属の **find_motors** ツールを知った',
           '📝 **--robot.port / --teleop.port** で 2 本のポートを明記',
-          '🎯 **キャリブレーション** = 各モータの真の零点を PC に教える',
+          '🎯 **キャリブレーション** = 各モータの真のゼロ点を PC に教える',
           '🔁 キャリブレーションは **ハードウェア変動時のみ**再実施'
         ]
       },
       {
         id: 'c4-12-completion',
         type: 'completion',
-        title: '🎉 第 4 課クリア',
-        body: 'ハードもソフトも準備完了。\n\n次の課は**全工程で一番楽しい部分** —— 実際にアームを持って動作を実演し、PC に録らせます。',
+        title: '🎉 第 4 章クリア',
+        body: 'ハードもソフトも準備完了。\n\n次の章は**全工程で一番楽しい部分** —— 実際にアームを持って動作を実演し、PC に録らせます。',
         nextChapterId: 5
       }
     ]
@@ -823,8 +823,8 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c5-12-completion',
         type: 'completion',
-        title: '🎉 第 5 課クリア',
-        body: 'データを録れるようになりました。全工程で**一番大変だが一番重要**な一歩。\n\n次の課では、録ったデータセットを開けて**中身を一目見て**みます。',
+        title: '🎉 第 5 章クリア',
+        body: 'データを録れるようになりました。全工程で**一番大変だが一番重要**な一歩。\n\n次の章では、録ったデータセットを開けて**中身を一目見て**みます。',
         nextChapterId: 6
       }
     ]
@@ -840,7 +840,7 @@ export const lessonsJa: Record<number, Lesson> = {
         type: 'intro',
         emoji: '🗂️',
         title: '50 件のデモを録ったばかり',
-        body: 'データは今どこに？　どんな姿？\n\nこの課で開けて見ます。',
+        body: 'データは今どこに？　どんな姿？\n\nこの章で開けて見ます。',
         cta: '中を見る →'
       },
       {
@@ -888,7 +888,7 @@ export const lessonsJa: Record<number, Lesson> = {
         prompt: '`meta/info.json` はデータセット**最重要のファイル**。',
         revealCta: 'なぜそんなに重要',
         reveal:
-          '## info.json = データセットの「身分証」\n\n記録されているもの：\n\n- **episodes 総数**\n- **各 episode のフレーム数**\n- **状態/行動の次元**\n- **カメラ台数、解像度、フレームレート**\n- **データセット schema バージョン**\n\n学習時、LeRobot はまずこのファイルを読む —— **存在しない、または壊れていると、学習は即エラー**。\n\n```\nFileNotFoundError: meta/info.json\n```\n\nは初学者に最も多いエラーの一つ。',
+          '## info.json = データセットの「仕様情報」\n\n記録されているもの：\n\n- **episodes 総数**\n- **各 episode のフレーム数**\n- **状態/行動の次元**\n- **カメラ台数、解像度、フレームレート**\n- **データセット schema バージョン**\n\n学習時、LeRobot はまずこのファイルを読む —— **存在しない、または壊れていると、学習は即エラー**。\n\n```\nFileNotFoundError: meta/info.json\n```\n\nは初学者に最も多いエラーの一つ。',
         followCta: '実物を見る →'
       },
       {
@@ -926,7 +926,7 @@ export const lessonsJa: Record<number, Lesson> = {
         unit: 'KB',
         hint: 'フレーム数 × (state 次元 + action 次元) × 4 バイト（float32）',
         explanation:
-          '## ✅ 約 10 KB\n\n```\n30 fps × 7 秒 = 210 フレーム\n1 フレーム = 6 + 6 = 12 個の float32\n1 float32 = 4 バイト\n\n210 × 12 × 4 = 10,080 バイト ≈ 10 KB\n```\n\nこのデモ 50 件 = **~500 KB の関節データ**。\n\n同じ 50 件の動画フレーム ≈ **数百 MB** と比べると、「本当に容量を食うのは動画」が分かる。'
+          '## ✅ 約 10 KB\n\n```\n30 fps × 7 秒 = 210 フレーム\n1 フレーム = 6 + 6 = 12 個の float32\n1 float32 = 4 バイト\n\n210 × 12 × 4 = 10,080 バイト ≈ 10 KB\n```\n\nこのデモ 50 件 = **~500 KB の関節データ**。\n\n同じ 50 件の動画フレーム ≈ **数百 MB** と比べると、「本当に容量を最も使用するのは動画」が分かる。'
       },
       {
         id: 'c6-09-recap',
@@ -935,7 +935,7 @@ export const lessonsJa: Record<number, Lesson> = {
         bullets: [
           '📁 データは `~/.cache/huggingface/lerobot/<repo-id>/` にある',
           '🗂️ 3 大ディレクトリ：**data**（関節）、**meta**（メタ情報）、**videos**（カメラ）',
-          '📄 **info.json** はデータセットの身分証 —— 完全であること必須',
+          '📄 **info.json** はデータセットの仕様情報 —— 完全であること必須',
           '💾 動画が 95%+ の容量、関節データは毎秒数 KB のみ',
           '⚠️ record 途中の Ctrl+C は meta 欠落の原因 —— **最後まで録る**'
         ]
@@ -943,8 +943,8 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c6-10-completion',
         type: 'completion',
-        title: '🎉 第 6 課クリア',
-        body: 'データが揃い、構造も明確に。\n\n次の課は**本題** —— ニューラルネットワークに本当に学習させます。',
+        title: '🎉 第 6 章クリア',
+        body: 'データが揃い、構造も明確に。\n\n次の章は**本題** —— ニューラルネットワークに本当に学習させます。',
         nextChapterId: 7
       }
     ]
@@ -1018,7 +1018,7 @@ export const lessonsJa: Record<number, Lesson> = {
         id: 'c7-05-start-training',
         type: 'command',
         title: '学習を起動',
-        description: '1 コマンドで完了（前提：第 5 課のデータセットを録り終えていること）：',
+        description: '1 コマンドで完了（前提：第 5 章のデータセットを録り終えていること）：',
         code:
           'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --output_dir=outputs/train/act_so101',
         expectedOutput:
@@ -1044,9 +1044,9 @@ export const lessonsJa: Record<number, Lesson> = {
         id: 'c7-07-loss-curve',
         type: 'reveal',
         prompt: '学習中、loss はどう変わるべき？',
-        revealCta: '健康な曲線とは',
+        revealCta: '正常な曲線とは',
         reveal:
-          '## 健康な loss 曲線 📉\n\n```\nstep 0     loss 1.5\nstep 1k    loss 0.4    ← 最初の 1000 ステップで急降下\nstep 10k   loss 0.15\nstep 50k   loss 0.08   ← だんだん緩やか\nstep 100k  loss 0.06\nstep 200k  loss 0.055  ← 収束\n```\n\n**重要なサイン**：\n\n- 最初の 1k で loss が急降下 → ✅ 学び始めた\n- 中盤で着実に低下 → ✅ 正常\n- 後半で変化 < 5% → ✅ 収束、止めてよい\n\n**不健康なサイン**：\n- loss が突然 NaN → 勾配爆発\n- loss が反転上昇 → 学習率が大きすぎ\n- loss が初期値で止まる → データに問題',
+          '## 正常な loss 曲線 📉\n\n```\nstep 0     loss 1.5\nstep 1k    loss 0.4    ← 最初の 1000 ステップで急降下\nstep 10k   loss 0.15\nstep 50k   loss 0.08   ← だんだん緩やか\nstep 100k  loss 0.06\nstep 200k  loss 0.055  ← 収束\n```\n\n**重要なサイン**：\n\n- 最初の 1k で loss が急降下 → ✅ 学び始めた\n- 中盤で着実に低下 → ✅ 正常\n- 後半で変化 < 5% → ✅ 収束、止めてよい\n\n**不健全なサイン**：\n- loss が突然 NaN → 勾配爆発\n- loss が上昇に転じる → 学習率が大きすぎ\n- loss が初期値で止まる → データに問題',
         followCta: 'NaN はどう救う？ →'
       },
       {
@@ -1080,7 +1080,7 @@ export const lessonsJa: Record<number, Lesson> = {
         intro: 'loss はターミナルだけで見ない。**wandb** は機械学習の定番監視ダッシュボードで、loss 曲線を描き、ハイパラを記録し、複数実験を比較できる。',
         description: '導入後、2 つの引数を足すだけ：',
         code:
-          'wandb login   # 初回だけログイン\n\nlerobot-train \\\n  --dataset.repo_id=... --policy.type=act \\\n  dataset.repo_id=your-name/so101-pick-cup \\\n  wandb.enable=true \\\n  wandb.project=so101-experiments',
+          'wandb login   # 初回だけログイン\n\nlerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --wandb.enable=true \\\n  --wandb.project=so101-experiments',
         tip: '学習開始後、wandb が URL を出力。ブラウザで開けば loss 曲線をリアルタイムで見られる。\n\n無料版で個人利用には十分。'
       },
       {
@@ -1103,7 +1103,7 @@ export const lessonsJa: Record<number, Lesson> = {
           '🧠 **ACT** = Transformer Encoder + CVAE + Decoder（100 ステップ出力）',
           '🎯 ACT を強くする核心：**Action Chunking** + **CVAE**',
           '🚀 `--dataset.repo_id=... --policy.type=act` で学習起動',
-          '📉 健康な loss = 最初の 1k で急降下 → 後半 < 5% 変化で収束',
+          '📉 正常な loss = 最初の 1k で急降下 → 後半 < 5% 変化で収束',
           '⚠️ **NaN loss** ➜ 学習率 ÷ 10 + 勾配クリッピング',
           '📊 **wandb** で監視、ターミナルより効率的'
         ]
@@ -1111,8 +1111,8 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c7-12-completion',
         type: 'completion',
-        title: '🎉 第 7 課クリア',
-        body: 'ACT モデルを学習できるようになりました。\n\n次の課：**学習したモデルで、実際にロボットを動かす**。',
+        title: '🎉 第 7 章クリア',
+        body: 'ACT モデルを学習できるようになりました。\n\n次の章：**学習したモデルで、実際にロボットを動かす**。',
         nextChapterId: 8
       }
     ]
@@ -1159,7 +1159,7 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c8-04-compounding-back',
         type: 'reveal',
-        prompt: '第 1 課で話した**複合誤差**を覚えてる？',
+        prompt: '第 1 章で話した**複合誤差**を覚えてる？',
         revealCta: '振り返る',
         reveal:
           '## 複合誤差がまた来た 🌨️\n\nACT は Action Chunking で大きく軽減したが、**完全には消していない**。\n\n観察される現象：\n\n- **最初の 2〜3 秒**：動作が滑らか、ほぼ学習デモ通り\n- **中盤**：少しずつずれ始める\n- **後半**：完全に誤った姿勢までずれる\n\nこれは**短い段内では ACT が自己完結**するが、**段と段の間**で依然累積するため。\n\n下の 2 ツールでさらに抑えられる：**EMA 平滑化** + **Temporal Ensembling**。',
@@ -1242,9 +1242,9 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c8-11-completion',
         type: 'completion',
-        title: '🎉 第 8 課クリア',
+        title: '🎉 第 8 章クリア',
         body:
-          'データ → モデル → 実機、**全工程を走り切りました**。\n\n最後の課：**あらゆる予期せぬ事態への対処法** —— 予期せぬ事態は必ず起きるから。',
+          'データ → モデル → 実機、**全工程を走り切りました**。\n\n最後の章：**あらゆる予期せぬ事態への対処法** —— 予期せぬ事態は必ず起きるから。',
         nextChapterId: 9
       }
     ]
@@ -1260,7 +1260,7 @@ export const lessonsJa: Record<number, Lesson> = {
         type: 'intro',
         emoji: '🐛',
         title: '必ずエラーに出会う',
-        body: '慌てない。誰もがそう。\n\nこの課では**あらゆるエラーを体系的に解決する方法**を教えます —— エンジニアの本当に価値ある能力。',
+        body: '慌てない。誰もがそう。\n\nこの章では**あらゆるエラーを体系的に解決する方法**を教えます —— エンジニアの本当に価値ある能力。',
         cta: 'はじめる →'
       },
       {
@@ -1371,7 +1371,7 @@ export const lessonsJa: Record<number, Lesson> = {
         type: 'recap',
         title: '🧠 切り分けの心得を習得：',
         bullets: [
-          '🔍 **4 ステップ法**：最後の行を読む → 種類を判断 → サイト内ライブラリ → Google',
+          '🔍 **4 ステップ法**：最後の行を読む → 種類を判断 → サイト内のトラブル診断 → Google',
           '👀 traceback は**最後の行を見る**、1 行目ではない',
           '📋 3 大エラー：**ImportError / RuntimeError / FileNotFoundError**',
           '💾 `2>&1 | tee error.log` でエラーを完全保存',
@@ -1382,7 +1382,7 @@ export const lessonsJa: Record<number, Lesson> = {
       {
         id: 'c9-10-completion',
         type: 'completion',
-        title: '🎉 全 9 課クリア！',
+        title: '🎉 全 9 章クリア！',
         body:
           'SO101 模倣学習の**全主線**を走り切りました ——\n\n「模倣学習とは何か」からハードウェア、環境、データ、学習、推論、切り分けまで。\n\n今あなたが持つのは、2025 年のロボット学修士新入生の入門レベルです。\n\n**次はどう進む？**\n\n- 実際に SO101 を買ってこの流れを一通り回す\n- 自分だけの小タスクに挑戦（タオル畳み？　水つぎ？　箱開け？）\n- ACT 原論文を読み、各ハイパラの背後の数学を理解\n- LeRobot Discord に参加し、世界中の実践者と交流\n\nここまでやり遂げてくれてありがとう。 🚀'
       }

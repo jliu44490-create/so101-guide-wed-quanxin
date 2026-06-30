@@ -11,7 +11,7 @@ export const chaptersJa: Chapter[] = [
     id: 1,
     title: '模倣学習とは何か',
     titleEn: 'What is Imitation Learning',
-    description: '模倣学習の基本概念、応用シーン、強化学習との違いを理解します。',
+    description: '模倣学習の基本概念、活用例、強化学習との違いを理解します。',
     duration: '15 分',
     status: 'locked',
     progress: 0,
@@ -45,7 +45,7 @@ export const chaptersJa: Chapter[] = [
 1. **「成功」の定義だけを与え**、あとは何万回も試行錯誤させて報酬から少しずつ学ばせる。これが **強化学習 (Reinforcement Learning, RL)** です。
 2. **数十回お手本を見せて**、それを真似して学ばせる。これが **模倣学習 (Imitation Learning, IL)** です。
 
-現実の物理世界では1番目はほぼ非現実的です —— ロボットアームを1台壊せば数千ドル、「何万回も試す」のはコストを燃やすのと同じだからです。そのため2020年頃から、ロボティクス分野は特に精密操作（pick-and-place、組み立て、把持）で大規模に模倣学習へ回帰しました。
+実世界では1番目はほぼ非現実的です —— ロボットアームを1台壊せば数千ドル、「何万回も試す」のはコストが膨らむのと同じだからです。そのため2020年頃から、ロボティクス分野は特に精密操作（pick-and-place、組み立て、把持）で大規模に模倣学習へ回帰しました。
 
 模倣学習の核となる数学は、実は一言で表せます：
 
@@ -53,7 +53,7 @@ export const chaptersJa: Chapter[] = [
 
 教師あり学習に似ている？　その通りです —— もっとも素朴な版はそのまま教師あり学習として解き、**行動クローニング (Behavior Cloning, BC)** と呼ばれます。ただし BC には **複合誤差 (compounding error)** という悪名高い問題があります：各ステップの予測がわずかにずれると、次の入力は学習分布からさらに外れ、誤差が雪だるま式に膨らみます。
 
-現代の模倣学習（ACT、Diffusion Policy）の核心的な工夫は、いずれもこの雪だるまを抑えることにあります。本サイトの以降8章で、ACT を SO101 上に実装するまでの道のりを一通り辿ります。`,
+現代の模倣学習（ACT、Diffusion Policy）の核心的な工夫は、いずれもこの雪だるまを抑えることにあります。本サイトの以降の 8 章で、ACT を SO101 上に実装するまでの道のりを一通り辿ります。`,
 
     whyItMatters: `なぜ本気で学ぶ価値があるのか？
 
@@ -61,7 +61,7 @@ export const chaptersJa: Chapter[] = [
 
 - 自分で 50〜100 件のデータを集め、特定タスクを動かせる方策を学習できる；
 - 同じコードで「タオルをたたむ」「USB を挿す」「扉を開ける」といった異なるタスクに取り組める；
-- 2023〜2025 年のトップ会議論文の中核 pipeline の大半を再現できる。`,
+- 2023〜2025 年の主要国際会議の論文における中核的なパイプラインの大半を再現できる。`,
 
     keyTerms: ['模倣学習', '行動クローニング', 'ACT', '遠隔操作', '複合誤差'],
 
@@ -69,7 +69,7 @@ export const chaptersJa: Chapter[] = [
       {
         title: '模倣学習の標準 pipeline',
         source: `flowchart LR
-    A["人間の専門家"] -->|"N 本の軌跡をデモ"| B["データセット (s, a)"]
+    A["人間の専門家"] -->|"N 本のデモ軌跡"| B["データセット (s, a)"]
     B -->|"教師あり学習"| C["方策 π_theta"]
     C -->|"s -> a"| D["ロボットアーム"]
     D -.->|"新しい状態 s'"| C
@@ -145,7 +145,7 @@ L = ||π_θ(s) - a_expert||²
         fix: '本当の難しさはデータ収集ではなく、方策を **未知の状態へ汎化させる** ことにあります。50件のデモを丸暗記できる方策には価値がありません —— 欲しいのは、環境の揺らぎ（照明変化、物体位置の微妙なずれ、初期姿勢の違い）に対応できる方策です。ここが IL と教師あり画像分類の最大の違いです。'
       },
       {
-        symptom: '「10件デモしたのに、モデルが学習してくれない。」',
+        symptom: '「10 件のデモを用意したのに、モデルが学習してくれない。」',
         cause: 'データ量が大幅に不足し、かつデモ同士が似すぎている（状態空間を十分カバーできていない）。',
         fix: '一般的な目安：単純な pick-and-place なら最低 50 件、複雑なタスク（USB 挿入など）なら 200 件以上。さらに「異なる初期位置／異なる把持角度／失敗してやり直す」デモを意図的に入れ、学習分布を十分に広げます。'
       },
@@ -169,7 +169,7 @@ L = ||π_θ(s) - a_expert||²
 2. **12 次元**（6 + 6）
 3. **210 × 12 = 2520 個の float32 ≈ 10 KB**
 
-これが、LeRobot データセットが数千件のデモを保存しても数百 MB で済む理由です —— 状態/行動そのものは低次元データで、本当に容量を食うのはカメラの動画フレームです。`
+これが、LeRobot データセットが数千件のデモを保存しても数百 MB で済む理由です —— 状態/行動そのものは低次元データで、本当に容量を多く使うのはカメラの動画フレームです。`
       },
       {
         title: '考察：なぜ模倣学習にカメラが必要なのか？',
@@ -227,7 +227,7 @@ L = ||π_θ(s) - a_expert||²
       {
         title: 'LeRobot 公式紹介ブログ',
         url: 'https://huggingface.co/blog/lerobot',
-        note: 'HuggingFace チームによる LeRobot のプロダクト紹介。以降8章のコード理解に役立つ。'
+        note: 'HuggingFace チームによる LeRobot のプロダクト紹介。以降の 8 章のコード理解に役立つ。'
       }
     ],
 
@@ -235,7 +235,7 @@ L = ||π_θ(s) - a_expert||²
 
 SO101 では状態は6次元の関節角度、行動は6次元の目標角度、さらにカメラフレーム。
 
-次章では SO101 のハードウェアを開け、Leader/Follower がどのようにこれらの (s, a) 対を生み出すかを見ていく。`
+次章では SO101 のハードウェア構成を確認し、Leader/Follower がどのようにこれらの (s, a) 対を生み出すかを見ていく。`
   },
   {
     id: 2,
@@ -247,7 +247,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
     progress: 0,
     objectives: [
       'SO101 ロボットアームのハードウェア構成を理解する',
-      'Leader-Follower 双腕協調モードを把握する',
+      'Leader / Follower 方式を把握する',
       'シリアルポートの接続・識別方法を習得する'
     ],
     principles: [
@@ -267,7 +267,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
     ],
     checkpoints: [
       'Leader と Follower のシリアルポートを識別できる',
-      '双腕協調の動作原理を理解している',
+      'Leader / Follower 方式の動作原理を理解している',
       'ハードウェア接続の確認を完了している'
     ],
     errors: [
@@ -283,7 +283,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
 
 最初は戸惑う人が多いです：なぜ2本？　どっちがどっち？
 
-答えは SO101 の核となる設計にあります：**1本は手で操作する用（Leader / 主腕）、もう1本はあなたの動きをリアルタイムでコピーする用（Follower / 従腕）**。あなたが Leader を持って「コップの持ち方」を実演すると、PC は Follower を同じように動かして結果を見せつつ、Leader の各瞬間の関節角度を記録します —— この記録が第1章で言った (s, a) のデモデータです。
+答えは SO101 の核となる設計にあります：**1本は手で操作する側（Leader アーム）、もう1本はあなたの動きをリアルタイムで再現する側（Follower アーム）**。あなたが Leader を持って「コップの持ち方」を実演すると、PC は Follower を同じように動かして結果を見せつつ、Leader の各瞬間の関節角度を記録します —— この記録が第 1 章で説明した (s, a) のデモデータです。
 
 この章ではハードウェアを徹底的に理解します：6つの関節とは何か、2本のアームをどう PC につなぐか、システム上でどう見分けるか、そして誰もが最初にぶつかる権限エラーの直し方。`,
 
@@ -291,7 +291,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
 
 - どっちが Leader でどっちが Follower か分からない → 第4章のポート設定で混乱する
 - 「役割は配線で決まる」を理解していない → 再起動でシリアル順が変わると慌てる
-- \`Permission denied\` を直せない → 8割の人が初接続でここに詰まる
+- \`Permission denied\` を直せない → 多くの人が初回接続でつまずく
 
 この章は純粋なハードウェア理解で、**実機が無くても読み進められます**。届いたらすぐ着手できます。`,
 
@@ -301,9 +301,9 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
       {
         title: 'Leader → PC → Follower のデータ経路',
         source: `flowchart LR
-    H["👋 あなたの手"] -->|"関節を動かす"| L["🦾 Leader 主腕"]
+    H["👋 あなたの手"] -->|"関節を動かす"| L["🦾 Leader アーム"]
     L -->|"USB で関節角を読む"| PC["💻 PC"]
-    PC -->|"USB で指令を送る"| F["🦾 Follower 従腕"]
+    PC -->|"USB で指令を送る"| F["🦾 Follower アーム"]
     PC -->|"同期して記録"| D["📦 データセット (s, a)"]
     style L fill:#7c5cff,stroke:#7c5cff,color:#fff
     style F fill:#0ea5e9,stroke:#0ea5e9,color:#fff
@@ -412,7 +412,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
 
     summary: `**SO101 は同じアームが2本**：Leader を手で操作し、Follower がリアルタイムで再現、PC が Leader の関節角を同期記録してデモデータにする。
 
-役割は出荷時ではなく、**配線＋設定**で決まる。アームはシステム上では \`/dev/ttyUSB*\` ファイル；初接続では高確率で \`Permission denied\` にぶつかるが、dialout グループに追加＋再ログインで解決。
+役割は出荷時ではなく、**配線＋設定**で決まる。アームはシステム上では \`/dev/ttyUSB*\` ファイル；初回接続では多くの場合 \`Permission denied\` にぶつかるが、dialout グループに追加＋再ログインで解決。
 
 次章ではソフト環境を構築し（実機不要）、LeRobot を動かす。`
   },
@@ -432,7 +432,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
     principles: [
       'LeRobot は Hugging Face が開発するロボット学習フレームワークです',
       '多様なロボットアームと模倣学習アルゴリズムに対応しています',
-      'Python 3.10+ と CUDA 環境が必要です'
+      'Python 3.10+ が必要で、ACT の学習には CUDA 対応 GPU を推奨します'
     ],
     steps: [
       { title: '環境作成', content: 'conda または venv で独立した Python 環境を作成します。' },
@@ -467,7 +467,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
       }
     ],
 
-    introduction: `この章は**実機がまったく不要**です —— ですが、初学者のおよそ8割を脱落させます。原因のほとんどは LeRobot 自体が難しいからではなく、**環境を綺麗に隔離していない**ことです：システムの Python にそのまま \`pip install\` を打ち込み、数日後にはシステムのランチャーまで壊す人がいます。
+    introduction: `この章は**実機がまったく不要**ですが、初学者がつまずきやすい章でもあります。原因のほとんどは LeRobot 自体が難しいからではなく、**環境をクリーンに分離していない**ことです：システムの Python にそのまま \`pip install\` を打ち込み、数日後にはシステムのランチャーまで壊す人がいます。
 
 ここでは **conda** で完全に独立した環境を作ります。Python パッケージだけでなく、**Python のバージョン自体**も隔離します —— システムに何のバージョンが入っていようと関係なく、conda が LeRobot 専用に綺麗な 3.10 を用意します。壊れたら？　環境を削除して作り直せばよく、システムは無傷です。
 
@@ -476,7 +476,7 @@ SO101 では状態は6次元の関節角度、行動は6次元の目標角度、
     whyItMatters: `環境は土台。土台が歪むと後がすべて崩れます：
 
 - システム Python に依存を入れる → いずれシステムを汚染し、収拾がつかない
-- PyTorch/CUDA を検証しない → 学習時に GPU が繋がっていないと気づき、数時間を無駄にする
+- PyTorch/CUDA を検証しない → 学習時に GPU が認識されていないと気づき、数時間を無駄にする
 - OOM の応急処置を知らない → VRAM エラーが出るたびに「GPU が足りない」と思い込むが、実はパラメータを1つ変えるだけ
 
 この章を綺麗に通せば、以降のデータ収集・学習・推論はすべて、再現可能で削除して作り直せる環境の上に成り立ちます。`,
@@ -548,7 +548,7 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
         fix: 'まず `conda activate lerobot` でプロンプトに `(lerobot)` が付くことを確認し、`pip install -e .`。`pip list` で入っているか確認できます。'
       },
       {
-        symptom: 'システム Python に直接 `pip install` してしまい、今システムが少し変。',
+        symptom: 'システム Python に直接 `pip install` してしまい、システム環境の挙動がおかしくなった。',
         cause: 'システムの Python 環境を汚染した。',
         fix: '今後すべてのプロジェクトで conda/venv を使って隔離し、システム Python には決して触れない。すでに汚染した場合、conda の新環境は綺麗な出発点になります。システム側の問題はディストリのドキュメントに従って修復を。'
       }
@@ -562,10 +562,10 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
         expectedResult: '未有効化 → `ModuleNotFoundError`（システム Python には lerobot が無いため）。有効化後 → エラー無し。これが「新しいターミナルでは毎回 activate」の直接的な証拠です。'
       },
       {
-        title: 'OOM 応急のリハーサル',
+        title: 'OOM 対応のリハーサル',
         instructions: '第7章の学習で `CUDA out of memory` が出たとします。ドキュメントを見ずに、この章の内容だけで、最初に変えるべきパラメータは？',
         hint: 'VRAM 不足 ≈ 一度に GPU へ詰め込むサンプルが多すぎる。',
-        expectedResult: '`batch_size` を小さくする（例：`training.batch_size=4`）。それでも駄目なら勾配累積＋混合精度。OOM の9割は最初の一手で解決します。'
+        expectedResult: '`batch_size` を小さくする（例：`--batch_size=4`）。それでも駄目なら勾配累積や混合精度 (AMP) を併用。OOM の9割は最初の一手で解決します。'
       }
     ],
 
@@ -588,7 +588,7 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
       {
         title: 'Miniconda インストールドキュメント',
         url: 'https://docs.conda.io/en/latest/miniconda.html',
-        note: 'conda 導入の公式入口。Anaconda ではなく Miniconda を選ぶ。'
+        note: 'conda 導入の公式案内ページ。Anaconda ではなく Miniconda を選ぶ。'
       },
       {
         title: 'LeRobot 公式リポジトリ README',
@@ -598,7 +598,7 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
       {
         title: 'PyTorch Mixed Precision (AMP) ガイド',
         url: 'https://pytorch.org/docs/stable/amp.html',
-        note: 'VRAM が厳しいときの公式解。第7章で使う。'
+        note: 'VRAM が厳しいときの公式ガイド。第7章で使う。'
       }
     ],
 
@@ -618,7 +618,7 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
     progress: 0,
     objectives: [
       'Leader / Follower のポートを正確に識別する',
-      'ロボットアームの零点キャリブレーションを完了する',
+      'ロボットアームのゼロ点キャリブレーションを完了する',
       'キャリブレーション結果の精度を検証する'
     ],
     principles: [
@@ -628,7 +628,7 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
     ],
     steps: [
       { title: 'ポート設定', content: '設定ファイルに Leader / Follower のシリアルパスを指定します。' },
-      { title: '零点設定', content: 'ロボットアームを初期姿勢に移動して記録します。' },
+      { title: 'ゼロ点設定', content: 'ロボットアームを初期姿勢に移動して記録します。' },
       { title: 'キャリブレーション検証', content: '各関節の可動範囲が正しいかテストします。' }
     ],
     commands: [
@@ -652,9 +652,9 @@ conda がまだ無ければ、先に **Miniconda** を入れてください（An
     introduction: `2本の USB を挿し、\`ls /dev/tty*\` で ttyUSB0 と ttyUSB1 も見えています。でもデータ収集を始めるには、あと2ステップ必要です：
 
 1. **どのポートが Leader でどれが Follower かを LeRobot に伝える** —— コマンド引数に書く
-2. **キャリブレーション** —— 各モータの「本当の零点」を PC に教える
+2. **キャリブレーション** —— 各モータの「本当のゼロ点」を PC に教える
 
-キャリブレーションがこの章の要で、もっとも見落とされやすく、見落とすと必ず問題になる一歩です。ロボットアームは出荷時、各モータの零点に組み立て公差があります：「30度へ」と言っても、実際には 31度や 28度に行くことがあります。キャリブレーションしないと、Follower の追従がずれ、録ったデータが歪み、学習したモデルは必ず崩れます。
+キャリブレーションがこの章の要で、もっとも見落とされやすく、省略すると問題につながる重要な工程です。ロボットアームは出荷時、各モータのゼロ点に組み立て公差があります：「30度へ」と言っても、実際には 31度や 28度に行くことがあります。キャリブレーションしないと、Follower の追従がずれ、録ったデータが不正確になり、学習したモデルの性能が低下します。
 
 この一歩は**飛ばせません**が、スクリプトが一歩ずつ案内してくれるので 3 分で終わります。`,
 
@@ -696,23 +696,23 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       },
       {
         title: 'ポートをコマンド引数に書く',
-        body: `どの ttyUSB がどの役割か分かったら、ポートを新版 LeRobot CLI 引数に直接書きます：Follower は \`--robot.port\`、Leader は \`--teleop.port\`。
+        body: `どの ttyUSB がどの役割か分かったら、ポートを対象バージョンの LeRobot CLI 引数に直接書きます：Follower は \`--robot.port\`、Leader は \`--teleop.port\`。
 
 例えば Follower が \`/dev/ttyACM0\`、Leader が \`/dev/ttyACM1\`。以降のキャリブレーション・遠隔操作・データ録画もこの2つのポートを使います。`,
         command: {
-          description: '新版 CLI のポート引数',
+          description: '対象バージョンの CLI のポート引数',
           code: '--robot.port=/dev/ttyACM0\n--teleop.port=/dev/ttyACM1'
         },
         warning: '再起動後はポート番号が入れ替わることがあります。その際はまず `ls /dev/tty*` を実行し直し、コマンド引数を更新してください。'
       },
       {
         title: 'キャリブレーションを実行',
-        body: `キャリブレーションスクリプトを実行すると、ロボットアームを**手で指定姿勢に動かす**よう一歩ずつ案内されます（完全伸展、零位など）。1姿勢ごとに Enter を押します。全体で 1〜2 分、データは自動で \`~/.cache/.../calibration.json\` に保存されます。`,
+        body: `キャリブレーションスクリプトを実行すると、ロボットアームを**手で指定姿勢に動かす**よう一歩ずつ案内されます（各関節を可動域の中央・全可動域の端・ゼロ位置へ、など）。1姿勢ごとに Enter を押します。全体で 1〜2 分、データは自動で \`~/.cache/.../calibration.json\` に保存されます。`,
         command: {
           description: 'キャリブレーション開始',
           code: 'lerobot-calibrate \\\n  --robot.type=so101_follower \\\n  --robot.port=/dev/ttyACM0 \\\n  --robot.id=so101_follower'
         },
-        expectedOutput: 'Calibrating leader_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration ... Done!',
+        expectedOutput: 'Calibrating follower_arms/main...\n[INFO] Move arm to fully-extended pose, press Enter...\n[INFO] Move arm to home pose, press Enter...\n[INFO] Saving calibration ... Done!',
         warning: '手で姿勢を作るときは**やさしく動かす**こと。SO101 のモータはダンパが無く、無理に動かすとギアを傷める恐れがあります。'
       }
     ],
@@ -730,8 +730,8 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       },
       {
         symptom: '「キャリブレーションは一度やれば永久でしょ？」',
-        cause: 'キャリブレーションが終身有効だと思い込んでいる。',
-        fix: 'データはディスクに保存され、電源を切っても消えない；ただし**モータ交換・分解組立・輸送の振動**の後は零点が変わるので再実施が必要。普段は繰り返さなくてよい。'
+        cause: 'キャリブレーションが永久に有効だと思い込んでいる。',
+        fix: 'データはディスクに保存され、電源を切っても消えない；ただし**モータ交換・分解組立・輸送の振動**の後はゼロ点が変わるので再実施が必要。普段は繰り返さなくてよい。'
       }
     ],
 
@@ -739,8 +739,8 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       {
         title: '再キャリブレーションの要否を判断する',
         instructions: `次のうち再キャリブレーションが必要なのは？\n\nA. 一晩電源を切り、翌日起動\nB. ロボットアームを机から落とした\nC. モータを1つ交換した\nD. USB を挿し直しただけ`,
-        hint: 'キャリブレーションデータはディスクにある。失われるのは「物理的な零点」であってファイルではない。',
-        expectedResult: '要再実施：**B（落下）、C（モータ交換）**。不要：A（データはディスクにあり消えない）、D（USB の抜き差しはモータ零点に影響しないが、ttyUSB 番号が変わる可能性があるので yaml のポートは確認）。'
+        hint: 'キャリブレーションデータはディスクにある。失われるのは「物理的なゼロ点」であってファイルではない。',
+        expectedResult: '要再実施：**B（落下）、C（モータ交換）**。不要：A（データはディスクにあり消えない）、D（USB の抜き差しはモータゼロ点に影響しないが、ttyUSB 番号が変わる可能性があるので yaml のポートは確認）。'
       }
     ],
 
@@ -763,11 +763,11 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       {
         title: 'LeRobot ロボット制御スクリプトのドキュメント',
         url: 'https://github.com/huggingface/lerobot',
-        note: '新版 LeRobot CLI の calibrate / teleoperate / record コマンドの説明。'
+        note: '対象バージョンの LeRobot CLI の calibrate / teleoperate / record コマンドの説明。'
       }
     ],
 
-    summary: `2ステップ：**ポートを見分ける**（抜線法または find_motors）→ 新版 CLI の \`--robot.port\` / \`--teleop.port\` に書く；**キャリブレーション**（lerobot-calibrate を実行し、手で姿勢を作って零点を記録）。
+    summary: `2ステップ：**ポートを見分ける**（抜線法または find_motors）→ 対象バージョンの CLI の \`--robot.port\` / \`--teleop.port\` に書く；**キャリブレーション**（lerobot-calibrate を実行し、手で姿勢を作ってゼロ点を記録）。
 
 キャリブレーションは Leader の読み値と Follower の実姿勢を揃える、データ品質の最初の関門。ハードウェアに変更が無ければやり直し不要。
 
@@ -807,9 +807,9 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
     ],
     errors: [],
 
-    introduction: `準備はすべて整いました。いよいよ一番楽しく、一番疲れる一歩です：**自分の手で Leader を動かし、Follower を追従させ、その全過程を PC に録画する**。この録画が AI に与える「デモデータ」です。
+    introduction: `準備はすべて整いました。いよいよ一番楽しく、最も手間のかかる工程です：**自分の手で Leader を動かし、Follower を追従させ、そのすべてのデータを PC に記録する**。この記録が AI に与える「デモデータ」です。
 
-この章には直感に反するが極めて重要な考えがあります：**データの質 > 量、そして質の核心は「多様性」**。初心者がもっとも犯しがちな失敗は、同じ動作を同じ位置で 50 回きっちり録ること —— 結果、モデルはその1場面を「丸暗記」するだけで、コップが1cm ずれただけで動けなくなります。
+この章には直感に反するが極めて重要な考えがあります：**データの質 > 量、そして品質を左右するのは「多様性」**。初心者がもっとも犯しがちな失敗は、同じ動作を同じ位置で 50 回きっちり録ること —— 結果、モデルはその1場面を「丸暗記」するだけで、コップが1cm ずれただけで動けなくなります。
 
 ここでは：遠隔操作の手応えをまず確認する方法、本番の録り方、何件録るか、そして「わざと変化をつけて」モデルに本当に汎化させる方法を明確にします。`,
 
@@ -843,7 +843,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         title: 'まず純粋な遠隔操作で手応えを確認',
         body: `いきなり録らない。まず teleoperate（データ保存なし）を実行し、Leader → Follower の同期が正常で遅延が小さいか確認します。Leader を動かすと、Follower がほぼリアルタイムで追従するはずです。
 
-30 秒試して手応えが良ければ Ctrl+C で抜け、本番録画へ。`,
+30 秒試して手応えが良ければ Ctrl+C で終了し、本番録画へ。`,
         command: {
           description: '録画せず遠隔操作のみ',
           code: 'lerobot-teleoperate \\\n  --robot.type=so101_follower --robot.port=/dev/ttyACM0 \\\n  --teleop.type=so101_leader --teleop.port=/dev/ttyACM1 \\\n  --display_data=true'
@@ -873,7 +873,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
 - 別の時間帯（光が違う）でも録る、机に邪魔物を置く
 - たまの失敗→やり直しも録る（誤りからの回復を教える）
 
-目標：50 件の中に**まったく同じものが2件と無い**こと。`,
+目標：50 件の中に**まったく同じ条件のデモが重ならない**ようにすること。`,
         tip: '単純な pick-place ≈ 50 件；USB 挿入のような難度 ≈ 100〜200 件；タオル畳みは 300 件以上。ただし多様な 50 件 > 似た 200 件。'
       }
     ],
@@ -939,7 +939,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       }
     ],
 
-    summary: `まず \`teleoperate\` で手応えを確認し、次に \`record\` で本番録画。**質 > 量、質 = 多様性**：物体の位置/向き/光/速さを意図的に変え、50 件に同じものが2件と無いように。
+    summary: `まず \`teleoperate\` で手応えを確認し、次に \`record\` で本番録画。**質 > 量、品質を左右するのは多様性**：物体の位置/向き/光/速さを意図的に変え、50 件で同じ条件のデモが重ならないように。
 
 単純タスクは ~50 件；失敗デモは残して印を付ける（<30%）；録画は完走しないと meta が書かれない。
 
@@ -966,7 +966,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
     steps: [
       { title: 'ディレクトリ構造', content: 'data/、meta/、videos/ などの役割を把握します。' },
       { title: 'メタデータ確認', content: 'info.json の中身が想定通りか確認します。' },
-      { title: 'データ検証', content: 'ツールを使ってデータセットの完整性を検証します。' }
+      { title: 'データ検証', content: 'ツールを使ってデータセットの整合性を検証します。' }
     ],
     commands: [
       { description: 'データセット構造を確認', code: 'tree ~/.cache/huggingface/lerobot/your-name/so101-task' },
@@ -982,16 +982,16 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       {
         error: 'FileNotFoundError: meta/info.json',
         cause: 'データセットのメタデータファイルが存在しません。',
-        solution: 'データセットディレクトリの完整性を確認します。欠損している場合は再収集が必要です。',
+        solution: 'データセットディレクトリの整合性を確認します。欠損している場合は再収集が必要です。',
         command: 'ls -la ~/.cache/huggingface/lerobot/your-name/so101-task/meta/'
       }
     ],
 
-    introduction: `さっき 50 件のデモを録りました。それは今ディスクのどこに、どんな姿で？　この章では開いて中を見ます —— データセット構造を理解すれば、学習でエラーが出たとき素早く原因を特定できます。
+    introduction: `さっき 50 件のデモを録りました。そのデータはディスク上のどこに、どのような形式で保存されているのでしょうか。　この章では開いて中を見ます —— データセット構造を理解すれば、学習でエラーが出たとき素早く原因を特定できます。
 
 データセットは \`~/.cache/huggingface/lerobot/<repo-id>/\` の下にあり、3つの中核ディレクトリで構成されます：**data/**（関節角度、とても小さい）、**videos/**（カメラフレーム、とても大きい）、**meta/**（このデータセットが何かを記述）。
 
-なかでも \`meta/info.json\` はデータセット全体の「身分証」で、初心者が最も遭遇する \`FileNotFoundError: meta/info.json\` の主役 —— 理解すれば多くの時間を節約できます。`,
+なかでも \`meta/info.json\` はデータセット全体の「仕様情報」で、初心者が最も遭遇する \`FileNotFoundError: meta/info.json\` の主役 —— 理解すれば多くの時間を節約できます。`,
 
     whyItMatters: `データ構造を理解しないと、学習エラー時に手が出せません：
 
@@ -1031,16 +1031,16 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         expectedOutput: 'so100-pick-cup/\n├── data/\n│   └── chunk-000/  episode_000.parquet ...\n├── meta/\n│   ├── info.json  episodes.jsonl  stats.json\n└── videos/\n    └── observation.images.cam_top/  episode_000.mp4 ...'
       },
       {
-        title: 'info.json を開く —— データセットの身分証',
+        title: 'info.json を開く —— データセットの仕様情報',
         body: `\`info.json\` は episodes 総数、総フレーム数、fps、状態/行動の次元、カメラ構成、schema バージョンを記録します。学習時に LeRobot が**まず最初に読む**もので、読めなければ即クラッシュします。
 
-\`cat\` して論理を照合：total_episodes × 平均フレーム数 ≈ total_frames。データセットが完整かの確認に役立ちます。`,
+\`cat\` で表示し、値の整合性を確認：total_episodes × 平均フレーム数 ≈ total_frames。データセットの整合が取れているかの確認に役立ちます。`,
         command: {
           description: 'メタデータを確認',
           code: 'cat ~/.cache/huggingface/lerobot/your-name/so101-pick-cup/meta/info.json'
         },
         expectedOutput: '{\n  "robot_type": "so100",\n  "total_episodes": 50,\n  "total_frames": 7423,\n  "fps": 30,\n  "features": {\n    "observation.state": {"dtype": "float32", "shape": [6]},\n    "action": {"dtype": "float32", "shape": [6]}\n  }\n}',
-        tip: 'total_episodes=50、total_frames≈7500 → 1件平均 150 フレーム = 5 秒×30fps。論理的に整合。'
+        tip: 'total_episodes=50、total_frames≈7500 → 1件平均 150 フレーム = 5 秒×30fps。数値の整合性が取れている。'
       },
       {
         title: 'コードで読み込めるか検証',
@@ -1050,15 +1050,15 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
           code: 'python -c "from lerobot.common.datasets.lerobot_dataset import LeRobotDataset; ds = LeRobotDataset(\'your-name/so101-pick-cup\'); print(len(ds))"'
         },
         expectedOutput: '7423   # フレーム数を出力 = 読み込み成功',
-        warning: 'このステップでエラー（特に FileNotFoundError: meta/info.json）が出たらデータセットが不完整です。学習を急がず、録り直すか meta を再構築してください。'
+        warning: 'このステップでエラー（特に FileNotFoundError: meta/info.json）が出たらデータセットが不完全です。学習を急がず、録り直すか meta を再構築してください。'
       }
     ],
 
     pitfalls: [
       {
         symptom: '学習を開始すると即 `FileNotFoundError: meta/info.json`。',
-        cause: '前回の record を途中で Ctrl+C 強制終了した —— data/ に一部 parquet はあるが、meta/ が未生成（全件録了後にまとめて書かれる）。',
-        fix: '完整に録り直すか、LeRobot のツールスクリプトで data/ から meta を再構築する。確認：`ls -la .../meta/` が空でないか。'
+        cause: '前回の record を途中で Ctrl+C 強制終了した —— data/ に一部 parquet はあるが、meta/ が未生成（全エピソードの記録完了後にまとめて書かれる）。',
+        fix: '完全に録り直すか、LeRobot のツールスクリプトで data/ から meta を再構築する。確認：`ls -la .../meta/` が空でないか。'
       },
       {
         symptom: 'ディスクがすぐにデータセットで埋まる。',
@@ -1072,22 +1072,22 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         title: '関節データの容量を計算する',
         instructions: 'info.json に fps=30、state と action が共に 6 次元 float32 とある。7 秒のデモ1件の純関節データはおよそ何 KB？',
         hint: 'フレーム数 × (6+6) × 4 バイト。',
-        expectedResult: '30×7=210 フレーム；1フレーム 12 個の float32 × 4 バイト = 48 バイト；210×48 ≈ **10 KB**。50 件でも ~500 KB —— だから「容量を食うのは動画で関節データではない」。'
+        expectedResult: '30×7=210 フレーム；1フレーム 12 個の float32 × 4 バイト = 48 バイト；210×48 ≈ **10 KB**。50 件でも ~500 KB —— だから「容量を最も使用するのは動画であって関節データではない」。'
       }
     ],
 
     selfCheck: [
       {
         question: 'なぜ info.json はそんなに重要なのか？',
-        answer: 'データセットの「身分証」だからです：episodes 数、フレーム数、fps、次元、カメラ構成を記録。LeRobot は学習前にまずこれを読み、欠損や破損があると即 FileNotFoundError で学習できません。'
+        answer: 'データセットの「仕様情報」だからです：episodes 数、フレーム数、fps、次元、カメラ構成を記録。LeRobot は学習前にまずこれを読み、欠損や破損があると即 FileNotFoundError で学習できません。'
       },
       {
-        question: '3つのディレクトリでどれが最も容量を食う？',
+        question: '3つのディレクトリでどれが最も容量を使用する？',
         answer: 'videos/（カメラフレーム）で 95%+。data/（関節）は毎秒数 KB、meta/ は小さな json がいくつか。'
       },
       {
         question: 'データセットが学習に使えるかどう確認する？',
-        answer: '`LeRobotDataset(\'repo-id\')` で一度読み込み、長さを返せれば構造は完整。エラーが出たらデータセットを直してから学習する。'
+        answer: '`LeRobotDataset(\'repo-id\')` で一度読み込み、長さを返せれば構造は完全。エラーが出たらデータセットを直してから学習する。'
       }
     ],
 
@@ -1101,7 +1101,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
 
     summary: `データセットは \`~/.cache/huggingface/lerobot/<repo-id>/\` にあり、3大ディレクトリ：**data**（関節、小）、**videos**（カメラ、容量の 95%）、**meta**（情報）。
 
-\`meta/info.json\` は身分証で、欠けると FileNotFoundError —— 多くは record の途中強制終了が原因。学習前に LeRobotDataset で一度読み込み、完整性を検証する。
+\`meta/info.json\` は仕様情報で、欠けると FileNotFoundError —— 多くは record の途中強制終了が原因。学習前に LeRobotDataset で一度読み込み、整合性を検証する。
 
 次章は本題：ニューラルネットワークに本当に学習を始めさせる。`
   },
@@ -1153,10 +1153,10 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
 
 この章では学習の起動、loss 曲線の読み方、NaN の応急処置、wandb での監視、そして「なぜ 50 件のデータで 20 万ステップ学習できるのか」を明確にします。`,
 
-    whyItMatters: `学習はデータを能力に変える変換器で、同時にもっとも「一晩回して無駄になりやすい」工程です：
+    whyItMatters: `学習は、収集したデータから方策を最適化する工程であり、同時にもっとも「一晩回して無駄になりやすい」工程でもあります：
 
-- 健康な loss の姿を知らない → 8時間回して成功か失敗か分からない
-- NaN を救えない → 勾配が爆発して全工程が無駄になり、再学習が必要だと思い込む
+- 正常な loss 曲線を知らない → 8時間回して成功か失敗か分からない
+- NaN に対処できない → 勾配が爆発して全工程が無駄になり、再学習が必要だと思い込む
 - batch_size を調整できない → OOM になるか、VRAM を無駄にして収束が遅い
 - wandb を使わない → ターミナルを眺めるだけで、複数実験を比較できない
 
@@ -1177,7 +1177,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
     style CVAE fill:#f59e0b,stroke:#f59e0b,color:#fff
     style Dec fill:#22c55e,stroke:#22c55e,color:#fff
     style Out fill:#0ea5e9,stroke:#0ea5e9,color:#fff`,
-        caption: '画像＋状態 → Encoder が特徴抽出 → CVAE が多峰性を注入 → Decoder が一気に 100 ステップの行動を出す（Action Chunking）。'
+        caption: '画像＋状態 → Encoder が特徴抽出 → CVAE が多様な行動分布を表現 → Decoder が一気に 100 ステップの行動を出す（Action Chunking）。'
       }
     ],
 
@@ -1186,7 +1186,7 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
         title: '学習を起動する',
         body: `1コマンドで完了（前提：第5章でデータセットを録り終えていること）。\`--policy.type=act\` で ACT を選び、\`--dataset.repo_id=...\` で自分のデータセットを指定します。
 
-デフォルトで 20 万ステップ、RTX 3060 で約 6〜8 時間、CPU では 1〜2 日。途中で Ctrl+C でき、\`resume=true\` を付けて続行できます。`,
+デフォルトで 20 万ステップ、RTX 3060 で約 6〜8 時間。CPU のみでの学習は現実的ではないため、GPU または Colab を推奨します。途中で Ctrl+C でき、\`resume=true\` を付けて続行できます。`,
         command: {
           description: 'ACT 学習を起動',
           code: 'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --output_dir=outputs/train/act_so101'
@@ -1196,18 +1196,18 @@ LeRobot には探索ツール \`find_motors_bus_port.py\` もあり、各ポー�
       },
       {
         title: 'loss 曲線を読む',
-        body: `健康な loss：**最初の 1000 ステップで急降下**（学び始め）→ 中盤は安定して低下 → 後半は変化 < 5%（収束、止めてよい）。
+        body: `正常な loss 曲線：**最初の 1000 ステップで急降下**（学び始め）→ 中盤は安定して低下 → 後半は変化 < 5%（収束、止めてよい）。
 
-不健康なサイン：loss が NaN になる（勾配爆発）、loss が反転して上昇（学習率が大きすぎ）、loss が初期値で止まって下がらない（データに問題）。`,
+不健全なサイン：loss が NaN になる（勾配爆発）、loss が上昇に転じる（学習率が大きすぎ）、loss が初期値で止まって下がらない（データに問題）。`,
         tip: '最初の 1000 ステップを見れば「学習が立ち上がったか」が判断でき、数時間待つ必要はありません。'
       },
       {
-        title: 'NaN loss の救出＋ batch_size 調整',
-        body: `loss の NaN はほぼ常に勾配爆発です。応急の二手：学習率を一桁下げる＋勾配クリッピングを有効化。NaN は不可逆なので、ここからやり直すしかなく「自然に回復」はしません。
+        title: 'NaN loss への対処＋ batch_size 調整',
+        body: `loss の NaN はほぼ常に勾配爆発です。まず試す 2 つの対処：学習率を一桁下げる＋勾配クリッピングを有効化。NaN は不可逆なので、ここからやり直すしかなく「自然に回復」はしません。
 
-batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正確、収束が速い）。12 GB なら一般に 32 程度入る；OOM なら下げる。`,
+batch_size は VRAM が許す範囲で大きくすると勾配推定が安定し収束も速くなりますが、最適値はカメラ台数・解像度・chunk・モデル・混合精度によって変わります。まずは 8 程度から始め、VRAM の余裕を見ながら調整してください。OOM が出たら下げます。`,
         command: {
-          description: 'NaN 救出 / パラメータ調整',
+          description: 'NaN への対処 / パラメータ調整',
           code: 'lerobot-train \\\n  --dataset.repo_id=your-name/so101-pick-cup \\\n  --policy.type=act \\\n  --optimizer.lr=1e-5 --optimizer.grad_clip_norm=10 \\\n  --batch_size=8'
         },
         warning: 'NaN が出た後は、それまでの進捗は無効（重みが汚染）。学習率を下げて再学習するしかなく、続行（resume）はできません。'
@@ -1223,12 +1223,12 @@ batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正
       {
         symptom: '`CUDA out of memory` で学習が立ち上がらない。',
         cause: 'VRAM に対して batch_size が大きすぎる。',
-        fix: 'まず `training.batch_size=4`；駄目なら `grad_accumulation_steps=4`；さらに `amp=true` 混合精度。9割は最初の一手で解決。'
+        fix: 'まず `--batch_size=4` に下げる；それでも厳しければ勾配累積や混合精度 (AMP) を併用する。9割は最初の一手で解決。'
       },
       {
         symptom: '「ACT が BC より強いのは Transformer を使ってるからでしょ？」',
-        cause: 'backbone を創新点だと取り違えている。',
-        fix: 'Transformer は骨格にすぎない。ACT を強くしているのは **Action Chunking**（一度に行動の塊を出して複合誤差を治す）＋ **CVAE**（多峰性を扱う）。論文のアブレーションでは Chunking を外すと性能が 50%+ 落ちる。'
+        cause: 'backbone を独自性の本質だと取り違えている。',
+        fix: 'Transformer は骨格にすぎない。ACT を強くしているのは **Action Chunking**（一度に行動の塊を出して複合誤差を抑える）＋ **CVAE**（多峰性を扱う）。論文のアブレーションでは Chunking を外すと性能が 50%+ 落ちる。'
       }
     ],
 
@@ -1244,7 +1244,7 @@ batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正
     selfCheck: [
       {
         question: 'ACT は何で構成され、どの部分が最も重要？',
-        answer: 'Transformer Encoder ＋ CVAE ＋ Transformer Decoder。最重要は Decoder の **Action Chunking**（100 ステップの行動を一度に予測し、複合誤差を治す）、次いで CVAE（多峰性を扱う）。Transformer は骨格にすぎない。'
+        answer: 'Transformer Encoder ＋ CVAE ＋ Transformer Decoder。最重要は Decoder の **Action Chunking**（100 ステップの行動を一度に予測し、複合誤差を抑える）、次いで CVAE（多峰性を扱う）。Transformer は骨格にすぎない。'
       },
       {
         question: 'loss が NaN になったらどうする？',
@@ -1271,7 +1271,7 @@ batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正
 
     summary: `**ACT = Transformer Encoder ＋ CVAE ＋ Decoder（一度に 100 ステップ出力）**。強さの源は Action Chunking ＋ CVAE で、Transformer 自体ではない。
 
-\`--dataset.repo_id=... --policy.type=act\` で起動；健康な loss は最初の 1k で急降下し後半で収束；NaN → 学習率÷10＋勾配クリッピングで再学習；OOM → batch_size を下げる；wandb で監視。
+\`--dataset.repo_id=... --policy.type=act\` で起動；正常な loss は最初の 1k で急降下し後半で収束；NaN → 学習率÷10＋勾配クリッピングで再学習；OOM → batch_size を下げる；wandb で監視。
 
 次章では学習済みモデルを実機ロボットアームにデプロイする。`
   },
@@ -1322,15 +1322,15 @@ batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正
 
     introduction: `学習が完了し、ディスクには数百 MB の checkpoint が眠っています。これを**本当にロボットアームを動かす**ために使います。
 
-心の準備を：**初回の推論成功率はしばしば 10〜30% にすぎません**。これは正常で、あなたのミスではありません。学習 loss が低い ≠ 実機で高い —— 学習データは有限、実環境には揺らぎがあり、第1章の複合誤差は ACT で大幅に緩和されても完全には消えません。
+先に知っておきたいのは、**初回の推論成功率はしばしば 10〜30% にとどまる**ということです。これは正常で、あなたのミスではありません。学習 loss が低い ≠ 実機で高い —— 学習データは有限、実環境には揺らぎがあり、第1章の複合誤差は ACT で大幅に緩和されても完全には消えません。
 
 この章では checkpoint をロードして稼働、fps を固定、EMA でガタつきを抑え、成功率を一歩ずつ上げる方法を教えます。`,
 
-    whyItMatters: `推論は「学習できる」から「本当に使える」への最後の1マイルで、調整のセンスがもっとも問われる場所です：
+    whyItMatters: `推論は「学習できる」から「本当に使える」へと仕上げる最終段階で、調整のセンスがもっとも問われる場所です：
 
-- 初回成功率が元々低いと知らない → 効果が悪いと見るや、前の工程が全部無駄だったと思い込んで諦める
+- 初回成功率が元々低いと知らない → 結果が悪いと、前の工程が全部無駄だったと思い込んで諦める
 - fps が不安定 → ガタつきの最大原因。固定しないと調整できない
-- EMA を使えない → 動作が粗く、見るからに不安
+- EMA を使えない → 動作が粗く、不安定になる
 - 複合誤差が再現すると理解していない → 「最初は滑らか、後半で歪む」のがなぜか分からない
 
 この章を押さえれば、「かろうじて動く」モデルを「安定して使える」まで仕上げられます。`,
@@ -1366,7 +1366,7 @@ batch_size は VRAM が許す範囲で大きいほど良い（勾配推定が正
       },
       {
         title: 'fps を学習時の値に固定する',
-        body: `不安定な fps はガタつきの系統的な元凶。推論 fps を**学習データと同じ**（通常 30）に固定します —— モデルが「感じる」リズムが学習時と同じである必要があり、ずれすぎると混乱します。
+        body: `不安定な fps はガタつきの系統的な元凶。推論 fps を**学習データと同じ**（通常 30）に固定します —— 学習時と実行時の時間間隔が同じである必要があり、ずれすぎるとモデルの出力が乱れます。
 
 GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fps 出ず、フレーム落ちで依然ガタつく。その場合は GPU を替えるか、学習時も低い fps を使う。`,
         command: {
@@ -1376,7 +1376,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
         warning: '推論 fps と学習 fps の不一致は、「シミュレーションでは良いのに実機で乱れる」という初心者によくある隠れ原因です。'
       },
       {
-        title: 'EMA 平滑化でガタつきを治す',
+        title: 'EMA 平滑化でガタつきを抑える',
         body: `EMA（指数移動平均）は現在の行動と直前の行動を重みで融合し、高周波のガタつきを抑えます。1行で書けます：
 
 \`smoothed = α × current + (1-α) × previous\`、α は一般に 0.3（新しい行動が 30%）。アームは明らかに滑らかになり、代償は応答がやや遅れること（多くのタスクで許容範囲）。`,
@@ -1392,7 +1392,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
       {
         symptom: '初回の推論成功率が低い。前の工程は無駄だった？',
         cause: '学習 loss が低ければ実機で高いはず、と誤解している。',
-        fix: '初回 10〜30% は正常。まず fps 固定、EMA 追加、必要ならデータ補充、と一歩ずつ調整。sim2real ギャップは常に存在し、調整は当たり前。'
+        fix: '初回 10〜30% は正常。まず fps 固定、EMA 追加、必要ならデータ補充、と一歩ずつ調整。学習時と実行時の分布のずれは常に存在し、調整は当たり前。'
       },
       {
         symptom: '最初の数秒は滑らかなのに、後半ほど歪む。',
@@ -1418,7 +1418,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
     selfCheck: [
       {
         question: '初回の推論成功率が 20% だけ。正常？',
-        answer: '正常です。学習 loss が低くても実機で高いとは限らず、sim2real ギャップ＋複合誤差＋環境の揺らぎがあります。まず fps 固定、EMA 追加、その後で段階的に調整。初回が悪くても諦めないこと。'
+        answer: '正常です。学習 loss が低くても実機で高いとは限らず、学習時と実行時の分布のずれ＋複合誤差＋環境の揺らぎがあります。まず fps 固定、EMA 追加、その後で段階的に調整。初回が悪くても諦めないこと。'
       },
       {
         question: 'なぜ推論 fps と学習 fps を一致させる？',
@@ -1434,12 +1434,12 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
       {
         title: 'ACT 原論文：Temporal Ensembling の節',
         url: 'https://arxiv.org/abs/2304.13705',
-        note: 'EMA を超えるより強い平滑化。複数の chunk の予測を加重平均する。'
+        note: 'EMA より高度な平滑化手法。複数の chunk の予測を加重平均する。'
       },
       {
         title: 'ALOHA プロジェクトのホームページ',
         url: 'https://tonyzhaozh.github.io/aloha/',
-        note: 'ACT が実機の双腕で推論する動画。「調整後に何ができるか」の期待値を作れる。'
+        note: 'ACT が実機の双腕で推論する動画。「調整後に何ができるか」の完成イメージをつかめる。'
       }
     ],
 
@@ -1473,7 +1473,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
       { title: '解決策の検証', content: '対処を適用し、問題が解消されたか確認します。' }
     ],
     commands: [
-      { description: '完整なエラースタックを表示', code: 'python script.py 2>&1 | tee error.log' },
+      { description: '完全なエラースタックを表示', code: 'python script.py 2>&1 | tee error.log' },
       { description: 'GPU の状態を確認', code: 'nvidia-smi' },
       { description: 'ディスク残容量を確認', code: 'df -h' }
     ],
@@ -1486,14 +1486,14 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
 
     introduction: `必ずエラーに出会います —— 誰もがそうです。違いはただ一つ：何時間も詰まって最後に諦める人と、5分で原因を特定して解決する人。差は才能ではなく、**体系的な切り分け方を持っているか**です。これこそがエンジニアの本当に価値ある能力です。
 
-この章は特定のエラーの解き方は教えません（それらは「トラブル診断」ライブラリにあります）。教えるのは**汎用4ステップ法**です：最終行を読む → 種類を判断 → サイト内ライブラリを引く → エラー文を正確に Google。9割は3ステップ目で解決します。
+この章では個別のエラーへの対処方法は扱いません（それらは「トラブル診断」にまとまっています）。お伝えするのは**汎用4ステップ法**です：最終行を読む → 種類を判断 → サイト内のトラブル診断を検索する → エラー文を正確に Google。多くは3ステップ目で解決します。
 
 さらに、多くの人ができないこともお教えします：**問題をどう明確に質問するか**。そうすれば AI アシスタントやコミュニティが本当に助けてくれます。`,
 
     whyItMatters: `この章はコース全体でもっとも「応用が効く」章です —— 学ぶのは LeRobot のエラー修正だけでなく、**あらゆる**技術エラーの直し方です：
 
 - traceback を読める → 長い赤い文字列に怯えなくなる
-- エラーの種類を判断できる → 正しい方向へ直行し、闇雲に試さない
+- エラーの種類を判断できる → 調査範囲を絞り込め、闇雲に試さずに済む
 - 質問できる → 一度の相談で有効な回答を得られる。「助けて」が「完全なエラーを貼って」で返ってこない
 - この方法を身につければ → 最初の8章を人に手取り足取り頼らず独力で走破できる`,
 
@@ -1515,7 +1515,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
     Google --> Fix
     style Err fill:#dc2626,color:#fff
     style Fix fill:#16a34a,color:#fff`,
-        caption: '汎用4ステップ法。各分岐が典型的なエラーの一類に対応し、大半は3ステップ目（サイト内ライブラリ）で解決する。'
+        caption: '汎用4ステップ法。各分岐が典型的なエラーの種類に対応し、大半は3ステップ目（サイト内のトラブル診断）で解決する。'
       }
     ],
 
@@ -1528,10 +1528,10 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
         tip: '赤い文字の長さに怯えないこと。情報量の9割は最終行の一文にあります。'
       },
       {
-        title: 'ステップ2：種類を判断、ステップ3：サイト内ライブラリを引く',
+        title: 'ステップ2：種類を判断、ステップ3：サイト内のトラブル診断を検索する',
         body: `エラーを分類します：環境/インストール、ハードウェア/シリアル、データ/ファイル、学習、推論。種類が調べる方向を決めます。
 
-次に本サイトの「トラブル診断」でキーワード検索 —— 収録済みの十数件が一般的なエラーの8割（Permission denied、CUDA OOM、meta/info.json、NaN loss など）をカバーします。`,
+次に本サイトの「トラブル診断」でキーワード検索 —— 収録済みの 13 件が、よく遭遇するエラー（Permission denied、CUDA OOM、meta/info.json、NaN loss など）の多くをカバーします。`,
         tip: '検索はエラー内の英語キーワード（例 "CUDA out of memory"）を使うと、日本語の説明より圧倒的にヒットしやすい。'
       },
       {
@@ -1555,13 +1555,13 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
       },
       {
         symptom: 'コミュニティ/AI に「学習でエラーが出た、助けて」と聞いても誰も答えられない。',
-        cause: '情報量がゼロで、相手は再現も特定もできない。',
+        cause: '情報が少なすぎて、相手が状況を再現・特定できない。',
         fix: '良い質問 = 完全なエラースタック＋実行したコマンド＋主要設定（info.json/yaml）＋試したこと。情報が揃うほど回答が正確になる。'
       },
       {
         symptom: 'エラーを自分の言葉で言い換えて投稿する。',
         cause: '言い換えると重要なエラーのキーワードが失われる。',
-        fix: '**生のエラーテキスト**を直接貼る（スクショや言い換えはダメ）。キーワードが一字一句一致して初めて検索/認識される。'
+        fix: '**生のエラーテキスト**をそのまま貼り付ける（スクリーンショットや言い換えだと、検索に必要なキーワードが失われます）。キーワードが一字一句一致して初めて検索/認識される。'
       }
     ],
 
@@ -1573,7 +1573,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
         expectedResult: 'A→③（パッケージ不足/環境未有効化）、B→①（VRAM 不足、batch を小さく）、C→②（パス誤りまたは meta 欠損）。この3類で遭遇するエラーの大半をカバーします。'
       },
       {
-        title: '合格点の相談文を書く',
+        title: '回答を得やすい質問文を書く',
         instructions: '学習で NaN loss が出たとします。本章の「良い質問テンプレ」に沿って、添えるべき4つの情報を挙げる。',
         hint: '相手が追加質問せずに助け始められるように。',
         expectedResult: '① 完全なエラースタック/loss が NaN になったログ断片 ② 実行した完全なコマンド（ハイパラ含む）③ データセットの主要情報（info.json 要約）④ 試した方策と結果（例「lr を 1e-4 から 1e-5 に下げても NaN」）。'
@@ -1612,7 +1612,7 @@ GPU が非力で1フレームの推論が 33ms を超えると実際には 30 fp
 
 traceback は最終行を見る；3大エラー ImportError / CUDA OOM / FileNotFoundError にはそれぞれ定石がある；相談には「エラースタック＋コマンド＋設定＋試したこと」を添え、スクショだけにしない。
 
-おめでとう —— ここまで来れば、SO101 模倣学習の概念からデバッグまでの主線を一通り身につけたことになります。実機で走らせてみよう。`
+おめでとう —— ここまで来れば、SO101 模倣学習の概念からデバッグまでの一連の流れを一通り身につけたことになります。実機で走らせてみよう。`
   }
 ]
 
@@ -1631,7 +1631,7 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
   'filenotfounderror meta/info.json': {
     error: 'FileNotFoundError: meta/info.json',
     cause:
-      'データセットのディレクトリ構造が不完整で、必要なメタデータファイルが見つかりません。データ収集の中断やパス誤りが原因として考えられます。',
+      'データセットのディレクトリ構造が不完全で、必要なメタデータファイルが見つかりません。データ収集の中断やパス誤りが原因として考えられます。',
     solution:
       'データセットディレクトリの存在と、meta フォルダおよびその中身を確認します。完全に欠損している場合はデータの再収集が必要です。',
     command: 'ls -la ~/.cache/huggingface/lerobot/your-repo-id/meta/',
@@ -1709,8 +1709,8 @@ export const errorDatabaseJa: Record<string, DiagnosticResult> = {
   },
   'leader follower mismatch': {
     error: 'Leader と Follower の関節角差が大きい',
-    cause: 'キャリブレーション未実施、もしくはモータ零点が一致していません。',
-    solution: 'キャリブレーションスクリプトを再実行し、両アームを同一姿勢で零点記録します。',
+    cause: 'キャリブレーション未実施、もしくはモータゼロ点が一致していません。',
+    solution: 'キャリブレーションスクリプトを再実行し、両アームを同一姿勢でゼロ点記録します。',
     command:
       'lerobot-calibrate --robot.type=so101_follower --robot.port=/dev/ttyACM0 --robot.id=so101_follower',
     nextStep: 'キャリブレーション後に遠隔操作を再実行し、追従性を観察してください。',
@@ -1760,7 +1760,7 @@ lerobot-calibrate \
 
 3. **キャリブレーションの流れ**
    - 指示に従ってアームを指定姿勢に移動
-   - 各関節の零点を順番にキャリブレーション
+   - 各関節のゼロ点を順番にキャリブレーション
    - キャリブレーションデータは自動保存されます
 
 4. **キャリブレーションの検証**
@@ -1825,7 +1825,7 @@ lerobot-record \
 
 **よくある原因：**
 1. データセットパスが誤っている
-2. データ収集が中断され、ファイルが完整に生成されていない
+2. データ収集が中断され、ファイルが完全に生成されていない
 3. ディレクトリ構造が壊れている
 
 **対処手順：**
@@ -1891,7 +1891,7 @@ smoothed_action = 0.7 * action + 0.3 * prev_action
 
 export const learningPathJa = [
   { icon: 'Settings', title: '環境構築', description: 'Python 環境と LeRobot のインストール' },
-  { icon: 'Cpu', title: 'ロボットアーム調整', description: 'ハードウェア接続と零点キャリブレーション' },
+  { icon: 'Cpu', title: 'ロボットアーム調整', description: 'ハードウェア接続とゼロ点キャリブレーション' },
   { icon: 'Database', title: 'データ収集', description: '遠隔操作と録画' },
   { icon: 'Brain', title: 'ACT 学習', description: '模倣学習モデルの学習' },
   { icon: 'Rocket', title: 'モデルデプロイ', description: '実機ロボットアームでの推論' },

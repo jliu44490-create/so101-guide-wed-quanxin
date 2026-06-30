@@ -52,7 +52,7 @@ export function CompanionIntroDialog({
   const t = isJa
     ? {
         points: POINTS_JA,
-        title: '電子学習パートナーを有効化？',
+        title: 'AI 学習パートナーを有効化？',
         desc: 'サイト全体で付き添う AI パートナー（Plus 専用）。有効化すると、こう手伝います：',
         dismiss: 'あとで',
         enable: '有効化する'

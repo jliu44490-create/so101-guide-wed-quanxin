@@ -128,14 +128,14 @@ export default function AboutPageJa() {
               </Reveal>
               <Reveal delay={120}>
                 <h1 className="mt-4 text-balance text-4xl font-bold sm:text-5xl lg:text-6xl">
-                  <ShimmerText>身体性 AI</ShimmerText>に、もう障壁はいらない
+                  <ShimmerText>身体性 AI</ShimmerText> に、もう障壁はいらない
                 </h1>
               </Reveal>
               <Reveal delay={240}>
                 <p className="mx-auto mt-5 max-w-2xl text-pretty text-muted-foreground sm:text-lg">
                   私たちは信じています ── 一台の低コストなロボットアーム +
                   分かりやすい日本語の学習パス + 実際に動くコマンド集があれば、
-                  ロボットに興味のある誰もが数時間で自分のポリシーを学習させられる、と。
+                  ロボットに興味のある誰もが、環境構築から学習・デプロイまでを一歩ずつ進められる、と。
                 </p>
               </Reveal>
               <Reveal delay={360}>
@@ -292,7 +292,7 @@ export default function AboutPageJa() {
             </Badge>
             <h2 className="mt-3 text-2xl font-bold sm:text-3xl">このガイドはどなた向け？</h2>
             <p className="mt-3 text-muted-foreground">
-              趣味でも研究でも、午後一回分の時間をいただければ、ACT を SO101 で動かすところまでお連れします。
+              趣味でも研究でも、半日ほどお時間をいただければ、ACT を SO101 で動かすところまでお連れします。
             </p>
             <ul className="mt-6 space-y-3">
               {audience.map((a) => (

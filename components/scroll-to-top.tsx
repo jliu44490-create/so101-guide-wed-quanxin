@@ -2,9 +2,11 @@
 
 import { ArrowUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 export function ScrollToTop() {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export function ScrollToTop() {
   return (
     <button
       type="button"
-      aria-label="回到顶部"
+      aria-label={isJa ? 'ページ上部へ戻る' : '回到顶部'}
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className={cn(
         'fixed bottom-5 right-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-background/80 text-foreground shadow-lg backdrop-blur-md transition-all hover:bg-secondary',

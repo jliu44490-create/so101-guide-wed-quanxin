@@ -25,7 +25,7 @@ export const glossaryJa: GlossaryTerm[] = [
     term: 'ACT',
     termEn: 'Action Chunking Transformer',
     definition:
-      'Stanford が提案した模倣学習アルゴリズム。Transformer + CVAE で複数ステップ分の行動 (action chunk) を一度に予測することで、複合誤差と振動を大幅に低減します。LeRobot 既定の方式です。',
+      'Stanford が提案した模倣学習アルゴリズム。Transformer + CVAE で複数ステップ分の行動 (action chunk) を一度に予測することで、複合誤差と振動を大幅に低減します。LeRobot で利用できる代表的な方式です。',
     category: 'algorithm',
     related: ['CVAE', 'Transformer', 'Action Chunking']
   },
@@ -57,7 +57,7 @@ export const glossaryJa: GlossaryTerm[] = [
     term: 'Leader / Follower',
     termEn: 'Leader / Follower Arm',
     definition:
-      'マスター・スレーブ構成。Leader は人が直接操作し、Follower は PID もしくは直接位置制御で Leader の関節角度を再現します。両者は同じハードでも役割が異なります。',
+      'Leader / Follower 構成。Leader は人が直接操作し、Follower は PID もしくは直接位置制御で Leader の関節角度を再現します。両者は同じハードでも役割が異なります。',
     category: 'hardware',
     related: ['遠隔操作', 'キャリブレーション']
   },

@@ -271,7 +271,7 @@ function DiagnoseContent() {
                     </div>
                     <p className="text-sm font-medium">エラーを選択して詳細を表示</p>
                     <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                      左のリストから任意のエラーを選ぶと、原因・対処・推奨コマンド・次の一手が表示されます。
+                      一覧から任意のエラーを選ぶと、原因・対処・推奨コマンド・次の一手が表示されます。
                     </p>
                   </CardContent>
                 </Card>
@@ -281,7 +281,7 @@ function DiagnoseContent() {
                 <CardContent className="flex flex-col items-start gap-3 p-5 sm:flex-row">
                   <Bot className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <div className="min-w-0 flex-1 text-sm">
-                    <p className="font-medium">該当が無い場合は AI に相談</p>
+                    <p className="font-medium">該当する項目がない場合は AI に相談</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       完全なエラースタックや実行コマンドを添えて LVJIN AI に送ると精度が上がります。
                     </p>

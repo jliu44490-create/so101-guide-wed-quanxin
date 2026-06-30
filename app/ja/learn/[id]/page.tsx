@@ -156,7 +156,7 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
                     この章にはインタラクティブ講座があります
                   </p>
                   <p className="mt-1 text-sm leading-relaxed sm:text-base">
-                    <strong>文章を読むのが大変？</strong>7 分のインタラクティブ版を試そう —— カードをめくりながら学べて、読むより身につきます。
+                    <strong>短時間で要点をつかみたい方へ。</strong>7 分で学べるインタラクティブ版をお試しください —— カードをめくりながら学べて、読むより身につきます。
                   </p>
                 </div>
               </div>
@@ -172,7 +172,7 @@ export default async function ChapterPageJa({ params }: ChapterPageProps) {
               </Button>
             </div>
             <div className="border-t border-accent/20 bg-background/30 px-5 py-2 text-[11px] text-muted-foreground sm:px-6">
-              いま読んでいるのは <strong className="text-foreground">完全なドキュメント版</strong> —— 復習や深掘りに最適。インタラクティブ講座は初学習に向いています。
+              いま読んでいるのは <strong className="text-foreground">詳細ドキュメント版</strong> —— 復習や深掘りに最適。インタラクティブ講座は初めて学ぶときに適しています。
             </div>
           </div>
         )}

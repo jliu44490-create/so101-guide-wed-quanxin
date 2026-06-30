@@ -36,7 +36,7 @@ const i18n = {
     lockedTitle: '未開始',
     completedAtPrefix: '完了日:',
     syncNote: '完了すると学習パスとホームの統計に反映されます',
-    markCompleted: '完了としてマーク',
+    markCompleted: '完了にする',
     markCompletedToast: '🎉 この章を完了しました',
     reset: 'リセット',
     resetToast: 'この章の進捗をリセットしました',

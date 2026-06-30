@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
         sending: '送信中…',
         resend: '再送信',
         backLogin: 'ログインに戻る',
-        forgotTitle: 'パスワードをお忘れ',
+        forgotTitle: 'パスワードをお忘れですか？',
         forgotSub: '登録メールアドレスを入力してください。リセットリンクをお送りします。',
         email: 'メールアドレス',
         sendLink: 'リセットリンクを送信'

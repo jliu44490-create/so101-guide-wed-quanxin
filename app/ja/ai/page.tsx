@@ -387,7 +387,7 @@ export default function AiPageJa() {
                 {
                   icon: Gauge,
                   title: '利用枠とご注意',
-                  body: '毎日無料枠あり、Plus はより多い枠 + 講座フル解放；重要なハード操作は公式ドキュメントを優先してください'
+                  body: '毎日無料枠あり、Plus は利用枠を拡大し全講座を利用可能。重要なハード操作は公式ドキュメントを優先してください'
                 }
               ].map((c) => (
                 <div
@@ -509,7 +509,7 @@ export default function AiPageJa() {
               <h1 className="flex items-center gap-1.5 text-sm font-bold tracking-tight">
                 LVJIN AI
                 <span className="hidden text-[10px] font-normal text-muted-foreground sm:inline">
-                  · SO-101 エキスパート助教
+                  · SO-101 専門チューター
                 </span>
               </h1>
             </div>
@@ -519,7 +519,7 @@ export default function AiPageJa() {
                 className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-border/50 bg-card/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-medium text-muted-foreground md:hidden"
                 aria-label="本日の利用枠"
               >
-                <Gauge className="size-3" />残り {fmtTok(usage.remaining + usage.credits)}
+                <Gauge className="size-3" />本日の残り {fmtTok(usage.remaining + usage.credits)}
               </button>
             )}
             {isPlus ? (
@@ -565,7 +565,7 @@ export default function AiPageJa() {
                   </h2>
                   <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
                     SO-101 / LeRobot 模倣学習の専属アシスタントです。キャリブレーション、収集、学習、デプロイ——
-                    1 つのコマンドから 1 つのエラーまで、何でも聞いてください。下から 1 つ選ぶか、そのまま入力を：
+                    1 つのコマンドから 1 つのエラーまで、何でも聞いてください。下の候補から選ぶか、質問を直接入力してください：
                   </p>
 
                   <div className="mt-5 flex justify-center">
@@ -605,8 +605,8 @@ export default function AiPageJa() {
 
                   <p className="mt-6 text-[11px] text-muted-foreground/70">
                     {isPlus
-                      ? 'Plus · 講座フル解放 · より多い毎日の利用枠'
-                      : 'Free · Plus にアップグレードすると全講座を解放し、毎日の利用枠も増えます'}
+                      ? 'Plus：全講座を利用可能・1 日あたりの AI 利用上限を拡大'
+                      : 'Free · Plus にアップグレードすると全講座を利用でき、毎日の利用枠も増えます'}
                   </p>
                 </div>
               </div>

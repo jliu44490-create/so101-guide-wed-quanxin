@@ -196,7 +196,7 @@ export default function HomePageJa() {
                 />
                 <span className="mt-2 block">
                   <TextReveal
-                    text="ゼロから踏まない"
+                    text="ゼロからつまずかない"
                     as="span"
                     className="block"
                     staggerMs={70}
@@ -284,7 +284,7 @@ export default function HomePageJa() {
               <span className="text-foreground">実践ハンドブック</span>
             </h2>
             <p className="mt-4 text-muted-foreground">
-              論文の概念羅列ではなく、各ステップを最小限のコマンドと明確なチェックポイントへ凝縮しました。
+              論文の概念を羅列するのではなく、各工程を最小限のコマンドと明確なチェックポイントに凝縮しました。
             </p>
           </div>
         </Reveal>

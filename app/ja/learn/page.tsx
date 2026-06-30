@@ -56,7 +56,7 @@ export default function LearnPageJa() {
             <Reveal delay={200}>
               <p className="mt-3 max-w-3xl text-muted-foreground">
                 {chaptersJa.length} 章、{totalMinutes} 分、{totalCommands} 件の実践コマンド。
-                状態やキーワードで現在の進捗をフィルタできます。
+                進捗状況やキーワードで章を絞り込めます。
               </p>
             </Reveal>
           </div>

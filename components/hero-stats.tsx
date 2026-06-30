@@ -8,7 +8,7 @@ type Locale = 'zh' | 'ja'
 
 const labels = {
   zh: { chapters: '总章节', duration: '预计时长', progress: '完成率', errors: '错误条目', chapterSuffix: ' 章', minSuffix: ' 分钟' },
-  ja: { chapters: '総章数', duration: '予想所要時間', progress: '完了率', errors: 'エラー項目', chapterSuffix: ' 章', minSuffix: ' 分' }
+  ja: { chapters: '章数', duration: '予想所要時間', progress: '完了率', errors: 'エラー事例', chapterSuffix: ' 章', minSuffix: ' 分' }
 }
 
 export function HeroStats({

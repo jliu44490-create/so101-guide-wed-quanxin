@@ -2,6 +2,7 @@
 
 import { Check, Copy, Terminal as TerminalIcon } from 'lucide-react'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -55,16 +56,23 @@ export function CodeBlock({
   className,
   showLineNumbers = false
 }: CodeBlockProps) {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
   const [copied, setCopied] = useState(false)
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(code)
       setCopied(true)
-      toast.success('已复制到剪贴板', { duration: 1500 })
+      toast.success(isJa ? 'クリップボードにコピーしました' : '已复制到剪贴板', {
+        duration: 1500
+      })
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('复制失败，请手动选择')
+      toast.error(
+        isJa
+          ? 'コピーできませんでした。手動で選択してください'
+          : '复制失败，请手动选择'
+      )
     }
   }
 
@@ -96,7 +104,7 @@ export function CodeBlock({
             size="icon"
             className="h-7 w-7 text-white/60 hover:bg-white/10 hover:text-white"
             onClick={copyToClipboard}
-            aria-label="复制代码"
+            aria-label={isJa ? 'コードをコピー' : '复制代码'}
           >
             {copied ? (
               <Check className="h-3.5 w-3.5 text-green-400" />

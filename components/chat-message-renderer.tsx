@@ -2,6 +2,7 @@
 
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -233,16 +234,17 @@ function renderText(text: string): React.ReactNode {
 }
 
 function CodeBubble({ code, language }: { code: string; language?: string }) {
+  const isJa = usePathname()?.startsWith('/ja') ?? false
   const [copied, setCopied] = useState(false)
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(code)
       setCopied(true)
-      toast.success('已复制', { duration: 1200 })
+      toast.success(isJa ? 'コピーしました' : '已复制', { duration: 1200 })
       setTimeout(() => setCopied(false), 1500)
     } catch {
-      toast.error('复制失败')
+      toast.error(isJa ? 'コピーできませんでした' : '复制失败')
     }
   }
 
@@ -255,7 +257,7 @@ function CodeBubble({ code, language }: { code: string; language?: string }) {
         <button
           type="button"
           onClick={copy}
-          aria-label="复制"
+          aria-label={isJa ? 'コピー' : '复制'}
           className="rounded p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
         >
           {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}

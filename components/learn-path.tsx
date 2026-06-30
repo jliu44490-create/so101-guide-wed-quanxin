@@ -23,7 +23,7 @@ export function LearnPath() {
   const base = ja ? '/ja' : ''
 
   const t = ja
-    ? { level: 'ステージ', cleared: 'クリア', active: '進行中', play: '挑戦', resume: '続ける', replay: 'もう一度', doc: 'ドキュメント' }
+    ? { level: 'ステージ', cleared: 'クリア', active: '進行中', play: '挑戦する', resume: '続ける', replay: 'もう一度', doc: 'ドキュメント' }
     : { level: '关', cleared: '已通关', active: '进行中', play: '开始闯关', resume: '继续闯关', replay: '再玩一次', doc: '看文档' }
 
   return (
@@ -64,8 +64,7 @@ export function LearnPath() {
                 >
                   <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
                     <span>
-                      {ja ? '' : '第 '}
-                      {c.id} {t.level}
+                      {ja ? `${t.level} ${c.id}` : `第 ${c.id} ${t.level}`}
                     </span>
                     <span aria-hidden>·</span>
                     <span>{c.duration}</span>

@@ -29,7 +29,7 @@ export function LearnHud() {
   const levelPct = Math.round((intoLevel / XP_PER_LEVEL) * 100)
 
   const t = ja
-    ? { level: 'レベル', xp: 'XP', toNext: '次のレベルまで', cleared: 'クリア', days: '連続日数', mins: '総分', wall: 'バッジ' }
+    ? { level: 'レベル', xp: 'XP', toNext: '次のレベルまで', cleared: 'クリア', days: '連続日数', mins: '総学習時間', wall: 'バッジ' }
     : { level: '等级', xp: 'XP', toNext: '距下一级还差', cleared: '已通关', days: '连续天数', mins: '总分钟', wall: '徽章墙' }
 
   const badges = [

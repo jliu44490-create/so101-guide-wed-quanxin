@@ -6,7 +6,7 @@ export const resourcesJa: Resource[] = [
     description: 'HuggingFace 公式のロボット学習ライブラリ。ソース、ドキュメント、サンプルが揃っています。',
     url: 'https://github.com/huggingface/lerobot',
     category: 'code',
-    tags: ['LeRobot', 'official']
+    tags: ['LeRobot', '公式']
   },
   {
     title: 'SO-ARM100 ハードウェアプロジェクト',
@@ -73,7 +73,7 @@ export const resourcesJa: Resource[] = [
   },
   {
     title: 'Hydra 設定ドキュメント',
-    description: 'LeRobot は設定管理に Hydra を採用しています。理解すると学習スクリプトの自由度が大きく上がります。',
+    description: 'LeRobot は設定管理に Hydra を採用しています。理解すると学習スクリプトの設定の柔軟性が高まります。',
     url: 'https://hydra.cc/docs/intro/',
     category: 'docs',
     tags: ['Hydra']

@@ -37,9 +37,9 @@ const i18n = {
     locked: '未開始',
     progress: '学習進捗',
     playLesson: '🎮 インタラクティブ',
-    viewArticle: '📚 文書',
+    viewArticle: '📚 ドキュメント',
     lessonBadge: 'Interactive',
-    onlyDoc: '文書のみ'
+    onlyDoc: 'ドキュメントのみ'
   }
 }
 

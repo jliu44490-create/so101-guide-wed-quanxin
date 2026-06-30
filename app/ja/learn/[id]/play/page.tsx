@@ -70,10 +70,10 @@ function ComingSoon({
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md space-y-6 text-center">
         <div className="text-7xl">🚧</div>
-        <h1 className="text-3xl font-bold">第 {chapterId} 課のインタラクティブ版は準備中</h1>
+        <h1 className="text-3xl font-bold">第 {chapterId} 章のインタラクティブ版は準備中</h1>
         <p className="text-muted-foreground">
           「<span className="text-foreground font-medium">{chapterTitle}</span>
-          」のインタラクティブ講座は制作中です。それまでは本章の完全なドキュメント版をご覧ください。
+          」のインタラクティブ講座は制作中です。それまでは本章の詳細ドキュメント版をご覧ください。
         </p>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button asChild size="lg" className="glow-primary h-12 px-6">
@@ -84,7 +84,7 @@ function ComingSoon({
           </Button>
           <Button asChild size="lg" variant="outline" className="h-12 px-6">
             <Link href="/ja/learn/1/play">
-              第 1 課のインタラクティブ版を試す
+              第 1 章のインタラクティブ版を試す
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>

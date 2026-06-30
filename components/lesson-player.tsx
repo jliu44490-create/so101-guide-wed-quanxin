@@ -80,7 +80,7 @@ function useLessonT() {
         streak: '連続正解',
         prevCard: '前のカード',
         keyHint: '← / → めくる · Esc 終了',
-        viewFullDoc: '完全なドキュメント',
+        viewFullDoc: '詳細ドキュメント',
         continue: '次へ',
         gotIt: 'わかった →',
         finishLesson: 'この講座を完了 →',
@@ -105,7 +105,7 @@ function useLessonT() {
         bestStreak: '最高連続',
         viewChapterDoc: 'この章のドキュメント',
         backToPath: '学習パスに戻る',
-        lessonNum: (n: number) => `第 ${n} 課`,
+        lessonNum: (n: number) => `第 ${n} 章`,
         wrongNumeric: (v: string, a: number, u: string) =>
           `❌ ${v} と入力。正解は ${a}${u}`
       }

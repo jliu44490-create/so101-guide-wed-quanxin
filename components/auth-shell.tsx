@@ -1,8 +1,9 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Cpu, Sparkles } from 'lucide-react'
+import { Cpu } from 'lucide-react'
 import { BinaryField } from '@/components/binary-field'
 import { cn } from '@/lib/utils'
 
@@ -88,8 +89,15 @@ export function AuthShell({
         {/* Header */}
         <header className="flex items-center justify-between py-6">
           <Link href={homeHref} className="group flex items-center gap-2.5">
-            <div className="relative flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25 ring-1 ring-white/20 ring-inset transition-transform group-hover:scale-105">
-              <Sparkles className="size-4 text-white drop-shadow-sm" />
+            <div className="relative flex size-9 items-center justify-center transition-transform group-hover:scale-105">
+              <Image
+                src="/lvjin-logo.png"
+                alt="LVJIN"
+                width={36}
+                height={36}
+                className="size-9 object-contain"
+                priority
+              />
             </div>
             <div className="leading-tight">
               <div className="text-sm font-semibold tracking-tight">LVJIN</div>

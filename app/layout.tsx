@@ -51,7 +51,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' }
+      { url: '/lvjin-logo.png', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/lvjin-logo.png', type: 'image/png' }
     ]
   },
   alternates: {

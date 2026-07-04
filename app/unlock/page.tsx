@@ -143,7 +143,7 @@ function UnlockContent() {
               <span className="mb-1 text-sm text-muted-foreground">/ 永久</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              或 {PRICING.jpy.label}（日元）· 无订阅 · 无隐藏费用
+              无订阅 · 无隐藏费用
             </p>
 
             <div className="mt-6 space-y-2.5">
@@ -156,20 +156,7 @@ function UnlockContent() {
                 {busy === 'cny' ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <>用 ¥99 解锁（人民币）</>
-                )}
-              </Button>
-              <Button
-                onClick={() => startCheckout('jpy')}
-                disabled={busy !== null}
-                size="lg"
-                variant="outline"
-                className="h-12 w-full"
-              >
-                {busy === 'jpy' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>用 ¥2,400 解锁（日元）</>
+                  <>用 ¥29.9 解锁</>
                 )}
               </Button>
             </div>

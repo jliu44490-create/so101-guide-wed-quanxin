@@ -29,8 +29,8 @@
 1. 注册 / 登录 https://dashboard.stripe.com （需要一个能用 Stripe 的主体：香港/新加坡/美国/日本公司均可，中国大陆主体不行）
 2. **Products → Add product**：
    - 名称：`SO101 全部内容 永久解锁`
-   - 添加价格 ①：**一次性**，币种 **CNY**，金额 **99** → 保存，复制价格 ID（`price_...`）→ 这是 `STRIPE_PRICE_CNY`
-   - 添加价格 ②：**一次性**，币种 **JPY**，金额 **2400** → 复制 ID → `STRIPE_PRICE_JPY`
+   - 添加价格 ①：**一次性**，币种 **CNY**，金额 **29.9** → 保存，复制价格 ID（`price_...`）→ 这是 `STRIPE_PRICE_CNY`
+   - 添加价格 ②：**一次性**，币种 **JPY**，金额 **710** → 复制 ID → `STRIPE_PRICE_JPY`
 3. 开启支付方式（Settings → Payment methods）：勾选卡 / Alipay / WeChat Pay（按需）
 
 ## 第 3 步：配置 Webhook
@@ -55,8 +55,8 @@ Supabase → Settings → **API Keys** → **Secret keys** → 复制那个 `sb_
 |------|-------|------|
 | `STRIPE_SECRET_KEY` | `sk_...` | 服务端 |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` | 服务端 |
-| `STRIPE_PRICE_CNY` | `price_...` | ¥99 价格 ID |
-| `STRIPE_PRICE_JPY` | `price_...` | ¥2400 价格 ID（可选） |
+| `STRIPE_PRICE_CNY` | `price_...` | ¥29.9 价格 ID |
+| `STRIPE_PRICE_JPY` | `price_...` | ¥710 价格 ID（可选） |
 | `SUPABASE_SERVICE_ROLE_KEY` | `sb_secret_...` | 服务端，机密 |
 | `NEXT_PUBLIC_PAYWALL_ENABLED` | `true` | **打开付费墙的总开关** |
 

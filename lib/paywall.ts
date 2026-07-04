@@ -28,8 +28,8 @@ export function chapterRequiresAccess(chapterId: number): boolean {
 
 /** Display prices. Real charge amounts live in Stripe (price IDs), not here. */
 export const PRICING = {
-  cny: { label: '¥99', amount: 99, currency: 'CNY', note: '人民币' },
-  jpy: { label: '¥2,400', amount: 2400, currency: 'JPY', note: '日元' }
+  cny: { label: '¥29.9', amount: 29.9, currency: 'CNY', note: '人民币' },
+  jpy: { label: '¥710', amount: 710, currency: 'JPY', note: '日元' }
 } as const
 
 export type PriceCurrency = keyof typeof PRICING

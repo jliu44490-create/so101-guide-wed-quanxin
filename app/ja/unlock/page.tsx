@@ -146,37 +146,24 @@ function UnlockContent() {
           <div className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-background to-accent/5 p-6 sm:p-8">
             <p className="text-sm text-muted-foreground">全コンテンツ · 一回限り</p>
             <div className="mt-2 flex items-end gap-2">
-              <span className="text-5xl font-bold tracking-tight">{PRICING.cny.label}</span>
+              <span className="text-5xl font-bold tracking-tight">{PRICING.jpy.label}</span>
               <span className="mb-1 text-sm text-muted-foreground">/ 永久</span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              または {PRICING.jpy.label}（日本円）· サブスクなし · 隠れた費用なし
+              サブスクなし · 隠れた費用なし
             </p>
 
             <div className="mt-6 space-y-2.5">
               <Button
-                onClick={() => startCheckout('cny')}
+                onClick={() => startCheckout('jpy')}
                 disabled={busy !== null}
                 size="lg"
                 className="glow-primary h-12 w-full"
               >
-                {busy === 'cny' ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>¥99 でアンロック（人民元）</>
-                )}
-              </Button>
-              <Button
-                onClick={() => startCheckout('jpy')}
-                disabled={busy !== null}
-                size="lg"
-                variant="outline"
-                className="h-12 w-full"
-              >
                 {busy === 'jpy' ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <>¥2,400 でアンロック（日本円）</>
+                  <>¥710 でアンロック</>
                 )}
               </Button>
             </div>

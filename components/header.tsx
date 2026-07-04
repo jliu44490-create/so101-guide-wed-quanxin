@@ -93,9 +93,9 @@ export function Header() {
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link href={homeHref} className="group flex items-center gap-2.5">
-          <div className="relative flex h-10 w-10 items-center justify-center transition-transform group-hover:scale-105">
+          <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-black ring-1 ring-white/10 transition-transform group-hover:scale-105">
             <Image
-              src="/lvjin-logo.png"
+              src="/lvjin-icon.jpg"
               alt={config.brand}
               width={40}
               height={40}

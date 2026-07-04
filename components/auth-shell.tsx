@@ -89,9 +89,9 @@ export function AuthShell({
         {/* Header */}
         <header className="flex items-center justify-between py-6">
           <Link href={homeHref} className="group flex items-center gap-2.5">
-            <div className="relative flex size-9 items-center justify-center transition-transform group-hover:scale-105">
+            <div className="relative flex size-9 items-center justify-center overflow-hidden rounded-lg bg-black ring-1 ring-white/10 transition-transform group-hover:scale-105">
               <Image
-                src="/lvjin-logo.png"
+                src="/lvjin-icon.jpg"
                 alt="LVJIN"
                 width={36}
                 height={36}
